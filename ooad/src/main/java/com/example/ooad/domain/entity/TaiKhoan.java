@@ -2,8 +2,10 @@ package com.example.ooad.domain.entity;
 
 import com.example.ooad.domain.enums.ETrangThaiTaiKhoan;
 import com.example.ooad.domain.enums.EVaiTro;
+import com.example.ooad.dto.request.TaoTaiKhoanDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -18,6 +20,7 @@ public class TaiKhoan {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private int maTK;
+    @Column(unique=true)
     private String tenDangNhap;
     private String matKhau;
     @Enumerated(EnumType.STRING)
@@ -28,6 +31,12 @@ public class TaiKhoan {
     @JsonIgnore
     private NhanVien nhanVien;
     public TaiKhoan() {
+    }
+    public TaiKhoan(TaoTaiKhoanDto dto, String matKhau) {
+        this.tenDangNhap= dto.getTenDangNhap();
+        this.matKhau=matKhau;
+        this.vaiTro=dto.getVaiTro();
+        this.trangThai=ETrangThaiTaiKhoan.DANGSUDUNG;
     }
     public TaiKhoan(int maTK, String tenDangNhap, String matKhau, EVaiTro vaiTro, ETrangThaiTaiKhoan trangThai, NhanVien nhanVien) {
         this.maTK = maTK;
