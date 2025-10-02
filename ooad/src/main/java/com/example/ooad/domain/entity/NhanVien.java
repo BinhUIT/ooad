@@ -5,7 +5,6 @@ import java.sql.Date;
 import com.example.ooad.domain.enums.EGioiTinh;
 import com.example.ooad.domain.enums.EVaiTro;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -13,11 +12,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 @Entity
 @Table(name="NHANVIEN")
-public class NhanVien {
+public class NhanVien{
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private int maNV;
@@ -28,7 +27,7 @@ public class NhanVien {
     private String sdt;
     @Enumerated(EnumType.STRING)
     private EVaiTro vaiTro;
-    @OneToOne(cascade=CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name="ma_tai_khoan")
     private TaiKhoan taiKhoan;
     public int getMaNV() {

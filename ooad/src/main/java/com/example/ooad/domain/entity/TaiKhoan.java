@@ -11,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.example.ooad.domain.enums.ETrangThaiTaiKhoan;
 import com.example.ooad.domain.enums.EVaiTro;
 import com.example.ooad.dto.request.TaoTaiKhoanDto;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,7 +19,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 @Entity
 @Table(name="TAIKHOAN")
@@ -36,9 +34,9 @@ public class TaiKhoan implements UserDetails {
     private EVaiTro vaiTro;
     @Enumerated(EnumType.STRING)
     private ETrangThaiTaiKhoan trangThai;
-    @OneToOne(mappedBy="taiKhoan")
+    /*@OneToOne(mappedBy="taiKhoan")
     @JsonIgnore
-    private NhanVien nhanVien;
+    private NhanVien nhanVien;*/
     public TaiKhoan() {
     }
     public TaiKhoan(TaoTaiKhoanDto dto, String matKhau) {
@@ -47,21 +45,21 @@ public class TaiKhoan implements UserDetails {
         this.vaiTro=dto.getVaiTro();
         this.trangThai=ETrangThaiTaiKhoan.DANGSUDUNG;
     }
-    public TaiKhoan(int maTK, String tenDangNhap, String matKhau, EVaiTro vaiTro, ETrangThaiTaiKhoan trangThai, NhanVien nhanVien) {
+    public TaiKhoan(int maTK, String tenDangNhap, String matKhau, EVaiTro vaiTro, ETrangThaiTaiKhoan trangThai /*NhanVien nhanVien*/) {
         this.maTK = maTK;
         this.tenDangNhap = tenDangNhap;
         this.matKhau = matKhau;
         this.vaiTro = vaiTro;
-        this.nhanVien= nhanVien;
-        this.trangThai = trangThai;
+        //this.nhanVien= nhanVien;
+        this.trangThai = trangThai; 
     }
-    @JsonIgnore
+    /*@JsonIgnore
     public NhanVien getNhanVien() {
         return nhanVien;
     }
     public void setNhanVien(NhanVien nhanVien) {
         this.nhanVien = nhanVien;
-    }
+    }*/
     public int getMaTK() {
         return maTK;
     }
