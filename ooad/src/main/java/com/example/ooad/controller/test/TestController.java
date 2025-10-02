@@ -9,5 +9,12 @@ public class TestController {
     public String test() {
         return "Success";
     }
-
+    @GetMapping("/test_jwt_token") 
+    public String testWithToken() {
+        return "Success";
+    }
+    @GetMapping("/bac_si/test") 
+    public String testBacSi() {
+        return "Bac si";
+    }
 }

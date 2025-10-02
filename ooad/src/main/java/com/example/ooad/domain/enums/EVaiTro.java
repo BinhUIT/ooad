@@ -6,7 +6,8 @@ public enum EVaiTro {
     BACSI("Bác sĩ"),
     LETAN("Lễ tân"),
     THUKHO("Thủ kho"),
-    BENHNHAN("Bệnh nhân");
+    BENHNHAN("Bệnh nhân"),
+    ADMIN("Admin");
     private final String label;
     EVaiTro(String label) {
         this.label = label;

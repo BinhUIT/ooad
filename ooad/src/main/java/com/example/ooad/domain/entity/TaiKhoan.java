@@ -1,5 +1,13 @@
 package com.example.ooad.domain.entity;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import com.example.ooad.domain.enums.ETrangThaiTaiKhoan;
 import com.example.ooad.domain.enums.EVaiTro;
 import com.example.ooad.dto.request.TaoTaiKhoanDto;
@@ -16,7 +24,8 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 @Entity
 @Table(name="TAIKHOAN")
-public class TaiKhoan {
+public class TaiKhoan implements UserDetails {
+    private static final String AUTHORITIES_DELIMETER ="::";
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private int maTK;
@@ -83,5 +92,19 @@ public class TaiKhoan {
     public void setTrangThai(ETrangThaiTaiKhoan trangThai) {
         this.trangThai = trangThai;
     }
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        String authorities = this.vaiTro.getLabel();
+        return Arrays.stream(authorities.split(AUTHORITIES_DELIMETER)).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+    }
+    @Override
+    public String getPassword() {
+        return this.matKhau;
+    }
+    @Override
+    public String getUsername() {
+        return this.tenDangNhap;
+    }
+    
     
 }

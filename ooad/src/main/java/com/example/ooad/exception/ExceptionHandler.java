@@ -20,6 +20,10 @@ public class ExceptionHandler {
         if(e instanceof ConflictException) {
             return new GlobalResponse(null, e.getMessage(),409);
         }
+        if(e instanceof BadCredentialException) {
+            return new GlobalResponse(null, e.getMessage(),401);
+        }
+        e.printStackTrace();
         return new GlobalResponse(null,e.getMessage(),500);
     }
 }
