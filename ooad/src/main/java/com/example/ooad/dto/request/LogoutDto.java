@@ -2,19 +2,21 @@ package com.example.ooad.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 
-public class DangXuatDto {
+public class LogoutDto {
     @NotNull
     private String acessToken;
     @NotNull
     private String refreshToken;
 
-    public DangXuatDto() {
-    }
-
-    public DangXuatDto(String acessToken, String refreshToken) {
+    public LogoutDto(String acessToken, String refreshToken) {
         this.acessToken = acessToken;
         this.refreshToken = refreshToken;
     }
+
+    public LogoutDto() {
+    }
+
+    
 
     public String getAcessToken() {
         return acessToken;

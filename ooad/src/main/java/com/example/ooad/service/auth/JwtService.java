@@ -10,11 +10,11 @@ import java.util.function.Function;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.example.ooad.domain.entity.Account;
 import com.example.ooad.domain.entity.RefreshToken;
-import com.example.ooad.domain.entity.TaiKhoan;
 import com.example.ooad.domain.entity.UnusedAccessToken;
+import com.example.ooad.repository.AccountRepository;
 import com.example.ooad.repository.RefreshTokenRepository;
-import com.example.ooad.repository.TaiKhoanRepository;
 import com.example.ooad.repository.UnusedAcessTokenRepository;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -29,11 +29,11 @@ public class JwtService {
     private static final String secret = Dotenv.load().get("SECRET_KEY");
     private static final int thoiHanAcessToken = 1000*60*30;
     private static final int thoiHanRefreshToken = 1000*60*60*24;
-    private final TaiKhoanRepository taiKhoanRepo;
+    private final AccountRepository accountRepo;
     private final RefreshTokenRepository refreshTokenRepo;
     private final UnusedAcessTokenRepository unusedAccessTokenRepo;
-    public JwtService(TaiKhoanRepository taiKhoanRepo, RefreshTokenRepository refreshTokenRepo, UnusedAcessTokenRepository unusedAcessTokenRepo) {
-        this.taiKhoanRepo = taiKhoanRepo;
+    public JwtService(AccountRepository accountRepo, RefreshTokenRepository refreshTokenRepo, UnusedAcessTokenRepository unusedAcessTokenRepo) {
+        this.accountRepo=accountRepo;
         this.refreshTokenRepo = refreshTokenRepo;
         this.unusedAccessTokenRepo= unusedAcessTokenRepo;
     }
@@ -85,10 +85,10 @@ public class JwtService {
             
             return false;
         }
-        if(userDetails instanceof TaiKhoan taiKhoan) {
+        if(userDetails instanceof Account account) {
             
-            String tenTaiKhoan = extractTenDangNhap(token);
-            return taiKhoan.getTenDangNhap().equals(tenTaiKhoan)&&!isTokenExpire(token);
+            String username = extractTenDangNhap(token);
+            return account.getUsername().equals(username)&&!isTokenExpire(token);
         } 
         return false;
     }
@@ -97,9 +97,9 @@ public class JwtService {
         if(refreshToken==null) {
             return false;
         } 
-        if(userDetails instanceof TaiKhoan taiKhoan) {
-         String tenTaiKhoan = extractTenDangNhap(token);
-         boolean isValid=taiKhoan.getTenDangNhap().equals(tenTaiKhoan)&&!isTokenExpire(token);
+        if(userDetails instanceof Account account) {
+         String username = extractTenDangNhap(token);
+         boolean isValid=account.getUsername().equals(username)&&!isTokenExpire(token);
          if(!isValid) {
             refreshTokenRepo.delete(refreshToken);
         }
@@ -118,9 +118,9 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
     }
-    public TaiKhoan findByToken(String token) {
-        String tenTaiKhoan = extractTenDangNhap(token);
-        return taiKhoanRepo.findByTenDangNhap(tenTaiKhoan);
+    public Account findByToken(String token) {
+        String username = extractTenDangNhap(token);
+        return accountRepo.findByUsername(username);
     }
     public RefreshToken getRefreshTokenByToken(String token) {
         return refreshTokenRepo.findByToken(token);

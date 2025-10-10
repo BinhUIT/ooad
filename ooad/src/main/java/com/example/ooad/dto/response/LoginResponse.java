@@ -3,12 +3,12 @@ package com.example.ooad.dto.response;
 public class LoginResponse {
     private String accessToken;
     private String refreshToken;
-    private TaiKhoanResponse taiKhoan;
+    private AccountResponse account;
 
-    public LoginResponse(String accessToken, String refreshToken, TaiKhoanResponse taiKhoan) {
+    public LoginResponse(String accessToken, String refreshToken, AccountResponse account) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
-        this.taiKhoan = taiKhoan;
+        this.account = account;
     }
 
     public LoginResponse() {
@@ -30,12 +30,12 @@ public class LoginResponse {
         this.refreshToken = refreshToken;
     }
 
-    public TaiKhoanResponse getTaiKhoan() {
-        return taiKhoan;
+    public AccountResponse getAccount() {
+        return account;
     }
 
-    public void setTaiKhoan(TaiKhoanResponse taiKhoan) {
-        this.taiKhoan = taiKhoan;
+    public void setAccount(AccountResponse account) {
+        this.account = account;
     }
     
 }

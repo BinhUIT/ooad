@@ -1,7 +1,16 @@
 package com.example.ooad.domain.entity;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.domain.enums.EStatus;
+import com.example.ooad.dto.request.CreateAccountDto;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,7 +22,8 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name="account")
-public class Account {
+public class Account implements UserDetails {
+    private static final String AUTHORITIES_DELIMETER ="::";
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private int accountId;
@@ -29,9 +39,7 @@ public class Account {
     public void setAccountId(int accountId) {
         this.accountId = accountId;
     }
-    public String getUsername() {
-        return username;
-    }
+    
     public void setUsername(String username) {
         this.username = username;
     }
@@ -62,6 +70,24 @@ public class Account {
         this.role = role;
         this.status = status;
     }
-    
+     @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        String authorities = this.role.name();
+        return Arrays.stream(authorities.split(AUTHORITIES_DELIMETER)).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+    }
+    @Override
+    public String getPassword() {
+        return this.userPassword;
+    }
+    @Override
+    public String getUsername() {
+        return this.username;
+    }
+    public Account(CreateAccountDto dto, String hashedPassword) {
+        this.username= dto.getUsername();
+        this.role= dto.getRole();
+        this.userPassword=hashedPassword;
+        this.status=EStatus.USING;
+    }
 
 }

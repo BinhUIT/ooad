@@ -14,7 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.example.ooad.domain.enums.EVaiTro;
+import com.example.ooad.domain.enums.ERole;
 
 @Configuration
 @EnableWebSecurity
@@ -30,11 +30,11 @@ public class SecurityConfig {
          http.csrf(httpSecurityCsrfConfigurer->httpSecurityCsrfConfigurer.disable())
         .httpBasic(Customizer.withDefaults()) 
         .authorizeHttpRequests(auth->auth.requestMatchers("/auth/**").permitAll()
-        .requestMatchers("/benh_nhan/**").hasAuthority(EVaiTro.BENHNHAN.getLabel())
-        .requestMatchers("/nhan_vien_kho/**").hasAnyAuthority(EVaiTro.THUKHO.getLabel())
-        .requestMatchers("/le_tan/**").hasAnyAuthority(EVaiTro.LETAN.getLabel())
-        .requestMatchers("/bac_si/**").hasAuthority(EVaiTro.BACSI.getLabel())
-        .requestMatchers("/admin/**").hasAuthority(EVaiTro.ADMIN.getLabel())
+        .requestMatchers("/patient/**").hasAuthority(ERole.PATIENT.name())
+        .requestMatchers("/store_keeper/**").hasAnyAuthority(ERole.WAREHOUSE_STAFF.name())
+        .requestMatchers("/receptionist/**").hasAnyAuthority(ERole.RECEPTIONIST.name())
+        .requestMatchers("/doctor/**").hasAuthority(ERole.DOCTOR.name())
+        .requestMatchers("/admin/**").hasAuthority(ERole.ADMIN.name())
         .anyRequest().authenticated()
         )
         .formLogin(Customizer.withDefaults())
