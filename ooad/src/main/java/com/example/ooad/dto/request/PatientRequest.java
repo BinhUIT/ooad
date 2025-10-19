@@ -4,9 +4,10 @@ import java.sql.Date;
 
 import com.example.ooad.domain.enums.EGender;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 
-public class CreatePatientRequest {
+public class PatientRequest {
     @NotNull(message="Address is required")
     private String address;
     @NotNull(message="First visit date is required")
@@ -18,6 +19,7 @@ public class CreatePatientRequest {
     @NotNull(message = "Gender is required")
     private EGender gender;
     @NotNull(message="Email is invalid")
+    @Email(message = "Invalid email")
     private String email;
     public String getAddress() {
         return address;
@@ -71,9 +73,9 @@ public class CreatePatientRequest {
     private String phone;
     @NotNull(message="Id card is required")
     private String idCard;
-    public CreatePatientRequest() {
+    public PatientRequest() {
     }
-    public CreatePatientRequest(@NotNull(message = "Address is required") String address,
+    public PatientRequest(@NotNull(message = "Address is required") String address,
             @NotNull(message = "First visit date is required") Date firstVisitDate,
             @NotNull(message = "Full name is required") String fullName,
             @NotNull(message = "Date of birth is required") Date dateOfBirth,

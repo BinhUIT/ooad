@@ -11,4 +11,10 @@ public class Message {
     public static final String dangXuatThanhCong="Đăng xuất thành công";
     public static final String refreshTokenHetHan="Token đã hết hạn, vui lòng đăng nhập lại";
     public static final String thanhCong="Thành công";
+    public static final String invalidEmail = "Invalid email";
+    public static final String invalidPhone = "Invalid phone number";
+    public static final String invalidIdCard = "Invalid id card";
+    public static final String success = "Success";
+    public static final String nullArgument = "Null argument";
+    public static final String patientNotFound = "Patient not found";
 }
