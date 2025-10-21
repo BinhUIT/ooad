@@ -1,4 +1,4 @@
-package com.example.ooad.service.scheduleservice;
+package com.example.ooad.service.dbcleaner;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

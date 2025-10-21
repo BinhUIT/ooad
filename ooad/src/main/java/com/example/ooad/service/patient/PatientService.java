@@ -14,7 +14,7 @@ import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.mapper.PatientMapper;
 import com.example.ooad.repository.PatientRepository;
-import com.example.ooad.utils.DateUtil;
+import com.example.ooad.utils.DateTimeUtil;
 import com.example.ooad.utils.Message;
 import com.example.ooad.validator.ActorValidator;
 
@@ -45,7 +45,7 @@ public class PatientService {
     public PatientResponse createPatient(PatientRequest request, BindingResult bindingResult) {
        validateRequest(request, bindingResult);
        Patient newPatient = PatientMapper.fromRequestToPatient(request);
-       newPatient.setRecordCreateDate(DateUtil.getCurrentDate());
+       newPatient.setRecordCreateDate(DateTimeUtil.getCurrentDate());
        newPatient= patientRepo.save(newPatient);
        return PatientMapper.getResponseFromPatient(newPatient);
 

@@ -17,4 +17,8 @@ public class Message {
     public static final String success = "Success";
     public static final String nullArgument = "Null argument";
     public static final String patientNotFound = "Patient not found";
+    public static final String staffNotFound = "Staff not found";
+    public static final String invalidScheduleDate="Schedule date must be after or equal current date";
+    public static final String invalidStartAndEndTime = "Invalid start and end time";
+    public static final String staffBusy="Staff is busy!";
 }
