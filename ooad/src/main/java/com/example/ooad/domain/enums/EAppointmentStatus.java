@@ -2,5 +2,7 @@ package com.example.ooad.domain.enums;
 
 public enum EAppointmentStatus {
     PENDING,
-    CANCEL
+    CANCEL,
+    IN_PROGRESS,
+    COMPLETED
 }
