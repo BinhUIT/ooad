@@ -17,6 +17,11 @@ import com.example.ooad.dto.response.LoginResponse;
 import com.example.ooad.service.auth.interfaces.AuthService;
 import com.example.ooad.utils.Message;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
 @RestController
 public class AuthController {
     private final AuthService authService;
@@ -24,6 +29,32 @@ public class AuthController {
         this.authService = authService;
     } 
     @PostMapping("/auth/create_account")
+    @Operation(
+        description="Create Account",
+        responses={
+            @ApiResponse(
+                description=Message.matKhauKoHopLe,
+                responseCode="400",
+                content = @Content(
+        
+        mediaType = "application/json",
+        schema = @Schema(implementation = GlobalResponse.class) 
+       
+    )
+            ),
+             @ApiResponse(
+                description=Message.tenDangNhapDaDuocSuDung,
+                responseCode="409",
+                content = @Content(
+        
+        mediaType = "application/json",
+        schema = @Schema(implementation = GlobalResponse.class) 
+       
+    )
+            ),
+            @ApiResponse
+        }
+    )
     public ResponseEntity<GlobalResponse<Account>> taoTaiKhoan(@RequestBody CreateAccountDto dto) {
         AccountResponse taiKhoan = authService.createAccount(dto);
         GlobalResponse<Account> response = new GlobalResponse(taiKhoan,Message.taoTaiKhoanThanhCong,200);
@@ -31,6 +62,32 @@ public class AuthController {
     }
 
     @PostMapping("/auth/login")
+    @Operation(
+        description="Create Schedule",
+        responses={
+            @ApiResponse(
+                description=Message.loiServer,
+                responseCode="500",
+                content = @Content(
+        
+        mediaType = "application/json",
+        schema = @Schema(implementation = GlobalResponse.class) 
+       
+    )
+            ),
+             @ApiResponse(
+                description=Message.saiTenDangNhapVaMatKhau,
+                responseCode="400",
+                content = @Content(
+        
+        mediaType = "application/json",
+        schema = @Schema(implementation = GlobalResponse.class) 
+       
+    )
+            ),
+            @ApiResponse
+        }
+    )
     public ResponseEntity<GlobalResponse<LoginResponse>> dangNhap(@RequestBody LoginDto dto) {
         LoginResponse response = authService.login(dto);
         GlobalResponse<LoginResponse> res = new GlobalResponse(response, Message.dangNhapThanhCong, 200);
@@ -43,6 +100,22 @@ public class AuthController {
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
     @PostMapping("/auth/get_access_token") 
+    @Operation(
+        description="Create Schedule",
+        responses={
+            @ApiResponse(
+                description=Message.refreshTokenHetHan,
+                responseCode="401",
+                content = @Content(
+        
+        mediaType = "application/json",
+        schema = @Schema(implementation = GlobalResponse.class) 
+       
+    )
+            ),
+            @ApiResponse
+        }
+    )
     public ResponseEntity<GlobalResponse<String>> layAccessToken(@RequestBody GetAcessTokenDto dto) {
         String token = authService.generateAcessToken(dto.getRefreshToken(), dto.getUsername());
         GlobalResponse<String> res = new GlobalResponse(token,Message.thanhCong,200);
