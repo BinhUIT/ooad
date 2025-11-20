@@ -1,4 +1,4 @@
-package com.example.ooad.service.auth;
+package com.example.ooad.service.auth.implementation;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,26 +21,29 @@ import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.ConflictException;
 import com.example.ooad.exception.UnauthorizedException;
 import com.example.ooad.repository.AccountRepository;
+import com.example.ooad.service.auth.interfaces.AuthService;
+import com.example.ooad.service.auth.interfaces.JwtService;
 import com.example.ooad.utils.Message;
 import com.example.ooad.validator.AccountValidator;
 
 import jakarta.transaction.Transactional;
 
 @Service
-public class AuthService implements UserDetailsService {
+public class AuthServiceImplementation implements UserDetailsService, AuthService {
     private final AccountRepository accountRepo;
     private final AccountValidator taiKhoanValidator;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authManager;
     private final JwtService jwtService;
     
-    public AuthService(AccountRepository accountRepo, AccountValidator taiKhoanValidator, PasswordEncoder passwordEncoder, @Lazy AuthenticationManager authManager, JwtService jwtService) {
+    public AuthServiceImplementation(AccountRepository accountRepo, AccountValidator taiKhoanValidator, PasswordEncoder passwordEncoder, @Lazy AuthenticationManager authManager, JwtService jwtService) {
         this.accountRepo= accountRepo;
         this.taiKhoanValidator = taiKhoanValidator;
         this.passwordEncoder= passwordEncoder;
         this.authManager = authManager;
         this.jwtService= jwtService;
     } 
+    @Override
     public AccountResponse createAccount(CreateAccountDto dto) throws RuntimeException {
         if(taiKhoanValidator.isNameUsed(dto.getUsername())){
             throw new ConflictException(Message.tenDangNhapDaDuocSuDung);
@@ -54,7 +57,7 @@ public class AuthService implements UserDetailsService {
         return new AccountResponse(newAccount);
         
     }
-
+    @Override
     public LoginResponse login(LoginDto dto) throws RuntimeException {
         Authentication auth = authManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
         if(auth.isAuthenticated()) {
@@ -72,6 +75,7 @@ public class AuthService implements UserDetailsService {
         }
     }
     @Transactional
+    @Override
     public String dangXuat(LogoutDto logoutDto) {
         jwtService.deleteRefreshToken(logoutDto.getRefreshToken());
         jwtService.saveUnusedAccessToken(logoutDto.getAcessToken());
@@ -85,6 +89,7 @@ public class AuthService implements UserDetailsService {
         }
         return taiKhoan;
     }
+    @Override
     public String generateAcessToken(String refreshToken, String username) throws RuntimeException {
         Account account =(Account) loadUserByUsername(username);
         if(jwtService.validateRefreshToken(refreshToken, account)) {

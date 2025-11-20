@@ -1,4 +1,4 @@
-package com.example.ooad.service.admin;
+package com.example.ooad.service.admin.implementation;
 
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,22 +11,24 @@ import com.example.ooad.dto.response.StaffScheduleResponse;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.mapper.StaffScheduleMapper;
 import com.example.ooad.repository.StaffScheduleRepository;
-import com.example.ooad.service.staff.StaffService;
+import com.example.ooad.service.admin.interfaces.AdminService;
+import com.example.ooad.service.staff.implementation.StaffServiceImplementation;
+import com.example.ooad.service.staff.interfaces.StaffService;
 import com.example.ooad.utils.DateTimeUtil;
 import com.example.ooad.utils.Message;
 import com.example.ooad.validator.StaffScheduleValidator;
 
 @Service
-public class AdminService {
+public class AdminServiceImplementation implements AdminService {
     private final StaffService staffService;
     private final StaffScheduleRepository staffScheduleRepo;
     private final StaffScheduleValidator staffScheduleValidator;
-    public AdminService(StaffService staffService, StaffScheduleRepository staffScheduleRepo, StaffScheduleValidator staffScheduleValidator) {
+    public AdminServiceImplementation(StaffServiceImplementation staffService, StaffScheduleRepository staffScheduleRepo, StaffScheduleValidator staffScheduleValidator) {
         this.staffService= staffService;
         this.staffScheduleRepo = staffScheduleRepo;
         this.staffScheduleValidator= staffScheduleValidator;
     }
-
+    @Override
     public StaffScheduleResponse createSchedule(CreateScheduleRequest request) {
         staffScheduleValidator.validateCreateScheduleRequest(request);
         Staff staff = staffService.findStaffById(request.getStaffId());

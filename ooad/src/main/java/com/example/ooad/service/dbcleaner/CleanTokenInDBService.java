@@ -3,7 +3,8 @@ package com.example.ooad.service.dbcleaner;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.example.ooad.service.auth.JwtService;
+import com.example.ooad.service.auth.implementation.JwtServiceImplementation;
+import com.example.ooad.service.auth.interfaces.JwtService;
 
 @Component
 public class CleanTokenInDBService {

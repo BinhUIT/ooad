@@ -14,7 +14,7 @@ import com.example.ooad.dto.request.LogoutDto;
 import com.example.ooad.dto.response.AccountResponse;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.dto.response.LoginResponse;
-import com.example.ooad.service.auth.AuthService;
+import com.example.ooad.service.auth.interfaces.AuthService;
 import com.example.ooad.utils.Message;
 
 @RestController

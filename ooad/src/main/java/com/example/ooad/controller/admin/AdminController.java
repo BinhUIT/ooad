@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.ooad.dto.request.CreateScheduleRequest;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.dto.response.StaffScheduleResponse;
-import com.example.ooad.service.admin.AdminService;
+
+import com.example.ooad.service.admin.interfaces.AdminService;
 import com.example.ooad.utils.Message;
 
 @RestController

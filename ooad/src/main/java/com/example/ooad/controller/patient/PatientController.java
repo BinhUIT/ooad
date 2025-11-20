@@ -17,7 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.ooad.dto.request.PatientRequest;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.dto.response.PatientResponse;
-import com.example.ooad.service.patient.PatientService;
+import com.example.ooad.service.patient.implementation.PatientServiceImplementation;
+import com.example.ooad.service.patient.interfaces.PatientService;
 import com.example.ooad.utils.Message;
 
 import jakarta.validation.Valid;

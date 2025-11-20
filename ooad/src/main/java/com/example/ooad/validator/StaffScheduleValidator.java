@@ -4,8 +4,8 @@ import org.springframework.stereotype.Service;
 
 import com.example.ooad.dto.request.CreateScheduleRequest;
 import com.example.ooad.exception.BadRequestException;
-import com.example.ooad.service.patient.PatientService;
-import com.example.ooad.service.staff.StaffService;
+
+import com.example.ooad.service.staff.interfaces.StaffService;
 import com.example.ooad.utils.DateTimeUtil;
 import com.example.ooad.utils.Message;
 

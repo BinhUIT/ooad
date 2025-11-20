@@ -1,4 +1,4 @@
-package com.example.ooad.service.auth;
+package com.example.ooad.service.auth.implementation;
 
 import java.security.Key;
 import java.util.Date;
@@ -16,6 +16,7 @@ import com.example.ooad.domain.entity.UnusedAccessToken;
 import com.example.ooad.repository.AccountRepository;
 import com.example.ooad.repository.RefreshTokenRepository;
 import com.example.ooad.repository.UnusedAcessTokenRepository;
+import com.example.ooad.service.auth.interfaces.JwtService;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
@@ -25,14 +26,14 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
 @Service
-public class JwtService {
+public class JwtServiceImplementation implements JwtService {
     private static final String secret = Dotenv.load().get("SECRET_KEY");
     private static final int thoiHanAcessToken = 1000*60*30;
     private static final int thoiHanRefreshToken = 1000*60*60*24;
     private final AccountRepository accountRepo;
     private final RefreshTokenRepository refreshTokenRepo;
     private final UnusedAcessTokenRepository unusedAccessTokenRepo;
-    public JwtService(AccountRepository accountRepo, RefreshTokenRepository refreshTokenRepo, UnusedAcessTokenRepository unusedAcessTokenRepo) {
+    public JwtServiceImplementation(AccountRepository accountRepo, RefreshTokenRepository refreshTokenRepo, UnusedAcessTokenRepository unusedAcessTokenRepo) {
         this.accountRepo=accountRepo;
         this.refreshTokenRepo = refreshTokenRepo;
         this.unusedAccessTokenRepo= unusedAcessTokenRepo;
@@ -42,10 +43,12 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+    @Override
     public String generateToken(String email) {
         Map<String, Object> claims = new HashMap<>();
         return createToken(claims, email);
     }
+    @Override
     public String generateRefreshToken(String email) {
         Map<String, Object> claims = new HashMap<>();
         return createRefreshToken(claims, email);
@@ -63,13 +66,16 @@ public class JwtService {
         refreshTokenRepo.save(rfToken);
         return refreshToken;
     }
+    @Override
     public String extractTenDangNhap(String token) {
        
         return extractClaim(token,Claims::getSubject );
     }
+    @Override
     public Date extractExpiredDate(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
+    @Override
     public Date extractIssueDate(String token) {
         return extractClaim(token, Claims::getIssuedAt);
     }
@@ -80,6 +86,7 @@ public class JwtService {
         long chenhLechThoiGian = extractExpiredDate(token).getTime()-extractIssueDate(token).getTime();
         return chenhLechThoiGian!=thoiHanRefreshToken;
     }
+    @Override
     public boolean validateToken(String token,UserDetails userDetails) {
         if(!isAccessToken(token)) {
             
@@ -92,6 +99,7 @@ public class JwtService {
         } 
         return false;
     }
+    @Override
     public boolean validateRefreshToken(String token , UserDetails userDetails) {
         RefreshToken refreshToken = refreshTokenRepo.findByToken(token);
         if(refreshToken==null) {
@@ -118,43 +126,53 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
     }
+    @Override
     public Account findByToken(String token) {
         String username = extractTenDangNhap(token);
         return accountRepo.findByUsername(username);
     }
+    @Override
     public RefreshToken getRefreshTokenByToken(String token) {
         return refreshTokenRepo.findByToken(token);
     } 
+    @Override
     public UnusedAccessToken getUnusedAccessTokenByToken(String token) {
         return unusedAccessTokenRepo.findByToken(token);
     } 
+    @Override
     public void saveNewRefreshToken(String token) {
         RefreshToken newRefreshToken = new RefreshToken();
         newRefreshToken.setExpireAt(extractExpiredDate(token));
         newRefreshToken.setToken(token);
         refreshTokenRepo.save(newRefreshToken);
     } 
+    @Override
     public void saveUnusedAccessToken(String token) {
         UnusedAccessToken unusedAccessToken = new UnusedAccessToken();
         unusedAccessToken.setExpireAt(extractExpiredDate(token));
         unusedAccessToken.setToken(token);
         unusedAccessTokenRepo.save(unusedAccessToken);
     }
+    @Override
     public void deleteRefreshToken(String token) {
         refreshTokenRepo.deleteByToken(token);
     }
+    @Override
     public List<UnusedAccessToken> getAllAccessTokenExpired() {
         
 
         return unusedAccessTokenRepo.findByExpireAtBefore(new Date());
     }
+    @Override
     public void deleteAllExpiredToken() {
         List<UnusedAccessToken> listTokens = getAllAccessTokenExpired();
         unusedAccessTokenRepo.deleteAll(listTokens);
     }
+    @Override
     public List<RefreshToken> getAllRefreshTokenExpired() {
         return refreshTokenRepo.findByExpireAtBefore(new Date());
     }
+    @Override
     public void deleteAllExpiredRefreshToken() {
         List<RefreshToken> listTokens = getAllRefreshTokenExpired();
         refreshTokenRepo.deleteAll(listTokens);
