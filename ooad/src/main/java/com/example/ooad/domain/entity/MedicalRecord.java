@@ -25,7 +25,9 @@ public class MedicalRecord {
     private Date examinateDate;
     private String symptoms;
     private String diagnosis;
-    private String diseaseType;
+    @ManyToOne
+    @JoinColumn(name="disease_type_id")
+    private RefDiseaseType diseaseType;
     private String orderedServices;
     private String notes;
     public int getRecordId() {
@@ -64,10 +66,10 @@ public class MedicalRecord {
     public void setDiagnosis(String diagnosis) {
         this.diagnosis = diagnosis;
     }
-    public String getDiseaseType() {
+    public RefDiseaseType getDiseaseType() {
         return diseaseType;
     }
-    public void setDiseaseType(String diseaseType) {
+    public void setDiseaseType(RefDiseaseType diseaseType) {
         this.diseaseType = diseaseType;
     }
     public String getOrderedServices() {
@@ -85,7 +87,7 @@ public class MedicalRecord {
     public MedicalRecord() {
     }
     public MedicalRecord(int recordId, Reception reception, Staff doctor, Date examinateDate, String symptoms,
-            String diagnosis, String diseaseType, String orderedServices, String notes) {
+            String diagnosis, RefDiseaseType diseaseType, String orderedServices, String notes) {
         this.recordId = recordId;
         this.reception = reception;
         this.doctor = doctor;

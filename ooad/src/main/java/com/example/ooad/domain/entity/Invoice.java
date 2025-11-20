@@ -3,6 +3,8 @@ package com.example.ooad.domain.entity;
 import java.math.BigDecimal;
 import java.sql.Date;
 
+import com.example.ooad.domain.enums.EPaymentStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,15 +28,17 @@ public class Invoice {
     private MedicalRecord record;
     private Date invoiceDate;
     @Column(precision=18, scale=2)
-    private BigDecimal examinationFee;
+    private BigDecimal examinationFee= new BigDecimal(0);
     @Column(precision=18, scale=2)
-    private BigDecimal medicineFee;
+    private BigDecimal medicineFee= new BigDecimal(0);
     @Column(precision=18, scale=2)
-    private BigDecimal serviceFee;
+    private BigDecimal serviceFee= new BigDecimal(0);
     @Column(precision=18, scale=2)
-    private BigDecimal totalAmount;
-    private String paymentMethod;
-    private String paymentStatus;
+    private BigDecimal totalAmount= new BigDecimal(0);
+    @ManyToOne
+    @JoinColumn(name="payment_method_id")
+    private  RefPaymentMethod paymentMethod;
+    private EPaymentStatus paymentStatus=EPaymentStatus.UNPAID;
     @ManyToOne
     @JoinColumn(name="issued_by")
     private Staff issueBy;
@@ -86,16 +90,16 @@ public class Invoice {
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
     }
-    public String getPaymentMethod() {
+    public RefPaymentMethod getPaymentMethod() {
         return paymentMethod;
     }
-    public void setPaymentMethod(String paymentMethod) {
+    public void setPaymentMethod(RefPaymentMethod paymentMethod) {
         this.paymentMethod = paymentMethod;
     }
-    public String getPaymentStatus() {
+    public EPaymentStatus getPaymentStatus() {
         return paymentStatus;
     }
-    public void setPaymentStatus(String paymentStatus) {
+    public void setPaymentStatus(EPaymentStatus paymentStatus) {
         this.paymentStatus = paymentStatus;
     }
     public Staff getIssueBy() {
@@ -107,8 +111,8 @@ public class Invoice {
     public Invoice() {
     }
     public Invoice(int invoiceId, Patient patient, MedicalRecord record, Date invoiceDate, BigDecimal examinationFee,
-            BigDecimal medicineFee, BigDecimal serviceFee, BigDecimal totalAmount, String paymentMethod,
-            String paymentStatus, Staff issueBy) {
+            BigDecimal medicineFee, BigDecimal serviceFee, BigDecimal totalAmount, RefPaymentMethod paymentMethod,
+            EPaymentStatus paymentStatus, Staff issueBy) {
         this.invoiceId = invoiceId;
         this.patient = patient;
         this.record = record;

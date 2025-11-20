@@ -4,5 +4,8 @@ public enum EMedicineUnit {
     TABLET,
     BLISTER,
     BOX,
-    BOTTLE
+    BOTTLE,
+    VIAL,
+    AMPOULE,
+    SACHET
 }

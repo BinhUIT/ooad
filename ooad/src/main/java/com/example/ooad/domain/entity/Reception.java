@@ -25,7 +25,7 @@ public class Reception {
     private Patient patient;
     private Date receptionDate;
     @Enumerated(EnumType.STRING)
-    private EReceptionStatus status;
+    private EReceptionStatus status=EReceptionStatus.WAITING;
     @ManyToOne
     @JoinColumn(name="receptionist_id")
     private Staff receptionist;

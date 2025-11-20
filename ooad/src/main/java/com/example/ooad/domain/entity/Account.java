@@ -12,6 +12,7 @@ import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.domain.enums.EStatus;
 import com.example.ooad.dto.request.CreateAccountDto;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -27,10 +28,11 @@ public class Account implements UserDetails {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private int accountId;
+    
     private String username;
     private String userPassword;
     @Enumerated(EnumType.STRING)
-    private ERole role;
+    private ERole role=ERole.PATIENT;
     @Enumerated(EnumType.STRING)
     private EStatus status;
     public int getAccountId() {
@@ -87,7 +89,7 @@ public class Account implements UserDetails {
         this.username= dto.getUsername();
         this.role= dto.getRole();
         this.userPassword=hashedPassword;
-        this.status=EStatus.USING;
+        this.status=EStatus.ACTIVE;
     }
 
 }

@@ -19,14 +19,14 @@ public class Medicine {
     private int medicineId;
     private String medicineName;
     @Enumerated(EnumType.STRING)
-    private EMedicineUnit unit;
+    private EMedicineUnit unit=EMedicineUnit.TABLET;
     private String concentration;
     private String form;
     private String manufacturer;
     private String usageInstructions;
     private String image;
     @Enumerated(EnumType.STRING)
-    private EMedicineStorageCondition storageCondition;
+    private EMedicineStorageCondition storageCondition=EMedicineStorageCondition.NORMAL;
     public int getMedicineId() {
         return medicineId;
     }

@@ -1,10 +1,13 @@
 package com.example.ooad.domain.entity;
 
 import com.example.ooad.domain.compositekey.PrescriptionDetailKey;
+import com.example.ooad.domain.enums.EDispenseStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
@@ -27,7 +30,8 @@ public class PrescriptionDetail {
     @Column(name="dosage", columnDefinition="VARCHAR(100)")
     private String dosage;
     private int days;
-    private String dispenseStatus;
+    @Enumerated(EnumType.STRING)
+    private EDispenseStatus dispenseStatus=EDispenseStatus.PENDING;
     public PrescriptionDetailKey getPrescriptionDetailId() {
         return prescriptionDetailId;
     }
@@ -64,16 +68,16 @@ public class PrescriptionDetail {
     public void setDays(int days) {
         this.days = days;
     }
-    public String getDispenseStatus() {
+    public EDispenseStatus getDispenseStatus() {
         return dispenseStatus;
     }
-    public void setDispenseStatus(String dispenseStatus) {
+    public void setDispenseStatus(EDispenseStatus dispenseStatus) {
         this.dispenseStatus = dispenseStatus;
     }
     public PrescriptionDetail() {
     }
     public PrescriptionDetail(PrescriptionDetailKey prescriptionDetailId, Prescription prescription, Medicine medicine,
-            int quantity, String dosage, int days, String dispenseStatus) {
+            int quantity, String dosage, int days, EDispenseStatus dispenseStatus) {
         this.prescriptionDetailId = prescriptionDetailId;
         this.prescription = prescription;
         this.medicine = medicine;

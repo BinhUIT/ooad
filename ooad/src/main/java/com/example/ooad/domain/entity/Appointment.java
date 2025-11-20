@@ -30,7 +30,7 @@ public class Appointment {
     private Date appointmentDate;
     private LocalTime appointmentTime;
     @Enumerated(EnumType.STRING)
-    private EAppointmentStatus status;
+    private EAppointmentStatus status=EAppointmentStatus.SCHEDULED;
     private Date createDate;
 
     public Appointment() {

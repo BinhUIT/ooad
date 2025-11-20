@@ -26,7 +26,7 @@ public class MedicineImport {
     private String supplier;
     private int totalQuantity;
     @Column(precision=18,scale=2)
-    private BigDecimal totalValue;
+    private BigDecimal totalValue=new BigDecimal(0);
     public int getImportId() {
         return importId;
     }

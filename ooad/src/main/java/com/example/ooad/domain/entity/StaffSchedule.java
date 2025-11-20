@@ -6,6 +6,8 @@ import java.time.LocalTime;
 import com.example.ooad.domain.enums.EScheduleStatus;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -36,6 +38,7 @@ public class StaffSchedule {
     private Date scheduleDate;
     private LocalTime startTime;
     private LocalTime endTime;
+    @Enumerated(EnumType.STRING)
     private EScheduleStatus status=EScheduleStatus.AVAILABLE;
 
     public StaffSchedule() {
