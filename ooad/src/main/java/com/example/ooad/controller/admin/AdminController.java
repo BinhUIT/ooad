@@ -43,7 +43,12 @@ public class AdminController {
        
     )
             ),
-            @ApiResponse
+            @ApiResponse(
+                description="Success",
+                content = @Content(
+                    mediaType="application/json"
+                )
+            )
         }
     )
     @PostMapping("/admin/create_schedule")

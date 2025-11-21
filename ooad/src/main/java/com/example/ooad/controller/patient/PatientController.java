@@ -49,7 +49,12 @@ public class PatientController {
        
     )
             ),
-            @ApiResponse
+            @ApiResponse(
+                description="Success",
+                content = @Content(
+                    mediaType="application/json"
+                )
+            )
         }
     )
     public ResponseEntity<GlobalResponse<PatientResponse>> createPatient(@RequestBody @Valid PatientRequest request, BindingResult bindingResult) {
@@ -81,7 +86,12 @@ public class PatientController {
        
     )
             ),
-            @ApiResponse
+            @ApiResponse(
+                description="Success",
+                content = @Content(
+                    mediaType="application/json"
+                )
+            )
         }
     )
     public ResponseEntity<GlobalResponse<PatientResponse>> getPatientById(@PathVariable int patientId) {
@@ -114,7 +124,12 @@ public class PatientController {
        
     )
             ),
-            @ApiResponse
+            @ApiResponse(
+                description="Success",
+                content = @Content(
+                    mediaType="application/json"
+                )
+            )
         }
     )
     public ResponseEntity<GlobalResponse<PatientResponse>> updatePatient(@RequestBody @Valid PatientRequest request, BindingResult bindingResult, @PathVariable int patientId) {
@@ -137,7 +152,12 @@ public class PatientController {
        
     )
             ),
-            @ApiResponse
+           @ApiResponse(
+                description="Success",
+                content = @Content(
+                    mediaType="application/json"
+                )
+            )
         }
     )
     public ResponseEntity<GlobalResponse<PatientResponse>> deletePatient(@PathVariable int patientId) {

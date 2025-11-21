@@ -54,7 +54,12 @@ public class AuthController {
        
     )
             ),
-            @ApiResponse
+            @ApiResponse(
+                description="Success",
+                content = @Content(
+                    mediaType="application/json"
+                )
+            )
         }
     )
     public ResponseEntity<GlobalResponse<Account>> taoTaiKhoan(@RequestBody CreateAccountDto dto) {
@@ -87,7 +92,12 @@ public class AuthController {
        
     )
             ),
-            @ApiResponse
+            @ApiResponse(
+                description="Success",
+                content = @Content(
+                    mediaType="application/json"
+                )
+            )
         }
     )
     public ResponseEntity<GlobalResponse<LoginResponse>> dangNhap(@RequestBody LoginDto dto) {
@@ -115,7 +125,12 @@ public class AuthController {
        
     )
             ),
-            @ApiResponse
+            @ApiResponse(
+                description="Success",
+                content = @Content(
+                    mediaType="application/json"
+                )
+            )
         }
     )
     public ResponseEntity<GlobalResponse<String>> layAccessToken(@RequestBody GetAcessTokenDto dto) {
