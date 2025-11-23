@@ -13,7 +13,7 @@ import com.example.ooad.repository.InvoiceMedicineDetailRepository;
 import com.example.ooad.repository.InvoiceRepository;
 import com.example.ooad.repository.InvoiceServiceDetailRepository;
 
-@Component
+//@Component
 public class InvoiceRefactor {
     private final InvoiceRepository invoiceRepository;
     private final InvoiceServiceDetailRepository invoiceServiceDetailRepository;
