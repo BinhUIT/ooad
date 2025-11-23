@@ -7,6 +7,8 @@ import com.example.ooad.domain.enums.EPaymentStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -38,6 +40,7 @@ public class Invoice {
     @ManyToOne
     @JoinColumn(name="payment_method_id")
     private  RefPaymentMethod paymentMethod;
+    @Enumerated(EnumType.STRING)
     private EPaymentStatus paymentStatus=EPaymentStatus.UNPAID;
     @ManyToOne
     @JoinColumn(name="issued_by")
