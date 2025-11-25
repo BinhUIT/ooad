@@ -50,7 +50,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
          http.csrf(httpSecurityCsrfConfigurer->httpSecurityCsrfConfigurer.disable()).cors(cors->cors.configurationSource(corsConfigurationSource()))
         .httpBasic(Customizer.withDefaults()) 
-        .authorizeHttpRequests(auth->auth.requestMatchers("/auth/**","/receptionist/**",
+        .authorizeHttpRequests(auth->auth.requestMatchers("/auth/**","/receptionist/**","/unsecure/**",
         "/swagger-ui/**","/v3/api-docs/**","/swagger-resources/**","/webjars/**").permitAll()
         .requestMatchers("/patient/**").hasAuthority(ERole.PATIENT.name())
         .requestMatchers("/store_keeper/**").hasAnyAuthority(ERole.WAREHOUSE_STAFF.name())
