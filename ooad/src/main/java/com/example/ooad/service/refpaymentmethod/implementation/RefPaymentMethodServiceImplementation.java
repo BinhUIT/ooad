@@ -3,10 +3,16 @@ package com.example.ooad.service.refpaymentmethod.implementation;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 
 import com.example.ooad.domain.entity.RefPaymentMethod;
+import com.example.ooad.dto.request.RefPaymentMethodFilterRequest;
 import com.example.ooad.dto.request.RefPaymentMethodRequest;
 import com.example.ooad.dto.response.RefPaymentMethodResponse;
 import com.example.ooad.exception.BadRequestException;
@@ -77,6 +83,38 @@ public class RefPaymentMethodServiceImplementation implements RefPaymentMethodSe
             .orElseThrow(() -> new NotFoundException("Payment method not found with id: " + id));
         
         return RefPaymentMethodMapper.fromEntityToResponse(entity);
+    }
+
+    @Override
+    public Page<RefPaymentMethodResponse> searchPaymentMethods(RefPaymentMethodFilterRequest filter) {
+        // Build sort
+        Sort sort = Sort.by(filter.getSortType() != null && filter.getSortType().equalsIgnoreCase("DESC")
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC,
+            filter.getSortBy() != null ? filter.getSortBy() : "paymentMethodId");
+
+        Pageable pageable = PageRequest.of(filter.getPage() != null ? filter.getPage() : 0,
+                filter.getSize() != null ? filter.getSize() : 10,
+                sort);
+
+        // Build specification
+        Specification<RefPaymentMethod> spec = (root, query, cb) -> cb.conjunction();
+
+        if (filter.getKeyword() != null && !filter.getKeyword().trim().isEmpty()) {
+            String kw = "%" + filter.getKeyword().trim().toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> cb.or(
+                cb.like(cb.lower(root.get("methodCode")), kw),
+                cb.like(cb.lower(root.get("methodName")), kw)
+            ));
+        }
+
+        if (filter.getIsActive() != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("isActive"), filter.getIsActive()));
+        }
+
+        Page<RefPaymentMethod> page = refPaymentMethodRepository.findAll(spec, pageable);
+
+        return page.map(RefPaymentMethodMapper::fromEntityToResponse);
     }
 
     @Override
