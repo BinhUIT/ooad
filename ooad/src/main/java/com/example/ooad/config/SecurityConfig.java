@@ -52,6 +52,8 @@ public class SecurityConfig {
         .httpBasic(Customizer.withDefaults()) 
         .authorizeHttpRequests(auth->auth.requestMatchers("/auth/**","/receptionist/**",
         "/swagger-ui/**","/v3/api-docs/**","/swagger-resources/**","/webjars/**").permitAll()
+        // API profile /account/me - Tất cả user đã đăng nhập đều truy cập được
+        .requestMatchers("/account/**").authenticated()
         .requestMatchers("/patient/**").hasAuthority(ERole.PATIENT.name())
         .requestMatchers("/store_keeper/**").hasAnyAuthority(ERole.WAREHOUSE_STAFF.name())
         //.requestMatchers("/receptionist/**").hasAnyAuthority(ERole.RECEPTIONIST.name())
