@@ -12,27 +12,29 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name="sys_param_group")
-@AllArgsConstructor
-@NoArgsConstructor
+@Table(name = "sys_param_group")
 @Getter
 @Setter
-public class SysParamGroup{
+@AllArgsConstructor
+@NoArgsConstructor
+public class SysParamGroup {
     @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY) 
-    @Column(name="group_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "group_id")
     private int groupId;
 
-    @Column(name="group_code",unique=true,nullable=false,columnDefinition="VARCHAR(50)")
+    @Column(name = "group_code", unique = true, nullable = false, columnDefinition = "VARCHAR(50)")
     private String groupCode;
 
-    @Column(name="group_name", nullable=false, columnDefinition="VARCHAR(100)")
+    @Column(name = "group_name", nullable = false, columnDefinition = "VARCHAR(100)")
     private String groupName;
 
-    @Column(name="description", columnDefinition="VARCHAR(255)")
+    @Column(name = "description", columnDefinition = "VARCHAR(255)")
     private String description;
 
-    @Column(name="is_active", columnDefinition="TINYINT(1)")
-    private boolean isActive=true;
+    @Column(name = "is_active", columnDefinition = "TINYINT(1)")
+    private boolean isActive = true;
 
+    @Column(name = "sort_order")
+    private int sortOrder = 0;
 }
