@@ -26,22 +26,18 @@ public class SysParamRequest {
    @NotNull(message = "Active status is required")
    private Boolean isActive;
 
-   private Integer sortOrder;
-
    public SysParamRequest() {
       this.isActive = true;
-      this.sortOrder = 0;
    }
 
    public SysParamRequest(String paramCode, String paramName, String paramValue, String description,
-         Integer groupId, Boolean isActive, Integer sortOrder) {
+         Integer groupId, Boolean isActive) {
       this.paramCode = paramCode;
       this.paramName = paramName;
       this.paramValue = paramValue;
       this.description = description;
       this.groupId = groupId;
       this.isActive = isActive != null ? isActive : true;
-      this.sortOrder = sortOrder != null ? sortOrder : 0;
    }
 
    // Getters and Setters
@@ -91,13 +87,5 @@ public class SysParamRequest {
 
    public void setIsActive(Boolean isActive) {
       this.isActive = isActive;
-   }
-
-   public Integer getSortOrder() {
-      return sortOrder;
-   }
-
-   public void setSortOrder(Integer sortOrder) {
-      this.sortOrder = sortOrder;
    }
 }

@@ -10,33 +10,29 @@ import lombok.Setter;
 @Getter
 public class SysParamGroupRequest {
 
-   @NotBlank(message = "Group code is required")
-   @Size(max = 100, message = "Group code must not exceed 100 characters")
-   private String groupCode;
+    @NotBlank(message = "Group code is required")
+    @Size(max = 100, message = "Group code must not exceed 100 characters")
+    private String groupCode;
 
-   @NotBlank(message = "Group name is required")
-   @Size(max = 255, message = "Group name must not exceed 255 characters")
-   private String groupName;
+    @NotBlank(message = "Group name is required")
+    @Size(max = 255, message = "Group name must not exceed 255 characters")
+    private String groupName;
 
-   @Size(max = 500, message = "Description must not exceed 500 characters")
-   private String description;
+    @Size(max = 500, message = "Description must not exceed 500 characters")
+    private String description;
 
-   @NotNull(message = "Active status is required")
-   private Boolean isActive;
+    @NotNull(message = "Active status is required")
+    private Boolean isActive;
 
-   private Integer sortOrder;
+    public SysParamGroupRequest() {
+        this.isActive = true;
+    }
 
-   public SysParamGroupRequest() {
-      this.isActive = true;
-      this.sortOrder = 0;
-   }
-
-   public SysParamGroupRequest(String groupCode, String groupName, String description,
-         Boolean isActive, Integer sortOrder) {
-      this.groupCode = groupCode;
-      this.groupName = groupName;
-      this.description = description;
-      this.isActive = isActive != null ? isActive : true;
-      this.sortOrder = sortOrder != null ? sortOrder : 0;
-   }
+    public SysParamGroupRequest(String groupCode, String groupName, String description,
+            Boolean isActive) {
+        this.groupCode = groupCode;
+        this.groupName = groupName;
+        this.description = description;
+        this.isActive = isActive != null ? isActive : true;
+    }
 }

@@ -34,7 +34,4 @@ public class SysParamGroup {
 
     @Column(name = "is_active", columnDefinition = "TINYINT(1)")
     private boolean isActive = true;
-
-    @Column(name = "sort_order")
-    private int sortOrder = 0;
 }
