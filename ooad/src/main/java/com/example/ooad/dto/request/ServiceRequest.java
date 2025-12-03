@@ -1,27 +1,21 @@
 package com.example.ooad.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ServiceRequest {
-    private String serviceName;
-    private BigDecimal unitPrice;
-    public ServiceRequest(String serviceName, BigDecimal unitPrice) {
-        this.serviceName = serviceName;
-        this.unitPrice = unitPrice;
-    }
-    public ServiceRequest() {
 
-    } 
-    public String getServiceName() {
-        return this.serviceName;
-    } 
-    public BigDecimal getUnitPrice() {
-        return this.unitPrice; 
-    } 
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName; 
-    } 
-    public void setUnitPrice(BigDecimal unitPrice) {
-        this.unitPrice= unitPrice;
-    }
+    @JsonProperty("serviceName")
+    private String serviceName;
+
+    @JsonProperty("unitPrice")
+    private float unitPrice;
+
 }
