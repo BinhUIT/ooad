@@ -1,5 +1,6 @@
 package com.example.ooad.service.sysparam.implementation;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,6 +20,7 @@ import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.mapper.SysParamMapper;
 import com.example.ooad.repository.SysParamRepository;
 import com.example.ooad.repository.SysParamGroupRepository;
+import com.example.ooad.service.sysparam.TypedParamValue;
 import com.example.ooad.service.sysparam.interfaces.SysParamService;
 
 @Service
@@ -167,5 +169,32 @@ public class SysParamServiceImplementation implements SysParamService {
             throw new NotFoundException("System parameter not found with id: " + id);
         }
         sysParamRepository.deleteById(id);
+    }
+
+    @Override
+    public TypedParamValue getTypedParamValueByCode(String paramCode) {
+        SysParam entity = sysParamRepository.findByParamCode(paramCode)
+                .orElseThrow(() -> new NotFoundException("System parameter not found with code: " + paramCode));
+        String type = entity.getDataType();
+        String valueStr = entity.getParamValue();
+        Object value;
+        switch (type.toUpperCase()) {
+            case "NUMBER":
+                try {
+                    value = Integer.parseInt(valueStr);
+                } catch (NumberFormatException e) {
+                    value = Double.parseDouble(valueStr);
+                }
+                break;
+            case "BOOLEAN":
+                value = Boolean.parseBoolean(valueStr);
+                break;
+            case "TIME":
+                value = LocalTime.parse(valueStr); // valueStr phải đúng định dạng HH:mm
+                break;
+            default:
+                value = valueStr;
+        }
+        return new TypedParamValue(value, type);
     }
 }

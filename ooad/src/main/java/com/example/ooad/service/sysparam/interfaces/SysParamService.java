@@ -7,8 +7,12 @@ import org.springframework.validation.BindingResult;
 
 import com.example.ooad.dto.request.SysParamRequest;
 import com.example.ooad.dto.response.SysParamResponse;
+import com.example.ooad.service.sysparam.TypedParamValue;
 
 public interface SysParamService {
+
+    TypedParamValue getTypedParamValueByCode(String paramCode);
+
     SysParamResponse createSysParam(SysParamRequest request, BindingResult bindingResult);
 
     SysParamResponse updateSysParam(int id, SysParamRequest request, BindingResult bindingResult);
