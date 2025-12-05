@@ -1,5 +1,6 @@
 package com.example.ooad.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,6 +11,7 @@ public class SysParamGroupResponse {
     private String groupCode;
     private String groupName;
     private String description;
+    @JsonProperty("active")
     private boolean isActive;
 
     public SysParamGroupResponse() {

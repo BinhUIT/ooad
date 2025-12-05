@@ -6,17 +6,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(name = "sys_param_group")
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class SysParamGroup {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,4 +26,55 @@ public class SysParamGroup {
 
     @Column(name = "is_active", columnDefinition = "TINYINT(1)")
     private boolean isActive = true;
+
+    public SysParamGroup() {
+    }
+
+    public SysParamGroup(int groupId, String groupCode, String groupName, String description, boolean isActive) {
+        this.groupId = groupId;
+        this.groupCode = groupCode;
+        this.groupName = groupName;
+        this.description = description;
+        this.isActive = isActive;
+    }
+
+    public int getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(int groupId) {
+        this.groupId = groupId;
+    }
+
+    public String getGroupCode() {
+        return groupCode;
+    }
+
+    public void setGroupCode(String groupCode) {
+        this.groupCode = groupCode;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        this.isActive = active;
+    }
 }

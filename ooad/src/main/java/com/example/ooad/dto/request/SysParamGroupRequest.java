@@ -1,5 +1,6 @@
 package com.example.ooad.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -22,6 +23,7 @@ public class SysParamGroupRequest {
     private String description;
 
     @NotNull(message = "Active status is required")
+    @JsonProperty("active")
     private Boolean isActive;
 
     public SysParamGroupRequest() {

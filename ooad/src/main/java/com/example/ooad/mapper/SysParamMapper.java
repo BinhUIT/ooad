@@ -1,5 +1,7 @@
 package com.example.ooad.mapper;
 
+import java.time.LocalDateTime;
+
 import com.example.ooad.domain.entity.SysParam;
 import com.example.ooad.domain.entity.SysParamGroup;
 import com.example.ooad.dto.request.SysParamRequest;
@@ -12,6 +14,9 @@ public class SysParamMapper {
         entity.setParamCode(request.getParamCode());
         entity.setParamName(request.getParamName());
         entity.setParamValue(request.getParamValue());
+        entity.setDataType(request.getDataType() != null ? request.getDataType() : "STRING");
+        entity.setUnit(request.getUnit());
+        entity.setEffectiveFrom(request.getEffectiveFrom());
         entity.setDescription(request.getDescription());
         entity.setGroup(group);
         entity.setActive(request.getIsActive() != null ? request.getIsActive() : true);
@@ -27,6 +32,15 @@ public class SysParamMapper {
         }
         if (request.getParamValue() != null) {
             entity.setParamValue(request.getParamValue());
+        }
+        if (request.getDataType() != null) {
+            entity.setDataType(request.getDataType());
+        }
+        if (request.getUnit() != null) {
+            entity.setUnit(request.getUnit());
+        }
+        if (request.getEffectiveFrom() != null) {
+            entity.setEffectiveFrom(request.getEffectiveFrom());
         }
         if (request.getDescription() != null) {
             entity.setDescription(request.getDescription());
@@ -45,6 +59,9 @@ public class SysParamMapper {
                 entity.getParamCode(),
                 entity.getParamName(),
                 entity.getParamValue(),
+                entity.getDataType(),
+                entity.getUnit(),
+                entity.getEffectiveFrom(),
                 entity.getDescription(),
                 entity.getGroup().getGroupId(),
                 entity.getGroup().getGroupCode(),

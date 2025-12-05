@@ -9,24 +9,24 @@ import com.example.ooad.dto.request.SysParamRequest;
 import com.example.ooad.dto.response.SysParamResponse;
 
 public interface SysParamService {
-   SysParamResponse createSysParam(SysParamRequest request, BindingResult bindingResult);
+    SysParamResponse createSysParam(SysParamRequest request, BindingResult bindingResult);
 
-   SysParamResponse updateSysParam(int id, SysParamRequest request, BindingResult bindingResult);
+    SysParamResponse updateSysParam(int id, SysParamRequest request, BindingResult bindingResult);
 
-   SysParamResponse getSysParamById(int id);
+    SysParamResponse getSysParamById(int id);
 
-   SysParamResponse getSysParamByCode(String paramCode);
+    SysParamResponse getSysParamByCode(String paramCode);
 
-   List<SysParamResponse> getAllSysParams();
+    List<SysParamResponse> getAllSysParams();
 
-   List<SysParamResponse> getAllActiveSysParams();
+    List<SysParamResponse> getAllActiveSysParams();
 
-   List<SysParamResponse> getSysParamsByGroupId(int groupId);
+    List<SysParamResponse> getSysParamsByGroupId(int groupId);
 
-   List<SysParamResponse> getSysParamsByGroupCode(String groupCode);
+    List<SysParamResponse> getSysParamsByGroupCode(String groupCode);
 
-   Page<SysParamResponse> searchSysParams(int page, int size, String keyword,
-         Integer groupId);
+    Page<SysParamResponse> searchSysParams(int page, int size, String keyword,
+            Integer groupId);
 
-   void deleteSysParam(int id);
+    void deleteSysParam(int id);
 }
