@@ -23,4 +23,8 @@ public class Message {
     public static final String staffBusy="Staff is busy!";
     public static final String serviceNotFound ="Service not found";
     public static final String serviceExist = "Service exist";
+    public static final String receptionNotFound = "Reception not found";
+    public static final String cannotEditReception = "Can not edit this reception";
+    public static final String cannotCreateReception="Can not create reception";
+    public static final String invalidReceptionDate = "Invalid reception date";
 }
