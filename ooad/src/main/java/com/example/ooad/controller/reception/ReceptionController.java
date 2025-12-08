@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,19 +17,21 @@ import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.dto.request.CreateReceptionRequest;
 import com.example.ooad.dto.request.UpdateReceptionRequest;
 import com.example.ooad.dto.response.GlobalResponse;
+import com.example.ooad.dto.response.PatientResponse;
 import com.example.ooad.service.account.interfaces.AccountService;
+import com.example.ooad.service.patient.interfaces.PatientService;
 import com.example.ooad.service.reception.interfaces.ReceptionService;
 import com.example.ooad.utils.Message;
-
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 @RestController
 public class ReceptionController {
     private final ReceptionService receptionService;
     private final AccountService accountService;
-    public ReceptionController(ReceptionService receptionService, AccountService accountService) {
+    private final PatientService patientService;
+    public ReceptionController(ReceptionService receptionService, AccountService accountService, PatientService patientServive) {
         this.receptionService = receptionService;
         this.accountService = accountService;
+        this.patientService = patientServive;
     }
     @GetMapping("/receptionist/all_receptions")
     public ResponseEntity<GlobalResponse<Page<Reception>>> getAllReceptions(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "7") int pageSize) {
@@ -56,4 +59,11 @@ public class ReceptionController {
         GlobalResponse<Reception> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    @GetMapping("/receptionist/find_patient")
+    public ResponseEntity<GlobalResponse<PatientResponse>> findPatientByIdCard(@RequestParam(defaultValue = "") String idCard) {
+        PatientResponse result = patientService.findPatientByIdCard(idCard);
+        GlobalResponse<PatientResponse> response = new GlobalResponse<>(result,Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
 }

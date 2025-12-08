@@ -39,7 +39,7 @@ public class ReceptionServiceImplementation implements ReceptionService {
     @Override
     public Page<Reception> getListReceptions(int pageNumber, int pageSize) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        return receptionRepo.findAll(pageable);
+        return receptionRepo.findAllByOrderByReceptionDateDesc(pageable);
     }
 
     @Override
@@ -62,11 +62,11 @@ public class ReceptionServiceImplementation implements ReceptionService {
     @Override
     public Reception createReception(CreateReceptionRequest request,Staff receptionist) {
         Patient patient = patientRepo.findById(request.getPatientId()).orElseThrow(()->new NotFoundException(Message.patientNotFound));
-        if(!receptionist.getPosition().equals("Receptionist")) {
+        if(!receptionist.getPosition().equals("RECEPTIONIST")) {
             throw new BadRequestException(Message.cannotCreateReception);
         }
         Date currentDate = Date.valueOf(LocalDate.now());
-        if(currentDate.after(request.getReceptionDate())) {
+        if(request.getReceptionDate().before(currentDate)) {
             throw new BadRequestException(Message.invalidReceptionDate);
         } 
         Reception reception = new Reception();

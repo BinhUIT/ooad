@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.ooad.domain.entity.Reception;
 
 public interface ReceptionRepository extends JpaRepository<Reception, Integer> {
-    public Page<Reception> findAll(Pageable pageable);
+    public Page<Reception> findAllByOrderByReceptionDateDesc(Pageable pageable);
 }

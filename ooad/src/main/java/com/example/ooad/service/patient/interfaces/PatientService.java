@@ -13,4 +13,5 @@ public interface PatientService {
     public List<PatientResponse> getAllPatients();
     public PatientResponse getPatientById(int patientId);
     public void deletePatient(int patientId);
+    public PatientResponse findPatientByIdCard(String idCard);
 }

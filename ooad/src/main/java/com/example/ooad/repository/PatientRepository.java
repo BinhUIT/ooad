@@ -12,4 +12,5 @@ import com.example.ooad.domain.entity.Patient;
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Integer> {
     public Page<Patient> findAll(Pageable pageable);
+    public Patient findByIdCard(String idCard);
 }

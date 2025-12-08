@@ -82,5 +82,14 @@ public class PatientServiceImplementation implements PatientService {
         Patient p = findPatientById(patientId);
         patientRepo.delete(p);
     }
+
+    @Override
+    public PatientResponse findPatientByIdCard(String idCard) {
+        Patient patient = patientRepo.findByIdCard(idCard);
+        if(patient==null) {
+            throw new NotFoundException(Message.patientNotFound);
+        } 
+        return PatientMapper.getResponseFromPatient(patient);
+    }
     
 }
