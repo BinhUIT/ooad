@@ -197,4 +197,11 @@ public class SysParamServiceImplementation implements SysParamService {
         }
         return new TypedParamValue(value, type);
     }
+
+    @Override
+    public String getParamValueByCode(String paramCode) {
+        SysParam entity = sysParamRepository.findByParamCode(paramCode)
+                .orElseThrow(() -> new NotFoundException("System parameter not found with code: " + paramCode));
+        return entity.getParamValue();
+    }
 }

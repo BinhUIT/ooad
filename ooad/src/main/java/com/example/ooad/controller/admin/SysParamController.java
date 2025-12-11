@@ -88,6 +88,16 @@ public class SysParamController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(description = "Get raw parameter value by code", responses = {
+            @ApiResponse(description = "Success", responseCode = "200", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(description = "Not Found", responseCode = "404", content = @Content(mediaType = "application/json", schema = @Schema(implementation = GlobalResponse.class))),
+    })
+    @GetMapping("/value/{paramCode}")
+    public ResponseEntity<?> getParamValueByCode(@PathVariable String paramCode) {
+        String value = sysParamService.getParamValueByCode(paramCode);
+        return ResponseEntity.ok(value);
+    }
+
     @Operation(description = "Get all system parameters", responses = {
             @ApiResponse(description = "Success", responseCode = "200", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SysParamResponse.class))),
     })
