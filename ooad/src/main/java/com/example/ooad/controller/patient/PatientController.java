@@ -72,7 +72,6 @@ public class PatientController {
     }
 
     @GetMapping({"/receptionist/get_patient_by_id/{patientId}","/doctor/get_patient_by_id/{patientId}"})
-     @PostMapping({"/receptionist/create_patient"})
     @Operation(
         description="Create Schedule",
         responses={
