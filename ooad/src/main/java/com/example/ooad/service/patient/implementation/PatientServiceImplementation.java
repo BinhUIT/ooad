@@ -9,6 +9,7 @@ import org.springframework.validation.BindingResult;
 
 import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.Invoice;
+import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.dto.request.PatientRequest;
@@ -18,6 +19,7 @@ import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.mapper.PatientMapper;
 import com.example.ooad.repository.AppointmentRepository;
 import com.example.ooad.repository.InvoiceRepository;
+import com.example.ooad.repository.MedicalRecordRepository;
 import com.example.ooad.repository.PatientRepository;
 import com.example.ooad.repository.ReceptionRepository;
 import com.example.ooad.service.patient.interfaces.PatientService;
@@ -35,14 +37,15 @@ public class PatientServiceImplementation implements PatientService {
     private final AppointmentRepository appointmentRepo;
     private final ReceptionRepository receptionRepo;
     private final InvoiceRepository invoiceRepo;
-
-    public PatientServiceImplementation(PatientRepository patientRepo, ActorValidator actorValidator,
+    private final MedicalRecordRepository medicalRecordRepo;
+    public PatientServiceImplementation(PatientRepository patientRepo, ActorValidator actorValidator,MedicalRecordRepository medicalRecordRepo,
          AppointmentRepository appointmentRepo, ReceptionRepository receptionRepo,InvoiceRepository invoiceRepo ) {
         this.patientRepo = patientRepo;
         this.actorValidator = actorValidator;
         this.appointmentRepo= appointmentRepo;
         this.receptionRepo= receptionRepo;
         this.invoiceRepo = invoiceRepo;
+        this.medicalRecordRepo= medicalRecordRepo;
     }
     private void validateRequest(PatientRequest request, BindingResult bindingResult) {
         if(bindingResult.hasErrors()) {
@@ -123,5 +126,21 @@ public class PatientServiceImplementation implements PatientService {
         } 
         return PatientMapper.getResponseFromPatient(patient);
     }
+
+    @Override
+    public List<Appointment> getAppointmentsOfPatient(int patientId) {
+        Patient p = findPatientById(patientId);
+        return appointmentRepo.findByPatient_PatientId(p.getPatientId());
+    }
+
+    @Override
+    public List<MedicalRecord> getMedicalRecordsOfPatient(int patientId) {
+        Patient p = findPatientById(patientId);
+        List<Reception> receptions = receptionRepo.findByPatient_PatientId(p.getPatientId());
+        List<Integer> receptioIds = receptions.stream().map(item->item.getReceptionId()).toList();
+        return medicalRecordRepo.findByReception_ReceptionIdIn(receptioIds);
+    }
+
+    
     
 }
