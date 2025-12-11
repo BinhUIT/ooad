@@ -2,6 +2,8 @@ package com.example.ooad.domain.entity;
 
 import java.sql.Date;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,9 +20,11 @@ public class MedicalRecord {
     private int recordId;
     @ManyToOne
     @JoinColumn(name="reception_id")
+    @JsonIgnore
     private Reception reception;
     @ManyToOne
     @JoinColumn(name="doctor_id")
+    @JsonIgnore
     private Staff doctor;
     private Date examinateDate;
     private String symptoms;
@@ -36,17 +40,26 @@ public class MedicalRecord {
     public void setRecordId(int recordId) {
         this.recordId = recordId;
     }
+    @JsonIgnore
     public Reception getReception() {
         return reception;
     }
     public void setReception(Reception reception) {
         this.reception = reception;
     }
+    @JsonIgnore
     public Staff getDoctor() {
         return doctor;
     }
+
     public void setDoctor(Staff doctor) {
         this.doctor = doctor;
+    }
+    public int getDoctorId() {
+        return doctor.getStaffId();
+    }
+    public String getDoctorName() {
+        return doctor.getFullName();
     }
     public Date getExaminateDate() {
         return examinateDate;
