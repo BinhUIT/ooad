@@ -46,9 +46,10 @@ public class SysParamController {
     public ResponseEntity<?> createSysParam(
             @Valid @RequestBody SysParamRequest request,
             BindingResult bindingResult) {
-        SysParamResponse response = sysParamService.createSysParam(
-                request,
-                bindingResult);
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
+        }
+        SysParamResponse response = sysParamService.createSysParam(request, bindingResult);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
