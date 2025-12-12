@@ -89,7 +89,7 @@ public class PatientServiceImplementation implements PatientService {
         return PatientMapper.getResponseFromPatient(findPatientById(patientId));
 
     }
-    private Patient findPatientById(int patientId) {
+    public Patient findPatientById(int patientId) {
         Patient p = patientRepo.findById(patientId).orElse(null);
         if(p==null) {
             throw new NotFoundException(Message.patientNotFound);
