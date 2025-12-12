@@ -37,7 +37,7 @@ public class PatientController {
     public PatientController(PatientService patientService) {
         this.patientService = patientService;
     }
-    @PostMapping({"/receptionist/create_patient"})
+    @PostMapping({"/receptionist/create_patient","/admin/create_patient"})
     @Operation(
         description="Create Schedule",
         responses={
@@ -66,14 +66,14 @@ public class PatientController {
 
     }
 
-    @GetMapping({"/receptionist/get_all_patients","/doctor/get_all_patients"})
+    @GetMapping({"/receptionist/get_all_patients","/doctor/get_all_patients","/admin/get_all_patients"})
     public ResponseEntity<GlobalResponse<List<PatientResponse>>> getAllPatients() {
         List<PatientResponse> result = patientService.getAllPatients();
         GlobalResponse<List<PatientResponse>> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping({"/receptionist/get_patient_by_id/{patientId}","/doctor/get_patient_by_id/{patientId}"})
+    @GetMapping({"/receptionist/get_patient_by_id/{patientId}","/doctor/get_patient_by_id/{patientId}","/admin/get_patient_by_id/{patientId}"})
     @Operation(
         description="Create Schedule",
         responses={
@@ -101,7 +101,7 @@ public class PatientController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PutMapping({"/receptionist/update_patient/{patientId}","/doctor/update_patient/{patientId}"})
+    @PutMapping({"/receptionist/update_patient/{patientId}","/admin/update_patient/{patientId}"})
     @Operation(
         description="Create Schedule",
         responses={
@@ -139,7 +139,7 @@ public class PatientController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @DeleteMapping({"/receptionist/delete_patient/{patientId}","/doctor/delete_patient/{patientId}"})
+    @DeleteMapping({"/receptionist/delete_patient/{patientId}","/admin/delete_patient/{patientId}"})
     @Operation(
         description="Create Schedule",
         responses={
@@ -166,7 +166,7 @@ public class PatientController {
         return new ResponseEntity<>(new GlobalResponse<>(null, Message.success,200), HttpStatus.OK);
     }
 
-    @GetMapping("/receptionist/patient_tabs/{patientId}") 
+    @GetMapping({"/receptionist/patient_tabs/{patientId}","/admin/patient_tabs/{patientId}","/doctor/patient_tabs/{patientId}"}) 
     public ResponseEntity<GlobalResponse<PatientTabsResponse>> getPatientTabs(@PathVariable int patientId) {
         List<Appointment> appointments = patientService.getAppointmentsOfPatient(patientId);
         List<MedicalRecord> medicalRecords = patientService.getMedicalRecordsOfPatient(patientId);
