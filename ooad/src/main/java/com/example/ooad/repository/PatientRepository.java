@@ -14,6 +14,7 @@ import com.example.ooad.domain.entity.Patient;
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Integer> {
     public Page<Patient> findAll(Pageable pageable);
+    public Patient findByIdCard(String idCard);
     
     /**
      * Tìm Patient theo Account ID (dùng cho API profile /me)

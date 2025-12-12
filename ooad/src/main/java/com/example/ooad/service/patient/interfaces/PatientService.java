@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.validation.BindingResult;
 
+import com.example.ooad.domain.entity.Appointment;
+import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.dto.request.PatientRequest;
 import com.example.ooad.dto.response.PatientResponse;
 
@@ -13,4 +15,7 @@ public interface PatientService {
     public List<PatientResponse> getAllPatients();
     public PatientResponse getPatientById(int patientId);
     public void deletePatient(int patientId);
+    public PatientResponse findPatientByIdCard(String idCard);
+    public List<Appointment> getAppointmentsOfPatient(int patientId);
+    public List<MedicalRecord> getMedicalRecordsOfPatient(int patientId);
 }

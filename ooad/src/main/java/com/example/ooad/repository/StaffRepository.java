@@ -11,7 +11,7 @@ import com.example.ooad.domain.entity.Staff;
 
 @Repository
 public interface StaffRepository extends JpaRepository<Staff, Integer> {
-    
+    public Staff findByAccount_AccountId(int accountId);    
     /**
      * Tìm Staff theo Account ID (dùng cho API profile /me)
      */
