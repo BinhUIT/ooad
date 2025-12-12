@@ -27,4 +27,7 @@ public class Message {
     public static final String cannotEditReception = "Can not edit this reception";
     public static final String cannotCreateReception="Can not create reception";
     public static final String invalidReceptionDate = "Invalid reception date";
+    public static final String appointmentNotFound = "Appointment not found";
+    public static final String medicalRecordNotFound = "Medical record not found";
+    public static final String invoiceNotFound ="Invoice not found";
 }

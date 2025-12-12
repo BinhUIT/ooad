@@ -23,7 +23,7 @@ public class Appointment {
     @GeneratedValue(strategy=GenerationType.IDENTITY) 
     private int appointmentId;
     @ManyToOne
-    @JsonIgnore
+    
     @JoinColumn(name="patient_id")
     private Patient patient;
     @ManyToOne
@@ -51,7 +51,7 @@ public class Appointment {
     public void setAppointmentId(int appointmentId) {
         this.appointmentId = appointmentId;
     }
-    @JsonIgnore
+   
     public Patient getPatient() {
         return patient;
     }
