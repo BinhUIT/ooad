@@ -1,16 +1,5 @@
 package com.example.ooad.service.patient.implementation;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -18,16 +7,30 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.validation.BindingResult;
 
+import com.example.ooad.domain.entity.Appointment;
+import com.example.ooad.domain.entity.Invoice;
+import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
+import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.dto.request.PatientRequest;
 import com.example.ooad.dto.response.PatientResponse;
 import com.example.ooad.exception.BadRequestException;
@@ -219,5 +222,66 @@ public class PatientServiceImplementationTest {
         });
         assertEquals(notFoundException.getMessage(), Message.patientNotFound);
     }
-    
+
+    @Test
+    void getAppointmentOfPatientSuccess() {
+        Appointment fakeAppointment = new Appointment();
+        fakeAppointment.setAppointmentId(1);
+
+        when(patientRepo.findById(patientId)).thenReturn(Optional.of(savedPatient));
+        when(appointmentRepo.findByPatient_PatientId(patientId)).thenReturn(Arrays.asList(fakeAppointment));
+        List<Appointment> result = patientService.getAppointmentsOfPatient(patientId);
+        assertNotNull(result);
+        assertNotEquals(result.size(), 0);
+    }
+
+    @Test
+    void getAppointmentOfPatientNotFound() {
+        when(patientRepo.findById(patientId)).thenReturn(Optional.empty());
+        NotFoundException notFoundException=assertThrows(NotFoundException.class, () -> {
+            patientService.getAppointmentsOfPatient(patientId);
+        });
+        assertEquals(notFoundException.getMessage(), Message.patientNotFound);
+    }
+
+    @Test
+    void getMedicalRecordOfPatientSuccess() {
+        when(patientRepo.findById(patientId)).thenReturn(Optional.of(savedPatient));
+        Reception fakeReception = new Reception();
+        fakeReception.setReceptionId(1);
+        when(receptionRepo.findByPatient_PatientId(patientId)).thenReturn(Arrays.asList(fakeReception));
+        MedicalRecord fakeMedicalRecord = new MedicalRecord();
+        fakeMedicalRecord.setRecordId(1);
+        when(medicalRecordRepo.findByReception_ReceptionIdIn(anyList())).thenReturn(Arrays.asList(fakeMedicalRecord));
+        List<MedicalRecord> result = patientService.getMedicalRecordsOfPatient(patientId);
+        assertNotNull(result);
+        assertNotEquals(result.size(), 0);
+    }
+    @Test
+    void getMedicalRecordOfPatientNotFound() {
+        when(patientRepo.findById(patientId)).thenReturn(Optional.empty());
+        NotFoundException notFoundException=assertThrows(NotFoundException.class, () -> {
+            patientService.getMedicalRecordsOfPatient(patientId);
+        });
+        assertEquals(notFoundException.getMessage(), Message.patientNotFound);
+    }
+
+    @Test
+    void getInvoiceOfPatientSuccess() {
+        when(patientRepo.findById(patientId)).thenReturn(Optional.of(savedPatient));
+        Invoice fakeInvoice = new Invoice();
+        fakeInvoice.setInvoiceId(1);
+        when(invoiceRepo.findByPatient_PatientId(patientId)).thenReturn(Arrays.asList(fakeInvoice));
+        List<Invoice> result = patientService.getInvoiceOfPatient(patientId);
+        assertNotNull(result);
+        assertNotEquals(result.size(), 0);
+    }
+    @Test
+    void getInvoiceOfPatientNotFound() {
+        when(patientRepo.findById(patientId)).thenReturn(Optional.empty());
+        NotFoundException notFoundException=assertThrows(NotFoundException.class, () -> {
+            patientService.getInvoiceOfPatient(patientId);
+        });
+        assertEquals(notFoundException.getMessage(), Message.patientNotFound);
+    }
 }
