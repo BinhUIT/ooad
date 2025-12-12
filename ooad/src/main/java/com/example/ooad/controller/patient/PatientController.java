@@ -1,7 +1,7 @@
 package com.example.ooad.controller.patient;
 
 import java.util.List;
-
+import com.example.ooad.domain.entity.Invoice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -19,7 +19,7 @@ import com.example.ooad.dto.request.PatientRequest;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.dto.response.PatientResponse;
 import com.example.ooad.dto.response.PatientTabsResponse;
-import com.example.ooad.service.patient.implementation.PatientServiceImplementation;
+
 import com.example.ooad.service.patient.interfaces.PatientService;
 import com.example.ooad.utils.Message;
 
@@ -170,7 +170,8 @@ public class PatientController {
     public ResponseEntity<GlobalResponse<PatientTabsResponse>> getPatientTabs(@PathVariable int patientId) {
         List<Appointment> appointments = patientService.getAppointmentsOfPatient(patientId);
         List<MedicalRecord> medicalRecords = patientService.getMedicalRecordsOfPatient(patientId);
-        PatientTabsResponse result = new PatientTabsResponse(appointments, medicalRecords);
+        List<Invoice> invoices= patientService.getInvoiceOfPatient(patientId);
+        PatientTabsResponse result = new PatientTabsResponse(appointments, medicalRecords, invoices);
         GlobalResponse<PatientTabsResponse> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

@@ -141,6 +141,12 @@ public class PatientServiceImplementation implements PatientService {
         return medicalRecordRepo.findByReception_ReceptionIdIn(receptioIds);
     }
 
+    @Override
+    public List<Invoice> getInvoiceOfPatient(int patientId) {
+        Patient p = findPatientById(patientId);
+        return invoiceRepo.findByPatient_PatientId(p.getPatientId());
+    }
+
     
     
 }
