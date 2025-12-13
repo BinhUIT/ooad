@@ -7,26 +7,45 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 
+import com.example.ooad.domain.entity.Appointment;
+import com.example.ooad.domain.entity.Invoice;
+import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
+import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.dto.request.PatientRequest;
 import com.example.ooad.dto.response.PatientResponse;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.mapper.PatientMapper;
+import com.example.ooad.repository.AppointmentRepository;
+import com.example.ooad.repository.InvoiceRepository;
+import com.example.ooad.repository.MedicalRecordRepository;
 import com.example.ooad.repository.PatientRepository;
+import com.example.ooad.repository.ReceptionRepository;
 import com.example.ooad.service.patient.interfaces.PatientService;
 import com.example.ooad.utils.DateTimeUtil;
 import com.example.ooad.utils.Message;
 import com.example.ooad.validator.ActorValidator;
+
+import jakarta.transaction.Transactional;
 
 
 @Service
 public class PatientServiceImplementation implements PatientService {
     private final PatientRepository patientRepo;
     private final ActorValidator actorValidator;
-    public PatientServiceImplementation(PatientRepository patientRepo, ActorValidator actorValidator) {
+    private final AppointmentRepository appointmentRepo;
+    private final ReceptionRepository receptionRepo;
+    private final InvoiceRepository invoiceRepo;
+    private final MedicalRecordRepository medicalRecordRepo;
+    public PatientServiceImplementation(PatientRepository patientRepo, ActorValidator actorValidator,MedicalRecordRepository medicalRecordRepo,
+         AppointmentRepository appointmentRepo, ReceptionRepository receptionRepo,InvoiceRepository invoiceRepo ) {
         this.patientRepo = patientRepo;
         this.actorValidator = actorValidator;
+        this.appointmentRepo= appointmentRepo;
+        this.receptionRepo= receptionRepo;
+        this.invoiceRepo = invoiceRepo;
+        this.medicalRecordRepo= medicalRecordRepo;
     }
     private void validateRequest(PatientRequest request, BindingResult bindingResult) {
         if(bindingResult.hasErrors()) {
@@ -70,7 +89,7 @@ public class PatientServiceImplementation implements PatientService {
         return PatientMapper.getResponseFromPatient(findPatientById(patientId));
 
     }
-    private Patient findPatientById(int patientId) {
+    public Patient findPatientById(int patientId) {
         Patient p = patientRepo.findById(patientId).orElse(null);
         if(p==null) {
             throw new NotFoundException(Message.patientNotFound);
@@ -78,9 +97,56 @@ public class PatientServiceImplementation implements PatientService {
         return p;
     }
     @Override
+    @Transactional
     public void deletePatient(int patientId) {
         Patient p = findPatientById(patientId);
+        List<Appointment> appointments = appointmentRepo.findByPatient_PatientId(p.getPatientId());
+        for(Appointment a: appointments) {
+            a.setPatient(null);
+        }
+        List<Reception> receptions = receptionRepo.findByPatient_PatientId(p.getPatientId());
+        for(Reception r: receptions) {
+            r.setPatient(null);
+        }
+        List<Invoice> invoices = invoiceRepo.findByPatient_PatientId(p.getPatientId());
+        for(Invoice i: invoices) {
+            i.setPatient(null);
+        }
+        appointmentRepo.saveAll(appointments);
+        receptionRepo.saveAll(receptions);
+        invoiceRepo.saveAll(invoices);
         patientRepo.delete(p);
     }
+
+    @Override
+    public PatientResponse findPatientByIdCard(String idCard) {
+        Patient patient = patientRepo.findByIdCard(idCard);
+        if(patient==null) {
+            throw new NotFoundException(Message.patientNotFound);
+        } 
+        return PatientMapper.getResponseFromPatient(patient);
+    }
+
+    @Override
+    public List<Appointment> getAppointmentsOfPatient(int patientId) {
+        Patient p = findPatientById(patientId);
+        return appointmentRepo.findByPatient_PatientId(p.getPatientId());
+    }
+
+    @Override
+    public List<MedicalRecord> getMedicalRecordsOfPatient(int patientId) {
+        Patient p = findPatientById(patientId);
+        List<Reception> receptions = receptionRepo.findByPatient_PatientId(p.getPatientId());
+        List<Integer> receptioIds = receptions.stream().map(item->item.getReceptionId()).toList();
+        return medicalRecordRepo.findByReception_ReceptionIdIn(receptioIds);
+    }
+
+    @Override
+    public List<Invoice> getInvoiceOfPatient(int patientId) {
+        Patient p = findPatientById(patientId);
+        return invoiceRepo.findByPatient_PatientId(p.getPatientId());
+    }
+
+    
     
 }

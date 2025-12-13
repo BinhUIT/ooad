@@ -46,9 +46,10 @@ public class SysParamController {
     public ResponseEntity<?> createSysParam(
             @Valid @RequestBody SysParamRequest request,
             BindingResult bindingResult) {
-        SysParamResponse response = sysParamService.createSysParam(
-                request,
-                bindingResult);
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(bindingResult.getAllErrors());
+        }
+        SysParamResponse response = sysParamService.createSysParam(request, bindingResult);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -86,6 +87,16 @@ public class SysParamController {
     public ResponseEntity<?> getSysParamByCode(@PathVariable String paramCode) {
         SysParamResponse response = sysParamService.getSysParamByCode(paramCode);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(description = "Get raw parameter value by code", responses = {
+            @ApiResponse(description = "Success", responseCode = "200", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(description = "Not Found", responseCode = "404", content = @Content(mediaType = "application/json", schema = @Schema(implementation = GlobalResponse.class))),
+    })
+    @GetMapping("/value/{paramCode}")
+    public ResponseEntity<?> getParamValueByCode(@PathVariable String paramCode) {
+        String value = sysParamService.getParamValueByCode(paramCode);
+        return ResponseEntity.ok(value);
     }
 
     @Operation(description = "Get all system parameters", responses = {

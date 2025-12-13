@@ -21,6 +21,7 @@ public class PatientRequest {
     @NotNull(message="Email is invalid")
     @Email(message = "Invalid email")
     private String email;
+    
     public String getAddress() {
         return address;
     }

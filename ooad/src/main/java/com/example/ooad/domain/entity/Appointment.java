@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.time.LocalTime;
 
 import com.example.ooad.domain.enums.EAppointmentStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,9 +23,11 @@ public class Appointment {
     @GeneratedValue(strategy=GenerationType.IDENTITY) 
     private int appointmentId;
     @ManyToOne
+    
     @JoinColumn(name="patient_id")
     private Patient patient;
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name="doctor_id")
     private Staff staff;
     private Date appointmentDate;
@@ -35,7 +38,12 @@ public class Appointment {
 
     public Appointment() {
     }
-
+    public int getDoctorId() {
+        return staff.getStaffId();
+    }
+    public String getDoctorName() {
+        return staff.getFullName();
+    }
     public int getAppointmentId() {
         return appointmentId;
     }
@@ -43,7 +51,7 @@ public class Appointment {
     public void setAppointmentId(int appointmentId) {
         this.appointmentId = appointmentId;
     }
-
+   
     public Patient getPatient() {
         return patient;
     }
@@ -51,7 +59,7 @@ public class Appointment {
     public void setPatient(Patient patient) {
         this.patient = patient;
     }
-
+    @JsonIgnore
     public Staff getStaff() {
         return staff;
     }

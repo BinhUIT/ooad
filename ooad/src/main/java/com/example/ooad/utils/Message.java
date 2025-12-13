@@ -21,4 +21,13 @@ public class Message {
     public static final String invalidScheduleDate="Schedule date must be after or equal current date";
     public static final String invalidStartAndEndTime = "Invalid start and end time";
     public static final String staffBusy="Staff is busy!";
+    public static final String serviceNotFound ="Service not found";
+    public static final String serviceExist = "Service exist";
+    public static final String receptionNotFound = "Reception not found";
+    public static final String cannotEditReception = "Can not edit this reception";
+    public static final String cannotCreateReception="Can not create reception";
+    public static final String invalidReceptionDate = "Invalid reception date";
+    public static final String appointmentNotFound = "Appointment not found";
+    public static final String medicalRecordNotFound = "Medical record not found";
+    public static final String invoiceNotFound ="Invoice not found";
 }
