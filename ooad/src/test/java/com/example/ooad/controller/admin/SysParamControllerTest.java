@@ -65,7 +65,7 @@ public class SysParamControllerTest {
         when(sysParamService.createSysParam(any(), any()))
                 .thenThrow(new com.example.ooad.exception.BadRequestException("bad request"));
 
-        String body = "{\"paramCode\":\"X\"}";
+        String body = "{\"paramCode\":\"X\",\"paramName\":\"X name\",\"groupId\":1,\"active\":true}";
         mockMvc.perform(MockMvcRequestBuilders.post("/admin/sys-params")
                 .with(Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.csrf()))
                 .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
@@ -80,7 +80,7 @@ public class SysParamControllerTest {
         when(sysParamService.createSysParam(any(), any()))
                 .thenThrow(new com.example.ooad.exception.ConflictException("conflict"));
 
-        String body = "{\"paramCode\":\"X\"}";
+        String body = "{\"paramCode\":\"X\",\"paramName\":\"X name\",\"groupId\":1,\"active\":true}";
         mockMvc.perform(MockMvcRequestBuilders.post("/admin/sys-params")
                 .with(Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.csrf()))
                 .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
@@ -108,7 +108,7 @@ public class SysParamControllerTest {
         when(sysParamService.updateSysParam(eq(123), any(), any()))
                 .thenThrow(new com.example.ooad.exception.NotFoundException("not found"));
 
-        String body = "{\"paramCode\":\"X\"}";
+        String body = "{\"paramCode\":\"X\",\"paramName\":\"X name\",\"groupId\":1,\"active\":true}";
         mockMvc.perform(MockMvcRequestBuilders.put("/admin/sys-params/123")
                 .with(Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.csrf()))
                 .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
