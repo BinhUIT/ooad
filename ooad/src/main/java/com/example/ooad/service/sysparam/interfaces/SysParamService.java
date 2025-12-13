@@ -13,6 +13,8 @@ public interface SysParamService {
 
     TypedParamValue getTypedParamValueByCode(String paramCode);
 
+    String getParamValueByCode(String paramCode);
+
     SysParamResponse createSysParam(SysParamRequest request, BindingResult bindingResult);
 
     SysParamResponse updateSysParam(int id, SysParamRequest request, BindingResult bindingResult);
