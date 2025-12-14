@@ -11,18 +11,30 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name="staff")
+@Table(name = "staff")
 public class Staff extends Actor {
     @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int staffId;
+    /**
+     * @deprecated The `position` field is deprecated. Use `Account.role` (ERole)
+     *             for
+     *             authorization and role checks. This field remains in the database
+     *             and entity for
+     *             backward compatibility. TODO: remove this column and field after
+     *             consumers are
+     *             migrated and a DB migration is scheduled.
+     */
+    @Deprecated
     private String position;
 
-    public Staff(String position, int staffId, String fullName, Date dateOfBirth, EGender gender, String phone, String email, String idCard, Account account) {
+    public Staff(String position, int staffId, String fullName, Date dateOfBirth, EGender gender, String phone,
+            String email, String idCard, Account account) {
         super(fullName, dateOfBirth, gender, phone, email, idCard, account);
         this.position = position;
         this.staffId = staffId;
     }
+
     public Staff() {
         super();
     }
@@ -42,5 +54,5 @@ public class Staff extends Actor {
     public void setPosition(String position) {
         this.position = position;
     }
-    
+
 }
