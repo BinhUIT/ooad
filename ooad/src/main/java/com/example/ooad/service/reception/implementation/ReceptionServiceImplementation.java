@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.domain.entity.Staff;
+import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.domain.enums.EReceptionStatus;
 import com.example.ooad.dto.request.CreateReceptionRequest;
 import com.example.ooad.dto.request.CreateReceptionRequest;
@@ -27,15 +28,18 @@ import com.example.ooad.utils.Message;
 @Service
 public class ReceptionServiceImplementation implements ReceptionService {
     private final ReceptionRepository receptionRepo;
-    
+
     private final PatientRepository patientRepo;
     private final StaffRepository staffRepo;
-    public ReceptionServiceImplementation(ReceptionRepository receptionRepo, PatientRepository patientRepo, StaffRepository staffRepo) {
+
+    public ReceptionServiceImplementation(ReceptionRepository receptionRepo, PatientRepository patientRepo,
+            StaffRepository staffRepo) {
         this.receptionRepo = receptionRepo;
-        
+
         this.patientRepo = patientRepo;
         this.staffRepo = staffRepo;
     }
+
     @Override
     public Page<Reception> getListReceptions(int pageNumber, int pageSize) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
@@ -44,31 +48,32 @@ public class ReceptionServiceImplementation implements ReceptionService {
 
     @Override
     public Reception getReceptionById(int receptionId) {
-        return receptionRepo.findById(receptionId).orElseThrow(()->new NotFoundException(Message.receptionNotFound));
+        return receptionRepo.findById(receptionId).orElseThrow(() -> new NotFoundException(Message.receptionNotFound));
     }
 
     @Override
     public Reception editReception(UpdateReceptionRequest request) {
         Reception reception = this.getReceptionById(request.getReceptionId());
         Date currentDate = Date.valueOf(LocalDate.now());
-        if(currentDate.after(reception.getReceptionDate())) {
+        if (currentDate.after(reception.getReceptionDate())) {
             throw new BadRequestException(Message.cannotEditReception);
-        } 
+        }
         reception.setStatus(request.getNewStatus());
         return receptionRepo.save(reception);
 
     }
 
     @Override
-    public Reception createReception(CreateReceptionRequest request,Staff receptionist) {
-        Patient patient = patientRepo.findById(request.getPatientId()).orElseThrow(()->new NotFoundException(Message.patientNotFound));
-        if(!receptionist.getPosition().equals("RECEPTIONIST")) {
+    public Reception createReception(CreateReceptionRequest request, Staff receptionist) {
+        Patient patient = patientRepo.findById(request.getPatientId())
+                .orElseThrow(() -> new NotFoundException(Message.patientNotFound));
+        if (receptionist.getAccount() == null || receptionist.getAccount().getRole() != ERole.RECEPTIONIST) {
             throw new BadRequestException(Message.cannotCreateReception);
         }
         Date currentDate = Date.valueOf(LocalDate.now());
-        if(request.getReceptionDate().before(currentDate)) {
+        if (request.getReceptionDate().before(currentDate)) {
             throw new BadRequestException(Message.invalidReceptionDate);
-        } 
+        }
         Reception reception = new Reception();
         reception.setPatient(patient);
         reception.setReceptionDate(request.getReceptionDate());
@@ -76,5 +81,5 @@ public class ReceptionServiceImplementation implements ReceptionService {
         reception.setStatus(EReceptionStatus.WAITING);
         return receptionRepo.save(reception);
     }
-    
+
 }
