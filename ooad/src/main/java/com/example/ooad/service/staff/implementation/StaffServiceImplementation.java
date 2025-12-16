@@ -25,6 +25,8 @@ import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.ConflictException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.repository.AccountRepository;
+import com.example.ooad.dto.request.CreateAccountDto;
+import com.example.ooad.service.auth.interfaces.AuthService;
 import com.example.ooad.repository.StaffRepository;
 import com.example.ooad.repository.StaffScheduleRepository;
 import com.example.ooad.service.staff.interfaces.StaffService;
@@ -41,18 +43,21 @@ public class StaffServiceImplementation implements StaffService {
     private final AccountRepository accountRepo;
     private final ActorValidator actorValidator;
     private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
 
     public StaffServiceImplementation(
             StaffRepository staffRepo,
             StaffScheduleRepository staffScheduleRepo,
             AccountRepository accountRepo,
             ActorValidator actorValidator,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            AuthService authService) {
         this.staffRepo = staffRepo;
         this.staffScheduleRepo = staffScheduleRepo;
         this.accountRepo = accountRepo;
         this.actorValidator = actorValidator;
         this.passwordEncoder = passwordEncoder;
+        this.authService = authService;
     }
 
     @Override
@@ -93,7 +98,6 @@ public class StaffServiceImplementation implements StaffService {
     public StaffResponse createStaff(StaffRequest request, BindingResult bindingResult) {
         validateRequest(request, bindingResult);
 
-        // Check duplicate email
         List<Staff> existingStaffs = staffRepo.findAll();
         for (Staff s : existingStaffs) {
             if (s.getEmail().equalsIgnoreCase(request.getEmail())) {
@@ -104,13 +108,19 @@ public class StaffServiceImplementation implements StaffService {
             }
         }
 
-        // Create Account
-        Account account = new Account();
-        account.setUsername(request.getEmail()); // Use email as username
-        account.setUserPassword(passwordEncoder.encode("123456")); // Default password
-        account.setRole(request.getRole());
+        if (accountRepo.findByUsername(request.getEmail()) != null) {
+            throw new ConflictException("Account username '" + request.getEmail() + "' already exists");
+        }
+
+        CreateAccountDto accountDto = new CreateAccountDto("12345678", request.getRole(), request.getEmail());
+        authService.createAccount(accountDto);
+        Account account = accountRepo.findByUsername(request.getEmail());
+        if (account == null) {
+            throw new RuntimeException("Failed to create account for staff");
+        }
         account.setStatus(request.getIsActive() ? EStatus.ACTIVE : EStatus.LOCKED);
-        account = accountRepo.save(account);
+        account.setRole(request.getRole());
+        accountRepo.save(account);
 
         // Create Staff
         Staff staff = new Staff();
@@ -146,6 +156,14 @@ public class StaffServiceImplementation implements StaffService {
                     throw new ConflictException("Staff with ID card '" + request.getIdCard() + "' already exists");
                 }
             }
+        }
+
+        // Ensure username not used by other accounts
+        Account existingAccountWithUsername = accountRepo.findByUsername(request.getEmail());
+        Account currentAccount = staff.getAccount();
+        if (existingAccountWithUsername != null && currentAccount != null
+                && existingAccountWithUsername.getAccountId() != currentAccount.getAccountId()) {
+            throw new ConflictException("Account username '" + request.getEmail() + "' already exists");
         }
 
         // Update Staff fields
