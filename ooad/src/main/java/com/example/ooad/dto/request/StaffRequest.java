@@ -1,17 +1,37 @@
-package com.example.ooad.dto.response;
+package com.example.ooad.dto.request;
 
 import java.sql.Date;
 
-import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.enums.EGender;
+import com.example.ooad.domain.enums.ERole;
 
-public class StaffResponse {
-    private Integer staffId;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+public class StaffRequest {
+
+    @NotBlank(message = "Full name is required")
+    @Size(max = 100, message = "Full name must not exceed 100 characters")
     private String fullName;
+
+    @NotNull(message = "Date of birth is required")
     private Date dateOfBirth;
+
+    @NotNull(message = "Gender is required")
     private EGender gender;
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
     private String email;
+
+    @NotBlank(message = "Phone is required")
+    @Size(max = 20, message = "Phone must not exceed 20 characters")
     private String phone;
+
+    @NotBlank(message = "ID Card is required")
+    @Size(max = 20, message = "ID Card must not exceed 20 characters")
     private String idCard;
 
     /**
@@ -24,51 +44,33 @@ public class StaffResponse {
      *             external consumers have migrated (monitor for 1-2 sprints).
      */
     @Deprecated
+    @Size(max = 50, message = "Position must not exceed 50 characters")
     private String position;
-    private String role; // From Account role
-    private Boolean active;
 
-    public StaffResponse() {
+    @NotNull(message = "Active status is required")
+    private Boolean isActive;
+
+    @NotNull(message = "Role is required")
+    private ERole role;
+
+    public StaffRequest() {
+        this.isActive = true;
     }
 
-    public StaffResponse(Staff staff) {
-        this.staffId = staff.getStaffId();
-        this.fullName = staff.getFullName();
-        this.dateOfBirth = staff.getDateOfBirth();
-        this.gender = staff.getGender();
-        this.email = staff.getEmail();
-        this.phone = staff.getPhone();
-        this.idCard = staff.getIdCard();
-        this.position = staff.getPosition();
-        this.role = staff.getAccount() != null && staff.getAccount().getRole() != null
-                ? staff.getAccount().getRole().name()
-                : null;
-        this.active = staff.getAccount() != null && staff.getAccount().getStatus() != null
-                ? staff.getAccount().getStatus().name().equals("ACTIVE")
-                : false;
-    }
-
-    public StaffResponse(Integer staffId, String fullName, String position,
-            Date dateOfBirth, EGender gender, String phone,
-            String email, String idCard) {
-        this.staffId = staffId;
+    public StaffRequest(String fullName, Date dateOfBirth, EGender gender, String email, String phone,
+            String idCard, String position, Boolean isActive, ERole role) {
         this.fullName = fullName;
-        this.position = position;
         this.dateOfBirth = dateOfBirth;
         this.gender = gender;
-        this.phone = phone;
         this.email = email;
+        this.phone = phone;
         this.idCard = idCard;
+        this.position = position;
+        this.isActive = isActive != null ? isActive : true;
+        this.role = role;
     }
 
-    public Integer getStaffId() {
-        return staffId;
-    }
-
-    public void setStaffId(Integer staffId) {
-        this.staffId = staffId;
-    }
-
+    // Getters and Setters
     public String getFullName() {
         return fullName;
     }
@@ -125,19 +127,19 @@ public class StaffResponse {
         this.position = position;
     }
 
-    public String getRole() {
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public ERole getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(ERole role) {
         this.role = role;
-    }
-
-    public Boolean getActive() {
-        return active;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
     }
 }
