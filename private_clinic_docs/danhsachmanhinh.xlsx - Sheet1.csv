@@ -1,0 +1,98 @@
+,diagram 1,diagram 2,"Yêu cầu triển khai đơn giản, nếu có thể thì bổ sung ci cd sau ngày 28/12",,,viết các unit test,
+,https://drive.google.com/file/d/1wUjXHskDsrUSs3r7pgSJ7kfsvKmpi_ba/view?usp=sharing,https://drive.google.com/file/d/1HyTIp9Xx0vV7tRQGIK5ExylV9bgqh0uB/view?usp=sharing,,,,,
+STT,Tên,Mô tả,,,Người làm FE,Người làm BE,
+1,Màn hình đăng nhập,,,,,,1
+2,Màn hình đăng ký,,,,,,
+3,Màn hình quên mật khẩu,,,,,,
+4,Màn hình thông tin tài khoản,,,,Thiện,Thiện,
+5,Màn hình đổi mật khẩu,,,,,,
+6,trang chủ thủ kho,"hot key các nghiệp vụ nhập kho, bán thuốc???",,,,,2
+7,trang chủ lễ tân,"hot key các nghiệp vụ thêm bệnh nhân, đặt lịch hẹn, tiếp nhận",,,,,
+8,trang chủ bác sĩ,"hot key các nghiệp vụ khám bệnh, hồ sơ khám bệnh",,,,,
+9,Trang chủ admin,,,,,,
+10,Màn hình danh sách nhân viên,"Lễ tân, thủ kho, bác sĩ",,,Minh,MInh,3
+11,Màn hình thông tin nhân viên,,,,Minh,MInh,
+12,Màn hình sửa thông tin nhân viên,,,,Minh,MInh,
+13,Màn hình xem thông tin lịch làm việc của nhân viên,"opt, chỉ xem","chỉnh sửa ở mh 14, opt vì tương tự mh 16, hiển thị lịch thôi",,Minh,MInh,
+14,Màn hình thêm thông tin nhân viên,,,,Minh,MInh,
+15,Màn hình lịch làm việc theo tháng,Xem và sửa,,,Thiện,Thiện,4
+16,Màn hình xem chi tiết 1 ca (lịch làm việc),dubclick vào ô chữ nhật,,,Thiện,Thiện,
+17,Màn hình sửa thông tin lịch làm việc,"form sửa, sau khi dubclick và click icon 'bút chì'",,,Thiện,Thiện,
+18,Màn hình thêm thông tin lịch làm việc của 1 bác sĩ,"thêm 1 staf_schedule (thêm đủ các thông tin tgbd, tgkt, ngay, tt), có thể thêm chức năng kéo thả để sửa ngày",,,Thiện,Thiện,
+19,Màn hình danh sách tham số,Xem sửa ds các tham số,,,Minh,Minh,5
+20,Màn hình danh sách loại thuốc,,,,,,6
+21,Màn hình thông tin loại thuốc,"Xem thông tin chi tiết loại thuốc
+Xem ds con 1 gồm các 'medicine_inventory' (ngày nhập, ngày hết hạn, giá nhập, số lượng tồn) (có thể ko hiển thị slt = 0, 
+Xem ds con 2 gồm các lịch sử giá bán (medicine price) (ngày có hiệu lực, giá bán), thêm giá bán mới, (ko sửa, xóa các giá bán cũ trừ giá bán mới thêm trong ngày (ngày hiện tại = created at))",Có yêu cầu ràng buộc giá bán > giá nhập ko (lớn hơn giá nhập của medicine_inventory nào ? Mới nhất ? Lớn nhất ?),,,,
+22,Màn hình xem chi tiết giá bán,Gộp vs màn hình sửa,Tạo màn hình riêng cho quản lý giá bán rồi tạo route đến,,,,
+23,Màn hình sửa giá bán,,,,,,
+24,Màn hình thêm giá bán,,,,,,
+25,Màn hình sửa thông tin loại thuốc,"tên, đơn vị tính",,,,,
+26,Màn hình thêm thông tin loại thuốc,,,,,,
+27,Màn hình danh sách kho thuốc,"danh sách toàn bộ các medicine_inventory (có kết vs bảng loại thuốc medicine và bảng medicine_import), hiển thị cả những slt = 0",opt,,,,7
+28,Màn hình thông tin kho thuốc,"Thông tin kho thuốc đc cập nhật tự động theo import_detail, khi tạo mới 1 import (1 import gồm nhiều import detail (nhiều loại thuốc))",,,,,
+29,,,,,,,
+30,Màn hình danh sách phiếu nhập thuốc,"Danh sách các medicine_import , gồm các thông tin (ngày, ng, ncc, tổng sl, tổng giá trị = tổng (import price * quantity) (import details)",,,,,
+31,Màn hình thông tin phiếu nhập thuốc,danh sách con các import details,,,,,
+32,Màn hình sửa thông tin phiếu nhập thuốc,"sửa thông tin của medicine import, thêm xóa sửa ds các import details, có thể có ràng buộc về thời gian sửa hoặc không",,,,,
+33,Màn hình thêm thông tin phiếu nhập thuốc,"Màn hình thêm thông tin phiếu, gồm 2 tab tab1: nhập thông tin cơ bản của phiếu, tab2: thêm xóa sửa các import details (Hiển thị combobox chọn loại thuốc hoặc form chọn loại thuốc)",,,,,
+34,Màn hình xem chi tiết nhập thuốc,gộp vs màn hình sửa,,,,,
+35,Màn hình thêm chi tiết nhập thuốc,,,,,,
+36,Màn hình sửa chi tiết nhập thuốc,,,,,,
+37,Màn hình danh sách bệnh nhân,,,,Huyền,Bình,8
+38,Màn hình thông tin bệnh nhân,"Tab thông tin bệnh nhân
+Tab Ds con1: ds các appointments
+Tab ds con2: ds các record medical (có button xem đơn thuốc hiển thị form thông tin đơn thuốc và danh sách thuốc trong đơn, có button xem chi tiết record: thông tin record kết vs reception kết vs disease type)
+tab ds con3: ds các invoice (kết vs method pay) , button xem form ds hóa đơn thuốc, button xem form ds hóa đơn dịch vụ (kết vs serivce), button xem form chi tiết invoice) ","Xem form hoặc dẫn đến màn hình xem chi tiết, rcm cách 2 dẫn đến mh xem chi tiết và tạo 1 button_route kiểu:
+Ds bn > chi tiết bn/appointments/record/invoice/ chi tiết invoice
+ds bn > invoice / service invoice
+nếu dẫn đến màn hình thì sẽ có thể dễ tái sử dụng và cài đặt các chức năng thêm xóa sửa ... hơn",,Huyền,Bình,
+39,Màn hình sửa thông tin bệnh nhân,,,,Huyền,Bình,
+40,Màn hình thêm thông tin bệnh nhân,,,,Huyền,Bình,
+41,Màn hình danh sách buổi hẹn,toàn bộ các buổi hẹn,opt,,Huyền,Bình,9
+42,Màn hình thông tin buổi hẹn,,,,Huyền,Bình,
+43,Màn hình sửa thông tin buổi hẹn,,cho phép đổi sang buổi hẹn khác -> hiển thị lịch làm việc của các bác sĩ để đổi,,Huyền,Bình,
+44,Màn hình thêm thông tin buổi hẹn,"là màn hình, có nút form chọn bệnh nhân (tra cứu), hiển thị lịch làm việc của các bác sĩ, dựa trên staff scheduled",,,Huyền,Bình,
+45,Màn hình danh sách reception,"toàn bộ các tiếp nhận, ","tiếp nhận bệnh nhân phát số, chưa tạo record medical","thêm nút kết ca chuyển các trạng thái sang vắng, hủy, ko sửa trạng thái recepttion, (POST ko tham số)",Huyền,Bình,10
+46,Màn hình thông tin reception,,,,Huyền,Bình,
+47,Màn hình sửa thông tin reception,"đổi từ waiting sang trạng thái nào? (ko sửa , nếu ngày tiếp nhận < ngày hiện tại)",,,Huyền,Bình,
+48,Màn hình thêm thông tin reception,"là màn hình, có nút form chọn bệnh nhân (tra cứu)",,,Huyền,Bình,
+49,Màn hình danh sách loại bệnh,,,,Minh,Minh,11
+50,Màn hình thông tin loại bệnh,,,,Minh,Minh,
+51,Màn hình sửa thông tin loại bệnh,,,,Minh,Minh,
+52,Màn hình thêm thông tin loại bệnh,,,,Minh,Minh,
+53,Màn hình danh sách hồ sơ khám,toàn bộ các medical record,,"Khi bệnh nhân thực hiện các dịch vụ xong quay lại, bác sĩ dựa trên phiếu tiếp nhận, phiêú khám mà hộ lý đưa cho để tìm thông tin hồ sơ khám tương ứng, để sửa đổi bổ sung thông tin hồ sơ khám, và thêm đơn thuốc",Huyền,,12
+54,Màn hình thông tin hồ sơ khám,"thông tin medical record
+tab con : thông tin chi tiết đơn thuốc và danh sách các chi tiết thuốc","route sang thông tin chi tiết đơn thuốc, thông tin chi tiết đơn thuốc (xem form)",,Huyền,,
+55,Màn hình sửa thông tin hồ sơ khám,sửa đc cái gì,,,Huyền,,
+56,Màn hình thêm thông tin hồ sơ khám,"chuyển reception sang done/in examination , tạo thông tin invoice với các giá trị mặc định?","hiển thị form chọn reception, form chọn loại bệnh (hoặc combobox)"," bác sĩ dựa trên phiếu tiếp nhận , phiếu khám mà hộ lý đưa cho để xem thông tin bản cứng của reception tương ứng, sau đó bác sĩ tìm đúng thông tin reception tương (hiện các reception trong ngày hiện tại cho bác sĩ hoặc có thể chỉ hiện các reception có trạng thái là in examination để ít reception lại, tức là mặc dù chưa thực sự khám, nhưng chuẩn bị khám (có thể là gọi vào phòng để chờ 1 , 2 bệnh nhân đang khám ở trước thì lễ tân chủ động đổi trạng thái tiếp nhận sang in examination để bác sĩ chọn dễ hơn), để thêm thông tin hồ sơ khám, phê các bệnh, triệu chứng ,... đề xuất dịch vụ , có button refresh danh sách thủ công chứ ko dùng thời gian thực",Huyền,,
+57,Màn hình danh sách đơn thuốc,toàn bộ các prescription,opt,,,,13
+58,Màn hình thông tin đơn thuốc,thông tin chi tiết đơn thuốc và danh sách các chi tiết thuốc,"route sang thông tin chi tiết đơn thuốc, thông tin chi tiết đơn thuốc (xem form)",,,,
+59,Màn hình sửa thông tin đơn thuốc,,,,,,
+60,Màn hình thêm thông tin đơn thuốc,,"hiển thị form chọn thuốc, ko quan trọng số lượng tồn",,,,
+61,Màn hình danh sách dịch vụ,,,,Bình,Bình,14
+62,Màn hình thông tin dịch vụ,,,,Bình,Bình,
+63,Màn hình sửa thông tin dịch vụ,,,,Bình,Bình,
+64,Màn hình thêm thông tin dịch vụ,,,,Bình,Bình,
+65,Màn hình danh sách phương thức thanh toán,,,,Thiện,Thiện,15
+66,Màn hình thông tin phương thức thanh toán,,,,Thiện,Thiện,
+67,Màn hình sửa thông tin phương thức thanh toán,,,,Thiện,Thiện,
+68,Màn hình thêm thông tin phương thức thanh toán,,,,Thiện,Thiện,
+69,Màn hình danh sách hóa đơn,toàn bộ hóa đơn,,,,,16
+70,Màn hình thông tin hóa đơn,"tab 1 : thông tin hóa đơn, kết phương thức thanh toán
+tab2:  hóa đơn dịch vụ
+tab3: hoas đơn thuốc","lễ tân, nhân viên bán thuốc tìm kiếm thông tin bệnh nhân qua danh sách hóa đơn, tìm hóa đơn tương ứng vs record_id, để tính tiền dịch vụ và thuốc (ko bán thuốc lẻ (ko khám thì ko bán thuốc))",,,,
+71,Màn hình sửa thông tin hóa đơn thuốc,"mô tả tab3: thêm (cấp phát), xóa , sửa danh sách các chi tiết thuốc (bán thuốc)","form chọn thuốc , có thể có thuật toán để đảm bảo chỉ có thể chọn đc loại thuốc mà có tổng inventory tương ứng đáp ứng yêu cầu (đáp ứng hạn ntn đó (ít nhất còn hạn trên 3 tháng chẳng hạn)",Nếu ko có thuốc đáp ứng thì ko bán thuốc đó,,,
+72,"Màn hình sửa thông tin hóa đơn, dịch vụ",tab2 : thêm xóa sửa (số lượng) danh sách các chi tiết dịch vụ,,,,,
+73,Màn hình thêm thông tin hóa đơn,thêm tự động?,,,,,
+74,Màn hình đặt lịch hẹn,,,patient,,,17
+75,lịch sử danh sách hồ sơ khám,,,,,,
+76,chi tiết hồ sơ khám,"xem đơn thuốc hiển thị form thông tin đơn thuốc và danh sách thuốc trong đơn, có button xem chi tiết record: thông tin record kết vs reception kết vs disease type)",,,,,
+77,lịch sử đặt hẹn,,,,,,
+78,lịch sử hóa đơn,,,,,,
+79,chi tiết hóa đơn,"tab 1 : thông tin hóa đơn, kết phương thức thanh toán
+tab2:  hóa đơn dịch vụ
+tab3: hoas đơn thuốc",,,,,
+80,trang chủ bệnh nhân,,,,,,
+,,,,40,,,
+,,,,37,,,
