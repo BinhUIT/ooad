@@ -6,13 +6,14 @@ import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.enums.EGender;
 
 public class StaffResponse {
-    private int staffId;
+    private Integer staffId;
     private String fullName;
     private Date dateOfBirth;
     private EGender gender;
     private String email;
     private String phone;
     private String idCard;
+
     /**
      * @deprecated The `position` field is deprecated. Use `role` (Account.role /
      *             ERole)
@@ -47,12 +48,24 @@ public class StaffResponse {
                 : false;
     }
 
-    // Getters and Setters
-    public int getStaffId() {
+    public StaffResponse(Integer staffId, String fullName, String position,
+            Date dateOfBirth, EGender gender, String phone,
+            String email, String idCard) {
+        this.staffId = staffId;
+        this.fullName = fullName;
+        this.position = position;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
+        this.phone = phone;
+        this.email = email;
+        this.idCard = idCard;
+    }
+
+    public Integer getStaffId() {
         return staffId;
     }
 
-    public void setStaffId(int staffId) {
+    public void setStaffId(Integer staffId) {
         this.staffId = staffId;
     }
 

@@ -5,6 +5,7 @@ import java.time.LocalTime;
 
 import com.example.ooad.domain.enums.EScheduleStatus;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,29 +18,42 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+/**
+ * Entity lưu lịch làm việc của nhân viên (bác sĩ).
+ * Mỗi record là 1 time slot (mặc định 1 giờ).
+ * Unique constraint: (staff_id, schedule_date, start_time) - mỗi bác sĩ chỉ có 1 slot tại 1 thời điểm.
+ */
 @Entity
 @Table(name="staff_schedule",
 uniqueConstraints={
-    @UniqueConstraint(columnNames={"staff_id","schedule_date"})
+    @UniqueConstraint(name = "uk_staff_slot", columnNames={"staff_id", "schedule_date", "start_time"})
 },
 indexes = {
-    @Index(columnList = "staff_id, schedule_date")
+    @Index(name = "idx_staff_schedule_date", columnList = "staff_id, schedule_date")
 }
 )
 public class StaffSchedule {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name = "schedule_id")
     private int scheduleId;
 
     @ManyToOne
-    @JoinColumn(name="staff_id")
+    @JoinColumn(name="staff_id", nullable = false)
     private Staff staff;
 
+    @Column(name = "schedule_date", nullable = false)
     private Date scheduleDate;
+    
+    @Column(name = "start_time", nullable = false)
     private LocalTime startTime;
+    
+    @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
+    
     @Enumerated(EnumType.STRING)
-    private EScheduleStatus status=EScheduleStatus.AVAILABLE;
+    @Column(name = "status")
+    private EScheduleStatus status = EScheduleStatus.AVAILABLE;
 
     public StaffSchedule() {
     }

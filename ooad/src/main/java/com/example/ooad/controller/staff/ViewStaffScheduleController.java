@@ -24,12 +24,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/admin/staff-schedule")
 @Tag(name = "Staff Schedule")
-public class StaffScheduleController {
+public class ViewStaffScheduleController {
 
     private final StaffScheduleRepository staffScheduleRepo;
     private final StaffService staffService;
 
-    public StaffScheduleController(StaffScheduleRepository staffScheduleRepo, StaffService staffService) {
+    public ViewStaffScheduleController(StaffScheduleRepository staffScheduleRepo, StaffService staffService) {
         this.staffScheduleRepo = staffScheduleRepo;
         this.staffService = staffService;
     }
