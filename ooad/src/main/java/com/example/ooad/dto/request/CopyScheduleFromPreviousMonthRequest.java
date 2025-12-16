@@ -38,11 +38,11 @@ public class CopyScheduleFromPreviousMonthRequest {
     /**
      * Hành động khi gặp lịch trùng
      */
-    private RecurringScheduleRequest.ConflictAction conflictAction;
+    private ShiftAssignmentRequest.ConflictAction conflictAction;
 
     public CopyScheduleFromPreviousMonthRequest() {
         this.overwriteExisting = false;
-        this.conflictAction = RecurringScheduleRequest.ConflictAction.SKIP;
+        this.conflictAction = ShiftAssignmentRequest.ConflictAction.SKIP;
     }
 
     public Integer getSourceMonth() {
@@ -93,11 +93,11 @@ public class CopyScheduleFromPreviousMonthRequest {
         this.overwriteExisting = overwriteExisting;
     }
 
-    public RecurringScheduleRequest.ConflictAction getConflictAction() {
+    public ShiftAssignmentRequest.ConflictAction getConflictAction() {
         return conflictAction;
     }
 
-    public void setConflictAction(RecurringScheduleRequest.ConflictAction conflictAction) {
+    public void setConflictAction(ShiftAssignmentRequest.ConflictAction conflictAction) {
         this.conflictAction = conflictAction;
     }
 }

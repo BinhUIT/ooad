@@ -1,5 +1,6 @@
 package com.example.ooad.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,4 +18,9 @@ public interface StaffRepository extends JpaRepository<Staff, Integer> {
      */
     @Query("SELECT s FROM Staff s WHERE s.account.accountId = :accountId")
     Optional<Staff> findByAccountId(@Param("accountId") int accountId);
+    
+    /**
+     * Lấy danh sách tất cả doctors (position = 'DOCTOR')
+     */
+    List<Staff> findByPositionIgnoreCase(String position);
 }

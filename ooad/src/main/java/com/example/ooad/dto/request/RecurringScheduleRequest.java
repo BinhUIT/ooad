@@ -1,12 +1,16 @@
 package com.example.ooad.dto.request;
 
+import java.sql.Date;
+import java.util.List;
+
 import com.example.ooad.domain.enums.EScheduleStatus;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 /**
  * DTO để lặp lại lịch làm việc theo ngày trong tuần.
- * Ví dụ: Lặp lại thứ 3 hàng tuần trong tháng 12.
+ * Ví dụ: Lặp lại thứ 2 và thứ 4 hàng tuần từ ngày startDate đến endDate.
  */
 public class RecurringScheduleRequest {
     
@@ -14,26 +18,26 @@ public class RecurringScheduleRequest {
     private Integer staffId;
     
     /**
-     * Ngày trong tuần (1 = Thứ 2, ..., 7 = Chủ nhật)
-     * Theo ISO-8601
+     * Ngày bắt đầu
      */
-    @NotNull(message = "Day of week is required")
-    private Integer dayOfWeek;
+    @NotNull(message = "Start date is required")
+    private Date startDate;
+    
+    /**
+     * Ngày kết thúc
+     */
+    @NotNull(message = "End date is required")
+    private Date endDate;
+    
+    /**
+     * Danh sách các ngày trong tuần (1 = Thứ 2, ..., 7 = Chủ nhật)
+     * Theo ISO-8601 convention
+     */
+    @NotEmpty(message = "At least one day of week is required")
+    private List<Integer> daysOfWeek;
     
     @NotNull(message = "Shift type is required")
     private ShiftAssignmentRequest.ShiftType shiftType;
-    
-    /**
-     * Tháng cần lặp (1-12)
-     */
-    @NotNull(message = "Month is required")
-    private Integer month;
-    
-    /**
-     * Năm
-     */
-    @NotNull(message = "Year is required")
-    private Integer year;
     
     private EScheduleStatus status;
     
@@ -43,17 +47,11 @@ public class RecurringScheduleRequest {
      * OVERWRITE - Ghi đè lịch cũ
      * CANCEL - Hủy thao tác
      */
-    private ConflictAction conflictAction;
-    
-    public enum ConflictAction {
-        SKIP,       // Bỏ qua ngày trùng, thêm các ngày không trùng
-        OVERWRITE,  // Ghi đè lịch cũ
-        CANCEL      // Hủy toàn bộ thao tác
-    }
+    private ShiftAssignmentRequest.ConflictAction conflictAction;
 
     public RecurringScheduleRequest() {
         this.status = EScheduleStatus.AVAILABLE;
-        this.conflictAction = ConflictAction.SKIP;
+        this.conflictAction = ShiftAssignmentRequest.ConflictAction.SKIP;
     }
 
     public Integer getStaffId() {
@@ -64,12 +62,28 @@ public class RecurringScheduleRequest {
         this.staffId = staffId;
     }
 
-    public Integer getDayOfWeek() {
-        return dayOfWeek;
+    public Date getStartDate() {
+        return startDate;
     }
 
-    public void setDayOfWeek(Integer dayOfWeek) {
-        this.dayOfWeek = dayOfWeek;
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
+    }
+
+    public List<Integer> getDaysOfWeek() {
+        return daysOfWeek;
+    }
+
+    public void setDaysOfWeek(List<Integer> daysOfWeek) {
+        this.daysOfWeek = daysOfWeek;
     }
 
     public ShiftAssignmentRequest.ShiftType getShiftType() {
@@ -80,22 +94,6 @@ public class RecurringScheduleRequest {
         this.shiftType = shiftType;
     }
 
-    public Integer getMonth() {
-        return month;
-    }
-
-    public void setMonth(Integer month) {
-        this.month = month;
-    }
-
-    public Integer getYear() {
-        return year;
-    }
-
-    public void setYear(Integer year) {
-        this.year = year;
-    }
-
     public EScheduleStatus getStatus() {
         return status;
     }
@@ -104,11 +102,11 @@ public class RecurringScheduleRequest {
         this.status = status;
     }
 
-    public ConflictAction getConflictAction() {
+    public ShiftAssignmentRequest.ConflictAction getConflictAction() {
         return conflictAction;
     }
 
-    public void setConflictAction(ConflictAction conflictAction) {
+    public void setConflictAction(ShiftAssignmentRequest.ConflictAction conflictAction) {
         this.conflictAction = conflictAction;
     }
 }

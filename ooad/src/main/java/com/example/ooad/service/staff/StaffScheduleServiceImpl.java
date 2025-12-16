@@ -241,32 +241,36 @@ public class StaffScheduleServiceImpl implements StaffScheduleService {
         List<BulkOperationResponse.ConflictInfo> conflicts = new ArrayList<>();
         List<Date> createdDates = new ArrayList<>();
 
-        YearMonth yearMonth = YearMonth.of(request.getYear(), request.getMonth());
-        LocalDate firstDay = yearMonth.atDay(1);
-        LocalDate lastDay = yearMonth.atEndOfMonth();
+        LocalDate startDate = request.getStartDate().toLocalDate();
+        LocalDate endDate = request.getEndDate().toLocalDate();
+        List<Integer> daysOfWeek = request.getDaysOfWeek();
         
-        // Convert dayOfWeek (1=Monday, 7=Sunday) to Java DayOfWeek
-        DayOfWeek targetDayOfWeek = DayOfWeek.of(request.getDayOfWeek());
+        // Convert daysOfWeek list to Set of DayOfWeek for quick lookup
+        java.util.Set<DayOfWeek> targetDays = new java.util.HashSet<>();
+        for (Integer day : daysOfWeek) {
+            targetDays.add(DayOfWeek.of(day)); // 1=Monday, 7=Sunday (ISO-8601)
+        }
         
-        // Duyệt qua từng ngày trong tháng
-        LocalDate currentDate = firstDay;
-        while (!currentDate.isAfter(lastDay)) {
-            if (currentDate.getDayOfWeek() == targetDayOfWeek) {
+        // Duyệt qua từng ngày từ startDate đến endDate
+        LocalDate currentDate = startDate;
+        while (!currentDate.isAfter(endDate)) {
+            if (targetDays.contains(currentDate.getDayOfWeek())) {
                 Date sqlDate = Date.valueOf(currentDate);
                 
                 // Bỏ qua ngày quá khứ
                 if (canModifySchedule(sqlDate)) {
                     ShiftAssignmentRequest shiftRequest = new ShiftAssignmentRequest();
                     shiftRequest.setStaffId(request.getStaffId());
-                    shiftRequest.setScheduleDate(sqlDate);
+                    shiftRequest.setDate(sqlDate);
                     shiftRequest.setShiftType(request.getShiftType());
                     shiftRequest.setStatus(request.getStatus());
+                    shiftRequest.setConflictAction(request.getConflictAction());
 
                     try {
                         List<ScheduleSlotResponse> slots = assignShift(shiftRequest);
                         if (slots.isEmpty()) {
                             skippedCount++;
-                            if (request.getConflictAction() == RecurringScheduleRequest.ConflictAction.CANCEL) {
+                            if (request.getConflictAction() == ShiftAssignmentRequest.ConflictAction.CANCEL) {
                                 throw new IllegalArgumentException("Conflict found and action is CANCEL");
                             }
                         } else {
@@ -274,7 +278,7 @@ public class StaffScheduleServiceImpl implements StaffScheduleService {
                             createdDates.add(sqlDate);
                         }
                     } catch (Exception e) {
-                        if (request.getConflictAction() == RecurringScheduleRequest.ConflictAction.CANCEL) {
+                        if (request.getConflictAction() == ShiftAssignmentRequest.ConflictAction.CANCEL) {
                             throw new IllegalArgumentException("Conflict found: " + e.getMessage());
                         }
                         errorCount++;
@@ -383,11 +387,11 @@ public class StaffScheduleServiceImpl implements StaffScheduleService {
                             staffId, sqlTargetDate, sourceSlot.getStartTime());
 
                     if (exists) {
-                        RecurringScheduleRequest.ConflictAction action = request.getConflictAction();
-                        if (action == RecurringScheduleRequest.ConflictAction.SKIP) {
+                        ShiftAssignmentRequest.ConflictAction action = request.getConflictAction();
+                        if (action == ShiftAssignmentRequest.ConflictAction.SKIP) {
                             skippedCount++;
                             continue;
-                        } else if (action == RecurringScheduleRequest.ConflictAction.CANCEL) {
+                        } else if (action == ShiftAssignmentRequest.ConflictAction.CANCEL) {
                             errorCount++;
                             BulkOperationResponse.ConflictInfo conflictInfo = new BulkOperationResponse.ConflictInfo();
                             conflictInfo.setDate(sqlTargetDate);

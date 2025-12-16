@@ -16,16 +16,25 @@ public class BulkShiftAssignmentRequest {
     @NotNull(message = "Staff ID is required")
     private Integer staffId;
     
-    @NotEmpty(message = "At least one schedule date is required")
-    private List<Date> scheduleDates;
+    @NotEmpty(message = "At least one date is required")
+    private List<Date> dates;
     
     @NotNull(message = "Shift type is required")
     private ShiftAssignmentRequest.ShiftType shiftType;
     
     private EScheduleStatus status;
+    
+    /**
+     * Hành động khi gặp lịch trùng:
+     * SKIP - Bỏ qua ngày trùng
+     * OVERWRITE - Ghi đè lịch cũ
+     * CANCEL - Hủy thao tác
+     */
+    private ShiftAssignmentRequest.ConflictAction conflictAction;
 
     public BulkShiftAssignmentRequest() {
         this.status = EScheduleStatus.AVAILABLE;
+        this.conflictAction = ShiftAssignmentRequest.ConflictAction.SKIP;
     }
 
     public Integer getStaffId() {
@@ -36,12 +45,29 @@ public class BulkShiftAssignmentRequest {
         this.staffId = staffId;
     }
 
+    public List<Date> getDates() {
+        return dates;
+    }
+
+    public void setDates(List<Date> dates) {
+        this.dates = dates;
+    }
+    
+    // Alias for backward compatibility
     public List<Date> getScheduleDates() {
-        return scheduleDates;
+        return dates;
     }
 
     public void setScheduleDates(List<Date> scheduleDates) {
-        this.scheduleDates = scheduleDates;
+        this.dates = scheduleDates;
+    }
+    
+    public ShiftAssignmentRequest.ConflictAction getConflictAction() {
+        return conflictAction;
+    }
+
+    public void setConflictAction(ShiftAssignmentRequest.ConflictAction conflictAction) {
+        this.conflictAction = conflictAction;
     }
 
     public ShiftAssignmentRequest.ShiftType getShiftType() {

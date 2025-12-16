@@ -16,8 +16,8 @@ public class ShiftAssignmentRequest {
     @NotNull(message = "Staff ID is required")
     private Integer staffId;
     
-    @NotNull(message = "Schedule date is required")
-    private Date scheduleDate;
+    @NotNull(message = "Date is required")
+    private Date date;
     
     /**
      * Loại ca: MORNING (sáng 8h-12h) hoặc AFTERNOON (chiều 13h-17h)
@@ -27,6 +27,20 @@ public class ShiftAssignmentRequest {
     
     private EScheduleStatus status;
     
+    /**
+     * Hành động khi gặp lịch trùng:
+     * SKIP - Bỏ qua ngày trùng
+     * OVERWRITE - Ghi đè lịch cũ
+     * CANCEL - Hủy thao tác
+     */
+    private ConflictAction conflictAction;
+    
+    public enum ConflictAction {
+        SKIP,       // Bỏ qua ngày trùng
+        OVERWRITE,  // Ghi đè lịch cũ
+        CANCEL      // Hủy toàn bộ thao tác
+    }
+    
     public enum ShiftType {
         MORNING,    // 8:00 - 12:00
         AFTERNOON   // 13:00 - 17:00
@@ -34,6 +48,7 @@ public class ShiftAssignmentRequest {
 
     public ShiftAssignmentRequest() {
         this.status = EScheduleStatus.AVAILABLE;
+        this.conflictAction = ConflictAction.SKIP;
     }
 
     public Integer getStaffId() {
@@ -44,12 +59,29 @@ public class ShiftAssignmentRequest {
         this.staffId = staffId;
     }
 
+    public Date getDate() {
+        return date;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
+    }
+    
+    // Alias for backward compatibility
     public Date getScheduleDate() {
-        return scheduleDate;
+        return date;
     }
 
     public void setScheduleDate(Date scheduleDate) {
-        this.scheduleDate = scheduleDate;
+        this.date = scheduleDate;
+    }
+    
+    public ConflictAction getConflictAction() {
+        return conflictAction;
+    }
+
+    public void setConflictAction(ConflictAction conflictAction) {
+        this.conflictAction = conflictAction;
     }
 
     public ShiftType getShiftType() {
