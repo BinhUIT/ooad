@@ -20,7 +20,6 @@ import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.repository.PatientRepository;
 import com.example.ooad.repository.ReceptionRepository;
-import com.example.ooad.repository.StaffRepository;
 import com.example.ooad.service.reception.interfaces.ReceptionService;
 import com.example.ooad.utils.Message;
 
@@ -29,14 +28,12 @@ public class ReceptionServiceImplementation implements ReceptionService {
     private final ReceptionRepository receptionRepo;
 
     private final PatientRepository patientRepo;
-    private final StaffRepository staffRepo;
+    
 
-    public ReceptionServiceImplementation(ReceptionRepository receptionRepo, PatientRepository patientRepo,
-            StaffRepository staffRepo) {
+    public ReceptionServiceImplementation(ReceptionRepository receptionRepo, PatientRepository patientRepo) {
         this.receptionRepo = receptionRepo;
 
         this.patientRepo = patientRepo;
-        this.staffRepo = staffRepo;
     }
 
     @Override
@@ -63,6 +60,9 @@ public class ReceptionServiceImplementation implements ReceptionService {
     @Override
     public Reception editReception(UpdateReceptionRequest request) {
         Reception reception = this.getReceptionById(request.getReceptionId());
+        if(reception.getStatus()==EReceptionStatus.DONE||reception.getStatus()==EReceptionStatus.CANCELLED) {
+            throw new BadRequestException(Message.cannotEditReception);
+        }
         Date currentDate = Date.valueOf(LocalDate.now());
         if (currentDate.after(reception.getReceptionDate())) {
             throw new BadRequestException(Message.cannotEditReception);
