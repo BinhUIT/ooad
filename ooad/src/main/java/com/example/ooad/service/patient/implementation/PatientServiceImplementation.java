@@ -1,7 +1,5 @@
 package com.example.ooad.service.patient.implementation;
 
-import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -12,6 +10,7 @@ import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Reception;
+import com.example.ooad.domain.enums.EReceptionStatus;
 import com.example.ooad.dto.request.PatientRequest;
 import com.example.ooad.dto.response.PatientResponse;
 import com.example.ooad.exception.BadRequestException;
@@ -106,6 +105,9 @@ public class PatientServiceImplementation implements PatientService {
         }
         List<Reception> receptions = receptionRepo.findByPatient_PatientId(p.getPatientId());
         for(Reception r: receptions) {
+            if(r.getStatus()==EReceptionStatus.IN_EXAMINATION||r.getStatus()==EReceptionStatus.WAITING) {
+                throw new BadRequestException(Message.cannotDeletePatient);
+            }
             r.setPatient(null);
         }
         List<Invoice> invoices = invoiceRepo.findByPatient_PatientId(p.getPatientId());

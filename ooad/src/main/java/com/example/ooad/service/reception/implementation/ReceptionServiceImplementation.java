@@ -2,6 +2,7 @@ package com.example.ooad.service.reception.implementation;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,14 +12,12 @@ import org.springframework.stereotype.Service;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.domain.entity.Staff;
-import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.domain.enums.EReceptionStatus;
-import com.example.ooad.dto.request.CreateReceptionRequest;
+import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.dto.request.CreateReceptionRequest;
 import com.example.ooad.dto.request.UpdateReceptionRequest;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
-import com.example.ooad.repository.AccountRepository;
 import com.example.ooad.repository.PatientRepository;
 import com.example.ooad.repository.ReceptionRepository;
 import com.example.ooad.repository.StaffRepository;
@@ -41,8 +40,18 @@ public class ReceptionServiceImplementation implements ReceptionService {
     }
 
     @Override
-    public Page<Reception> getListReceptions(int pageNumber, int pageSize) {
+    public Page<Reception> getListReceptions(int pageNumber, int pageSize, Optional<EReceptionStatus> status, Optional<Date> date) {
+
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        if(status.isPresent()) {
+            if(date.isPresent()) {
+                return receptionRepo.findAllByStatusAndReceptionDate(status.get(), date.get(),pageable);
+            }
+            return receptionRepo.findAllByStatusOrderByReceptionDateDesc(status.get(), pageable);
+        }
+        if(date.isPresent()) {
+            return receptionRepo.findAllByReceptionDate(date.get(), pageable);
+        }
         return receptionRepo.findAllByOrderByReceptionDateDesc(pageable);
     }
 

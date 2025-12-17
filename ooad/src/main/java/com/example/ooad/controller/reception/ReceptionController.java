@@ -1,5 +1,8 @@
 package com.example.ooad.controller.reception;
 
+import java.sql.Date;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.domain.entity.Staff;
+import com.example.ooad.domain.enums.EReceptionStatus;
 import com.example.ooad.dto.request.CreateReceptionRequest;
 import com.example.ooad.dto.request.UpdateReceptionRequest;
 import com.example.ooad.dto.response.GlobalResponse;
@@ -34,8 +38,9 @@ public class ReceptionController {
         this.patientService = patientServive;
     }
     @GetMapping("/receptionist/all_receptions")
-    public ResponseEntity<GlobalResponse<Page<Reception>>> getAllReceptions(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "7") int pageSize) {
-        Page<Reception> result = receptionService.getListReceptions(pageNumber, pageSize);
+    public ResponseEntity<GlobalResponse<Page<Reception>>> getAllReceptions(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "7") int pageSize,
+@RequestParam Optional<EReceptionStatus> status, @RequestParam Optional<Date> date) {
+        Page<Reception> result = receptionService.getListReceptions(pageNumber, pageSize, status , date);
         GlobalResponse<Page<Reception>> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -45,13 +50,13 @@ public class ReceptionController {
         GlobalResponse<Reception> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     } 
-    @PutMapping("/receptionist/update")
+    @PutMapping({"/receptionist/reception/update","/doctor/reception/update"})
     public ResponseEntity<GlobalResponse<Reception>> updateReception(@RequestBody UpdateReceptionRequest request) {
         Reception result = receptionService.editReception(request);
         GlobalResponse<Reception> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-    @PostMapping("/receptionist/create")
+    @PostMapping("/receptionist/reception/create")
     public ResponseEntity<GlobalResponse<Reception>> createReception(@RequestBody CreateReceptionRequest request, Authentication auth) {
         String accountName = auth.getName();
         Staff receptionist = accountService.getStaffIdFromAccountName(accountName);

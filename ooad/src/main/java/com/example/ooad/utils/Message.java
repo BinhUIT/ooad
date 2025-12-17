@@ -30,4 +30,5 @@ public class Message {
     public static final String appointmentNotFound = "Appointment not found";
     public static final String medicalRecordNotFound = "Medical record not found";
     public static final String invoiceNotFound ="Invoice not found";
+    public static final String cannotDeletePatient = "You can not delete this patient";
 }
