@@ -1,6 +1,7 @@
 package com.example.ooad.service.reception.implementation;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -43,6 +44,10 @@ public class ReceptionServiceImplementationTest {
     private PatientRepository patientRepo;
     @InjectMocks
     private ReceptionServiceImplementation receptionService;
+
+    private Date getDaysFromNow(int days) {
+        return Date.valueOf(LocalDate.now().plusDays(days));
+    }
     @Test
     void getListReceptionsNoFilter_Success() {
         Page<Reception> fakeResult = new PageImpl<>(Arrays.asList(new Reception()));
@@ -80,7 +85,7 @@ public class ReceptionServiceImplementationTest {
         UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1,EReceptionStatus.CANCELLED);
         Reception fakeReception= new Reception();
         fakeReception.setReceptionId(1);
-        fakeReception.setReceptionDate(Date.valueOf("2025-12-17"));
+        fakeReception.setReceptionDate(getDaysFromNow(0));
         
         when(receptionRepo.findById(1)).thenReturn(Optional.of(fakeReception));
         when(receptionRepo.save(any(Reception.class))).thenReturn(fakeReception);
@@ -97,7 +102,7 @@ public class ReceptionServiceImplementationTest {
         UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1,EReceptionStatus.CANCELLED);
         Reception fakeReception= new Reception();
         fakeReception.setReceptionId(1);
-        fakeReception.setReceptionDate(Date.valueOf("2025-12-17"));
+        fakeReception.setReceptionDate(getDaysFromNow(0));
         fakeReception.setStatus(EReceptionStatus.CANCELLED);
         when(receptionRepo.findById(1)).thenReturn(Optional.of(fakeReception));
         BadRequestException exception = assertThrows(BadRequestException.class, ()->{
@@ -112,9 +117,10 @@ public class ReceptionServiceImplementationTest {
         UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1,EReceptionStatus.CANCELLED);
         Reception fakeReception= new Reception();
         fakeReception.setReceptionId(1);
-        fakeReception.setReceptionDate(Date.valueOf("2025-12-16"));
+        fakeReception.setReceptionDate(getDaysFromNow(-1));
        
         when(receptionRepo.findById(1)).thenReturn(Optional.of(fakeReception));
+
         BadRequestException exception = assertThrows(BadRequestException.class, ()->{
             receptionService.editReception(fakeRequest);
         });
@@ -123,10 +129,27 @@ public class ReceptionServiceImplementationTest {
         verify(receptionRepo,never()).save(any(Reception.class));
     }
     @Test
+    void updateReception_Fail_ReceptionNotFound() {
+        UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1,EReceptionStatus.CANCELLED);
+
+        when(receptionRepo.findById(1)).thenReturn(Optional.empty());
+
+         NotFoundException exception = assertThrows(NotFoundException.class, ()->{
+            receptionService.editReception(fakeRequest);
+        });
+
+        assertNotNull(exception);
+        assertEquals(Message.receptionNotFound, exception.getMessage());
+        verify(receptionRepo, never()).save(any(Reception.class));
+
+
+    }
+    
+    @Test
     void createReceptionSuccess() {
         CreateReceptionRequest request = new CreateReceptionRequest();
         request.setPatientId(1);
-        request.setReceptionDate(Date.valueOf("2025-12-17"));
+        request.setReceptionDate(getDaysFromNow(0));
         Staff receptionist = new Staff();
         Account fakeAccount = new Account();
         fakeAccount.setRole(ERole.RECEPTIONIST);
@@ -142,11 +165,12 @@ public class ReceptionServiceImplementationTest {
         verify(receptionRepo,times(1)).save(any(Reception.class));
 
     }
+    
     @Test
     void createReception_Fail_NoPermission() {
         CreateReceptionRequest request = new CreateReceptionRequest();
         request.setPatientId(1);
-        request.setReceptionDate(Date.valueOf("2025-12-17"));
+        request.setReceptionDate(getDaysFromNow(0));
         Staff receptionist = new Staff();
         Account fakeAccount = new Account();
         fakeAccount.setRole(ERole.WAREHOUSE_STAFF);
@@ -163,11 +187,12 @@ public class ReceptionServiceImplementationTest {
         assertEquals(Message.cannotCreateReception, exception.getMessage());
         verify(receptionRepo, never()).save(any(Reception.class));
     }
+     
     @Test
     void createReception_Fail_InvalidDate() {
         CreateReceptionRequest request = new CreateReceptionRequest();
         request.setPatientId(1);
-        request.setReceptionDate(Date.valueOf("2025-12-16"));
+        request.setReceptionDate(getDaysFromNow(-1));
         Staff receptionist = new Staff();
         Account fakeAccount = new Account();
         fakeAccount.setRole(ERole.RECEPTIONIST);
@@ -189,7 +214,7 @@ public class ReceptionServiceImplementationTest {
     void createReception_Fail_PatientNotFound() {
         CreateReceptionRequest request = new CreateReceptionRequest();
         request.setPatientId(1);
-        request.setReceptionDate(Date.valueOf("2025-12-17"));
+        request.setReceptionDate(getDaysFromNow(0));
         Staff receptionist = new Staff();
         Account fakeAccount = new Account();
         fakeAccount.setRole(ERole.RECEPTIONIST);
