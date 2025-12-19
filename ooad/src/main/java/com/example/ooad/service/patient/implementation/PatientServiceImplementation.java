@@ -2,9 +2,11 @@ package com.example.ooad.service.patient.implementation;
 
 import java.util.List;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 
+import com.example.ooad.domain.entity.Account;
 import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.domain.entity.MedicalRecord;
@@ -21,6 +23,7 @@ import com.example.ooad.repository.InvoiceRepository;
 import com.example.ooad.repository.MedicalRecordRepository;
 import com.example.ooad.repository.PatientRepository;
 import com.example.ooad.repository.ReceptionRepository;
+import com.example.ooad.service.auth.interfaces.AuthService;
 import com.example.ooad.service.patient.interfaces.PatientService;
 import com.example.ooad.utils.DateTimeUtil;
 import com.example.ooad.utils.Message;
@@ -37,14 +40,18 @@ public class PatientServiceImplementation implements PatientService {
     private final ReceptionRepository receptionRepo;
     private final InvoiceRepository invoiceRepo;
     private final MedicalRecordRepository medicalRecordRepo;
+    private final AuthService authService;
+
     public PatientServiceImplementation(PatientRepository patientRepo, ActorValidator actorValidator,MedicalRecordRepository medicalRecordRepo,
-         AppointmentRepository appointmentRepo, ReceptionRepository receptionRepo,InvoiceRepository invoiceRepo ) {
+         AppointmentRepository appointmentRepo, ReceptionRepository receptionRepo,
+         InvoiceRepository invoiceRepo, AuthService authService ) {
         this.patientRepo = patientRepo;
         this.actorValidator = actorValidator;
         this.appointmentRepo= appointmentRepo;
         this.receptionRepo= receptionRepo;
         this.invoiceRepo = invoiceRepo;
         this.medicalRecordRepo= medicalRecordRepo;
+        this.authService= authService;
     }
     private void validateRequest(PatientRequest request, BindingResult bindingResult) {
         if(bindingResult.hasErrors()) {
@@ -147,6 +154,18 @@ public class PatientServiceImplementation implements PatientService {
     public List<Invoice> getInvoiceOfPatient(int patientId) {
         Patient p = findPatientById(patientId);
         return invoiceRepo.findByPatient_PatientId(p.getPatientId());
+    }
+
+    @Override
+    public Patient getPatientFromAuth(Authentication auth) {
+        Account account = authService.getAccountFromAuth(auth);
+        Patient p = patientRepo.findByAccountId(account.getAccountId()).orElseThrow(()->new NotFoundException(Message.patientNotFound));
+        return p;
+    }
+
+    @Override
+    public PatientResponse getPatientResponseFromAuth(Authentication auth) {
+        return PatientMapper.getResponseFromPatient(this.getPatientFromAuth(auth));
     }
 
     

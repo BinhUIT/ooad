@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 public enum EScheduleStatus {
     AVAILABLE,
     ON_LEAVE,
-    CANCELLED;
+    CANCELLED,
+    BOOKED;
 
     @JsonCreator
     public static EScheduleStatus fromString(String key) {
@@ -23,6 +24,8 @@ public enum EScheduleStatus {
                 return ON_LEAVE;
             if (lower.contains("cancel") || lower.contains("huy") || lower.contains("hủy"))
                 return CANCELLED;
+            if(lower.contains("booked")||lower.contains("Da dat")) 
+                return BOOKED;
             // Default fallback
             return AVAILABLE;
         }

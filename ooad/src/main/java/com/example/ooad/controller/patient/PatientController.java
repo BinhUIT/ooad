@@ -1,9 +1,12 @@
 package com.example.ooad.controller.patient;
 
 import java.util.List;
+
 import com.example.ooad.domain.entity.Invoice;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.MedicalRecord;
+import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.dto.request.PatientRequest;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.dto.response.PatientResponse;
@@ -173,6 +177,13 @@ public class PatientController {
         List<Invoice> invoices= patientService.getInvoiceOfPatient(patientId);
         PatientTabsResponse result = new PatientTabsResponse(appointments, medicalRecords, invoices);
         GlobalResponse<PatientTabsResponse> response = new GlobalResponse<>(result, Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/patient/auth")
+    public ResponseEntity<GlobalResponse<PatientResponse>> getPatientFromAuth(Authentication auth) {
+        PatientResponse result = patientService.getPatientResponseFromAuth(auth);
+        GlobalResponse<PatientResponse> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

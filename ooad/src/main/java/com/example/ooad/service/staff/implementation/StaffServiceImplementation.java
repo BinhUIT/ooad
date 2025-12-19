@@ -18,6 +18,7 @@ import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.entity.StaffSchedule;
 import com.example.ooad.domain.enums.EScheduleStatus;
 import com.example.ooad.domain.enums.EStatus;
+import com.example.ooad.dto.request.CreateAccountDto;
 import com.example.ooad.dto.request.StaffFilterRequest;
 import com.example.ooad.dto.request.StaffRequest;
 import com.example.ooad.dto.response.StaffResponse;
@@ -25,10 +26,9 @@ import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.ConflictException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.repository.AccountRepository;
-import com.example.ooad.dto.request.CreateAccountDto;
-import com.example.ooad.service.auth.interfaces.AuthService;
 import com.example.ooad.repository.StaffRepository;
 import com.example.ooad.repository.StaffScheduleRepository;
+import com.example.ooad.service.auth.interfaces.AuthService;
 import com.example.ooad.service.staff.interfaces.StaffService;
 import com.example.ooad.utils.DateTimeUtil;
 import com.example.ooad.utils.Message;
@@ -251,5 +251,10 @@ public class StaffServiceImplementation implements StaffService {
         if (account != null) {
             accountRepo.delete(account);
         }
+    }
+
+    @Override
+    public List<Staff> findStaffByRole(String role) {
+       return staffRepo.findByPositionIgnoreCase(role);
     }
 }

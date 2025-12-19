@@ -98,4 +98,10 @@ public class AuthServiceImplementation implements UserDetailsService, AuthServic
         }
         throw new UnauthorizedException(Message.refreshTokenHetHan);
     }
+
+    @Override
+    public Account getAccountFromAuth(Authentication auth) {
+        String username = auth.getName();
+        return accountRepo.findByUsername(username);
+    }
 }

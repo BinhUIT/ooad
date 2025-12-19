@@ -1,6 +1,7 @@
 package com.example.ooad.domain.entity;
 
 import java.sql.Date;
+import java.time.LocalDate;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,7 +20,7 @@ public class Prescription {
     @ManyToOne
     @JoinColumn(name="record_id")
     private MedicalRecord record;
-    private Date prescriptionDate;
+    private Date prescriptionDate=Date.valueOf(LocalDate.now());
     private String notes;
     public Prescription(int prescriptionId, MedicalRecord record, Date prescriptionDate, String notes) {
         this.prescriptionId = prescriptionId;

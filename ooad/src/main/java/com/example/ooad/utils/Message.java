@@ -31,4 +31,12 @@ public class Message {
     public static final String medicalRecordNotFound = "Medical record not found";
     public static final String invoiceNotFound ="Invoice not found";
     public static final String cannotDeletePatient = "You can not delete this patient";
+    public static final String invalidAppointmentTime = "Invalid appointment time";
+    public static final String wrongDoctorId = "Wrong doctor id";
+    public static final String cannotBookAppointment ="You can not book appointment";
+    public static final String noPermission="You can not access this resource";
+    public static final String prescriptionNotFound ="Prescription not found";
+    public static final String invalidData="Invalid data";
+    public static final String medicineNotFound = "Medicine not found";
+    public static final String scheduleNotFound="Schedule not found";
 }

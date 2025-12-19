@@ -2,6 +2,7 @@ package com.example.ooad.service.staff.interfaces;
 
 import java.sql.Date;
 import java.time.LocalTime;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.validation.BindingResult;
@@ -25,4 +26,6 @@ public interface StaffService {
     public Page<StaffResponse> searchStaffs(StaffFilterRequest filter);
 
     public void deleteStaff(int id);
+
+    public List<Staff> findStaffByRole(String role);
 }
