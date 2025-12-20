@@ -17,4 +17,6 @@ public interface AppointmentService {
     public Page<Appointment> getAppointmentHistory(int pageNumber, int pageSize,Patient patient, Optional<EAppointmentStatus> status, Optional<Date> appointmentDate);
     public Appointment patientGetAppointmentById(Patient patient, int appointmentId);
     public List<StaffSchedule> getScheduleOfDoctor(int doctorId, Date selectedDate);
+    public Page<Appointment> getAppointmens(int pageNumber, int pageSize, Optional<String> patientName, Optional<EAppointmentStatus> status, Optional<Date> appointmentDate);
+    public void endSession();
 }

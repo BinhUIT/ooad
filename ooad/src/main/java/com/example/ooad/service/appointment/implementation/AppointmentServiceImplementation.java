@@ -1,6 +1,7 @@
 package com.example.ooad.service.appointment.implementation;
 
 import java.sql.Date;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -88,6 +89,31 @@ public class AppointmentServiceImplementation implements AppointmentService {
     @Override
     public List<StaffSchedule> getScheduleOfDoctor(int doctorId, Date selectedDate) {
         return staffScheduleRepo.findByStaff_StaffIdAndScheduleDateOrderByStartTimeAsc(doctorId,selectedDate);
+    }
+
+    @Override
+    public Page<Appointment> getAppointmens(int pageNumber, int pageSize, Optional<String> patientName, Optional<EAppointmentStatus> status, Optional<Date> appointmentDate) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        String queryName = patientName.orElse(null);
+        EAppointmentStatus queryStatus = status.orElse(null);
+        Date queryDate= appointmentDate.orElse(null);
+        return appointmentRepo.getAppointments(pageable, queryStatus, queryDate, queryName);
+    }
+
+    @Override
+    public void endSession() {
+        List<Appointment> appointments = appointmentRepo.findByStatus(EAppointmentStatus.SCHEDULED);
+        for(Appointment a: appointments) {
+            if(isAppointmentExpire(a)){
+                a.setStatus(EAppointmentStatus.NOSHOW);
+            }
+        }
+        appointmentRepo.saveAll(appointments);
+    }
+    private boolean isAppointmentExpire(Appointment appointment) {
+        LocalTime current = LocalTime.now();
+        LocalTime appointmentMaxTime = appointment.getAppointmentTime().plusHours(1);
+        return appointmentMaxTime.isBefore(current);
     }
     
 }

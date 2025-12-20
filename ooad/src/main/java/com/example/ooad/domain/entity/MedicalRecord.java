@@ -44,6 +44,12 @@ public class MedicalRecord {
     public Reception getReception() {
         return reception;
     }
+    public int getPatientId() {
+        return this.reception.getPatient().getPatientId();
+    }
+    public String getPatientName() {
+        return this.reception.getPatient().getFullName();
+    }
     public void setReception(Reception reception) {
         this.reception = reception;
     }

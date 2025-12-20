@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,12 +41,11 @@ public class PrescriptionServiceImplementation implements PrescriptionService{
         this.medicineRepo = medicineRepo;
     }
     @Override
-    public Page<Prescription> getAllPrescription(int pageNumber, int pageSize, Optional<Date> prescriptionDate) {
+    public Page<Prescription> getAllPrescription(int pageNumber, int pageSize, Optional<Date> prescriptionDate, Optional<String> patientName) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        if(prescriptionDate.isPresent()) {
-            return prescriptionRepo.findByPrescriptionDate(pageable, prescriptionDate.get());
-        }
-        return prescriptionRepo.findAll(pageable);
+        Date pDate = prescriptionDate.orElse(null);
+        String pName = patientName.orElse(null);
+        return prescriptionRepo.findPrescriptions(pageable, pDate, pName);
     }
 
     @Override
@@ -56,10 +54,10 @@ public class PrescriptionServiceImplementation implements PrescriptionService{
     }
 
     @Override
-    public Page<PrescriptionDetail> getPrescriptionDetailOfPrescription(int pageNumber, int pageSize,
+    public List<PrescriptionDetail> getPrescriptionDetailOfPrescription(
             int prescriptionId) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        return prescriptionDetailRepo.findByPrescription_PrescriptionId(pageable, prescriptionId);
+        
+        return prescriptionDetailRepo.findByPrescription_PrescriptionId( prescriptionId);
     }
     @Override
     @Transactional

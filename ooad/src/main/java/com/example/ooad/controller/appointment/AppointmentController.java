@@ -45,6 +45,13 @@ public class AppointmentController {
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    @GetMapping({"/receptionist/appointments","/admin/appointments"})
+    public ResponseEntity<GlobalResponse<Page<Appointment>>> getAppointmentsList(@RequestParam(defaultValue = "0") int pageNumber,
+@RequestParam(defaultValue = "7") int pageSize, @RequestParam("patientName") Optional<String> patientName, @RequestParam("status") Optional<EAppointmentStatus> status, @RequestParam("appointmentDate") Optional<Date> appointmentDate) {
+     Page<Appointment> result = appointmentService.getAppointmens(pageNumber, pageSize, patientName, status, appointmentDate);
+    GlobalResponse<Page<Appointment>> response = new GlobalResponse<>(result, Message.success, 200);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+}
 
     @PostMapping("/patient/book_appointment") 
     public ResponseEntity<GlobalResponse<Appointment>> bookAppointment(@RequestBody BookAppointmentRequest request, Authentication auth) {
@@ -80,5 +87,12 @@ public class AppointmentController {
         Appointment result = appointmentService.patientGetAppointmentById(p, appointmentId);
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/receptionist/end_session") 
+    public ResponseEntity<GlobalResponse<String>> endSession() {
+        appointmentService.endSession();
+        GlobalResponse<String> response = new GlobalResponse<>("", Message.success,200);
+         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
