@@ -10,6 +10,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.example.ooad.domain.compositekey.PrescriptionDetailKey;
+import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Medicine;
 import com.example.ooad.domain.entity.Prescription;
 import com.example.ooad.domain.entity.PrescriptionDetail;
@@ -63,16 +65,17 @@ public class PrescriptionServiceImplementation implements PrescriptionService{
     @Transactional
     public Prescription createPrescription(PrescriptionRequest request) {
         Prescription prescription = new Prescription();
-        return fillInfoToPrescription(prescription, request);
+        
+        return fillInfoToPrescription(prescription, request,true);
     }
     @Override
     @Transactional
     public Prescription updatePrescription(PrescriptionRequest request, int prescriptionId) {
         Prescription prescription = this.getPrescriptionById(prescriptionId);
-        return fillInfoToPrescription(prescription, request);
+        return fillInfoToPrescription(prescription, request,false);
     }
     
-    private Prescription fillInfoToPrescription(Prescription prescription, PrescriptionRequest request) {
+    private Prescription fillInfoToPrescription(Prescription prescription, PrescriptionRequest request, boolean isCreate) {
         clearPrescriptionDetail(prescription);
         prescription.setNotes(request.getNotes());
         prescription.setRecord(medicalRecordService.findMedicalRecordById(request.getRecordId()));
@@ -83,23 +86,26 @@ public class PrescriptionServiceImplementation implements PrescriptionService{
         
         for(PrescriptionDetailRequest detailRequest: request.getPrescriptionDetails()) {
             
-            prescriptionDetails.add(fromRequestToPrescriptionDetail(prescription, detailRequest, medicines));
+            prescriptionDetails.add(fromRequestToPrescriptionDetail(prescription, detailRequest, medicines,isCreate));
         }
         prescriptionDetailRepo.saveAll(prescriptionDetails);
         return prescription;
 
 
     }
-    private PrescriptionDetail fromRequestToPrescriptionDetail(Prescription prescription, PrescriptionDetailRequest detailRequest, List<Medicine> medicines) {
-        if(prescription.getPrescriptionId()!=0&&prescription.getPrescriptionId()!=detailRequest.getPrescriptionId()) {
+    private PrescriptionDetail fromRequestToPrescriptionDetail(Prescription prescription, PrescriptionDetailRequest detailRequest, List<Medicine> medicines, boolean isCreate) {
+        if(!isCreate&&prescription.getPrescriptionId()!=detailRequest.getPrescriptionId()) {
                 throw new BadRequestException(Message.invalidData);
             }
         PrescriptionDetail prescriptionDetail = new PrescriptionDetail();
         prescriptionDetail.setDays(detailRequest.getDays());
         prescriptionDetail.setDosage(detailRequest.getDosage());
         prescriptionDetail.setQuantity(detailRequest.getQuantity());
-        prescriptionDetail.setPrescription(prescription);
+        
         Medicine med = findByMedicineIdInList(medicines, detailRequest.getMedicineId());
+        PrescriptionDetailKey key = new PrescriptionDetailKey(prescription.getPrescriptionId(), med.getMedicineId());
+        prescriptionDetail.setPrescriptionDetailId(key);
+        prescriptionDetail.setPrescription(prescription);
         prescriptionDetail.setMedicine(med);
         return prescriptionDetail;
     }
@@ -114,6 +120,15 @@ public class PrescriptionServiceImplementation implements PrescriptionService{
     private void clearPrescriptionDetail(Prescription prescription) {
         List<PrescriptionDetail> prescriptionDetails = prescriptionDetailRepo.findByPrescription_PrescriptionId(prescription.getPrescriptionId());
         prescriptionDetailRepo.deleteAll(prescriptionDetails);
+    }
+
+    @Override
+    public List<MedicalRecord> getRecords() {
+        return medicalRecordService.findAllRecords();
+    }
+    @Override
+    public List<Medicine> getMedicines() {
+        return medicineRepo.findAll();
     }
     
 }

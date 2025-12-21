@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.ooad.domain.entity.MedicalRecord;
+import com.example.ooad.domain.entity.Medicine;
 import com.example.ooad.domain.entity.Prescription;
 import com.example.ooad.domain.entity.PrescriptionDetail;
 import com.example.ooad.dto.request.PrescriptionRequest;
@@ -57,6 +59,18 @@ public class PrescriptionController {
     public ResponseEntity<GlobalResponse<Prescription>> updatePrescription(@RequestBody PrescriptionRequest request, @PathVariable int prescriptionId) {
          Prescription result = prescriptionService.updatePrescription(request, prescriptionId);
         GlobalResponse<Prescription> response = new GlobalResponse<>(result, Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @GetMapping("/doctor/records")
+    public ResponseEntity<GlobalResponse<List<MedicalRecord>>> getMedicalRecords() {
+        List<MedicalRecord> result = prescriptionService.getRecords();
+        GlobalResponse<List<MedicalRecord>> response = new GlobalResponse<>(result,Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @GetMapping("/doctor/medicines")
+    public ResponseEntity<GlobalResponse<List<Medicine>>> getMedicines() {
+        List<Medicine> result = prescriptionService.getMedicines();
+        GlobalResponse<List<Medicine>> response = new GlobalResponse<>(result,Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

@@ -1,5 +1,7 @@
 package com.example.ooad.service.medical_record.implementation;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.example.ooad.domain.entity.MedicalRecord;
@@ -16,6 +18,11 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
     @Override
     public MedicalRecord findMedicalRecordById(int recordId) {
         return medicalRecordRepo.findById(recordId).orElseThrow(()->new NotFoundException(Message.medicalRecordNotFound));
+    }
+
+    @Override
+    public List<MedicalRecord> findAllRecords() {
+        return medicalRecordRepo.findAllByOrderByRecordIdDesc();
     }
     
 }
