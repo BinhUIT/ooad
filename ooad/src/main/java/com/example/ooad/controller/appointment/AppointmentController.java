@@ -89,10 +89,4 @@ public class AppointmentController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/receptionist/end_session") 
-    public ResponseEntity<GlobalResponse<String>> endSession() {
-        appointmentService.endSession();
-        GlobalResponse<String> response = new GlobalResponse<>("", Message.success,200);
-         return new ResponseEntity<>(response, HttpStatus.OK);
-    }
 }

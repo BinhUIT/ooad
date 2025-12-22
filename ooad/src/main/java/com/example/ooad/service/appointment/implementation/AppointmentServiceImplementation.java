@@ -1,6 +1,7 @@
 package com.example.ooad.service.appointment.implementation;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -111,6 +112,10 @@ public class AppointmentServiceImplementation implements AppointmentService {
         appointmentRepo.saveAll(appointments);
     }
     private boolean isAppointmentExpire(Appointment appointment) {
+        Date currentDate = Date.valueOf(LocalDate.now());
+        if(!appointment.getAppointmentDate().before(currentDate)) {
+            return false;
+        }
         LocalTime current = LocalTime.now();
         LocalTime appointmentMaxTime = appointment.getAppointmentTime().plusHours(1);
         return appointmentMaxTime.isBefore(current);
