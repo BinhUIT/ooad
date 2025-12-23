@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,8 +21,8 @@ import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.entity.StaffSchedule;
 import com.example.ooad.domain.enums.EAppointmentStatus;
+import com.example.ooad.dto.request.AppointmentRequest;
 import com.example.ooad.dto.request.BookAppointmentRequest;
-import com.example.ooad.dto.request.ReceptionBookAppointmentRequest;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.service.appointment.interfaces.AppointmentService;
 import com.example.ooad.service.patient.interfaces.PatientService;
@@ -62,7 +63,7 @@ public class AppointmentController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     @PostMapping("/receptionist/book_appointment") 
-    public ResponseEntity<GlobalResponse<Appointment>> receptionistBookAppointment(@RequestBody ReceptionBookAppointmentRequest request) {
+    public ResponseEntity<GlobalResponse<Appointment>> receptionistBookAppointment(@RequestBody AppointmentRequest request) {
         Appointment result = appointmentService.receptionistBookAppointment(request);
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -102,6 +103,12 @@ public class AppointmentController {
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    @PutMapping({"/patient/appointment/update/{appointmentId}","/receptionist/appointment/update/{appointmentId}"})
+    public ResponseEntity<GlobalResponse<Appointment>> updateAppointment(@PathVariable int appointmentId, @RequestBody AppointmentRequest request, Authentication auth) {
+        Appointment result = appointmentService.editAppointment(auth, appointmentId, request);
+        GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    } 
 
 
 

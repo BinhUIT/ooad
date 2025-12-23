@@ -18,8 +18,8 @@ import com.example.ooad.domain.entity.StaffSchedule;
 import com.example.ooad.domain.enums.EAppointmentStatus;
 import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.domain.enums.EScheduleStatus;
+import com.example.ooad.dto.request.AppointmentRequest;
 import com.example.ooad.dto.request.BookAppointmentRequest;
-import com.example.ooad.dto.request.ReceptionBookAppointmentRequest;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.exception.UnauthorizedException;
@@ -55,11 +55,8 @@ public class AppointmentServiceImplementation implements AppointmentService {
     @Transactional
     public Appointment bookAppointment(BookAppointmentRequest request, Patient patient) {
         StaffSchedule schedule = staffScheduleRepo.findById(request.getScheduleId()).orElseThrow(()->new NotFoundException(Message.scheduleNotFound));
-        if(schedule.getStatus()!=EScheduleStatus.AVAILABLE) {
+        if(!checkSchedule(schedule)) {
             throw new BadRequestException(Message.cannotBookAppointment);
-        }
-        if(!schedule.getStaff().getPosition().equalsIgnoreCase("Doctor")){
-             throw new BadRequestException(Message.cannotBookAppointment);
         }
         Appointment appointment = new Appointment();
         appointment.setAppointmentDate(schedule.getScheduleDate());
@@ -131,7 +128,7 @@ public class AppointmentServiceImplementation implements AppointmentService {
     }
 
     @Override
-    public Appointment receptionistBookAppointment(ReceptionBookAppointmentRequest request) {
+    public Appointment receptionistBookAppointment(AppointmentRequest request) {
         Patient p = patientRepo.findById(request.getPatientId()).orElseThrow(()->new NotFoundException(Message.patientNotFound));
         return bookAppointment(request.getRequest(), p);
     }
@@ -141,16 +138,7 @@ public class AppointmentServiceImplementation implements AppointmentService {
     @Transactional
     public Appointment changeAppointmentStatus(Authentication auth, int appointmentId,EAppointmentStatus status) {
         Appointment appointment = this.findAppointmentById(appointmentId);
-         boolean isReceptionist = auth.getAuthorities().stream().anyMatch(grantedAuthority->{
-            
-            return grantedAuthority.getAuthority().equals(ERole.RECEPTIONIST.name());
-        });
-         if(!isReceptionist) {
-            Patient p = patientService.getPatientFromAuth(auth);
-            if(appointment.getPatient()==null||appointment.getPatient().getPatientId()!=p.getPatientId()){
-                throw new BadRequestException(Message.noPermission);
-            }
-        }
+        checkAuthority(auth, appointment);
         if(status==EAppointmentStatus.CANCELLED){
             freeSchedule(appointment);
         }
@@ -162,5 +150,58 @@ public class AppointmentServiceImplementation implements AppointmentService {
         StaffSchedule schedule = staffScheduleRepo.findByStaff_StaffIdAndStartTimeAndScheduleDate(appointment.getDoctorId(), appointment.getAppointmentTime(), appointment.getAppointmentDate());
         schedule.setStatus(EScheduleStatus.AVAILABLE);
         staffScheduleRepo.save(schedule);
+    }
+    private void checkAuthority(Authentication auth, Appointment appointment) {
+        boolean isReceptionist = auth.getAuthorities().stream().anyMatch(grantedAuthority->{
+            
+            return grantedAuthority.getAuthority().equals(ERole.RECEPTIONIST.name());
+        });
+         if(!isReceptionist) {
+            Patient p = patientService.getPatientFromAuth(auth);
+            if(appointment.getPatient()==null||appointment.getPatient().getPatientId()!=p.getPatientId()){
+                throw new BadRequestException(Message.noPermission);
+            }
+        }
+    }
+    private boolean checkSchedule(StaffSchedule schedule) {
+        if(!schedule.getStaff().getPosition().equalsIgnoreCase("Doctor")) {
+            return false;
+        }
+        if(schedule.getStatus()!=EScheduleStatus.AVAILABLE) {
+            return false;
+        } 
+        Date currentDate = Date.valueOf(LocalDate.now());
+        if(schedule.getScheduleDate().after(currentDate)) {
+            return true;
+        } 
+        if(schedule.getScheduleDate().before(currentDate)) {
+            return false;
+        } 
+        LocalTime currentTime=LocalTime.now();
+        return !schedule.getStartTime().isBefore(currentTime);
+
+    }
+
+    @Override
+    @Transactional
+    public Appointment editAppointment(Authentication auth, int appointmentId, AppointmentRequest request) {
+         Appointment appointment = this.findAppointmentById(appointmentId);
+         if(appointment.getStatus()!=EAppointmentStatus.SCHEDULED){
+            throw new BadRequestException(Message.cannotEdit);
+         }
+        checkAuthority(auth, appointment);
+        Patient p= patientRepo.findById(request.getPatientId()).orElseThrow(()->new NotFoundException(Message.patientNotFound));
+         StaffSchedule schedule = staffScheduleRepo.findById(request.getScheduleId()).orElseThrow(()->new NotFoundException(Message.scheduleNotFound));
+        if(!checkSchedule(schedule)) {
+            throw new BadRequestException(Message.cannotBookAppointment);
+        }
+        freeSchedule(appointment);
+        appointment.setAppointmentDate(schedule.getScheduleDate());
+        appointment.setPatient(p);
+        appointment.setAppointmentTime(schedule.getStartTime());
+        appointment.setStaff(schedule.getStaff());
+        schedule.setStatus(EScheduleStatus.BOOKED);
+        staffScheduleRepo.save(schedule);
+        return appointmentRepo.save(appointment);
     }
 }
