@@ -21,6 +21,7 @@ import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.entity.StaffSchedule;
 import com.example.ooad.domain.enums.EAppointmentStatus;
 import com.example.ooad.dto.request.BookAppointmentRequest;
+import com.example.ooad.dto.request.ReceptionBookAppointmentRequest;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.service.appointment.interfaces.AppointmentService;
 import com.example.ooad.service.patient.interfaces.PatientService;
@@ -60,6 +61,12 @@ public class AppointmentController {
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    @PostMapping("/receptionist/book_appointment") 
+    public ResponseEntity<GlobalResponse<Appointment>> receptionistBookAppointment(@RequestBody ReceptionBookAppointmentRequest request) {
+        Appointment result = appointmentService.receptionistBookAppointment(request);
+        GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
     @GetMapping("/unsecure/list_doctor") 
     public ResponseEntity<GlobalResponse<List<Staff>>> getListDoctor() {
         List<Staff> result = staffService.findStaffByRole("Doctor");
@@ -88,5 +95,14 @@ public class AppointmentController {
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @GetMapping({"/patient/change_appointment_status/{appointmentId}","/receptionist/change_appointment_status/{appointmentId}"})
+    public ResponseEntity<GlobalResponse<Appointment>> changeAppointmentStatus(@PathVariable int appointmentId, Authentication auth, @RequestParam(defaultValue="CANCELLED") EAppointmentStatus status) {
+        Appointment result = appointmentService.changeAppointmentStatus(auth, appointmentId, status);
+        GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
 
 }

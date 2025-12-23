@@ -9,20 +9,25 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.StaffSchedule;
 import com.example.ooad.domain.enums.EAppointmentStatus;
+import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.domain.enums.EScheduleStatus;
 import com.example.ooad.dto.request.BookAppointmentRequest;
+import com.example.ooad.dto.request.ReceptionBookAppointmentRequest;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.exception.UnauthorizedException;
 import com.example.ooad.repository.AppointmentRepository;
+import com.example.ooad.repository.PatientRepository;
 import com.example.ooad.repository.StaffScheduleRepository;
 import com.example.ooad.service.appointment.interfaces.AppointmentService;
+import com.example.ooad.service.patient.interfaces.PatientService;
 import com.example.ooad.utils.Message;
 
 import jakarta.transaction.Transactional;
@@ -31,10 +36,14 @@ public class AppointmentServiceImplementation implements AppointmentService {
     private final AppointmentRepository appointmentRepo;
     
     private final StaffScheduleRepository staffScheduleRepo;
-    public AppointmentServiceImplementation(AppointmentRepository appointmentRepo, StaffScheduleRepository staffScheduleRepo) {
+    private final PatientRepository patientRepo;
+    private final PatientService patientService;
+    public AppointmentServiceImplementation(AppointmentRepository appointmentRepo,
+         StaffScheduleRepository staffScheduleRepo, PatientRepository patientRepo, PatientService patientService) {
         this.appointmentRepo = appointmentRepo;
-       
+        this.patientRepo = patientRepo;
         this.staffScheduleRepo = staffScheduleRepo;
+        this.patientService= patientService;
     }
 
     @Override
@@ -120,5 +129,38 @@ public class AppointmentServiceImplementation implements AppointmentService {
         LocalTime appointmentMaxTime = appointment.getAppointmentTime().plusHours(1);
         return appointmentMaxTime.isBefore(current);
     }
+
+    @Override
+    public Appointment receptionistBookAppointment(ReceptionBookAppointmentRequest request) {
+        Patient p = patientRepo.findById(request.getPatientId()).orElseThrow(()->new NotFoundException(Message.patientNotFound));
+        return bookAppointment(request.getRequest(), p);
+    }
+
     
+    @Override
+    @Transactional
+    public Appointment changeAppointmentStatus(Authentication auth, int appointmentId,EAppointmentStatus status) {
+        Appointment appointment = this.findAppointmentById(appointmentId);
+         boolean isReceptionist = auth.getAuthorities().stream().anyMatch(grantedAuthority->{
+            
+            return grantedAuthority.getAuthority().equals(ERole.RECEPTIONIST.name());
+        });
+         if(!isReceptionist) {
+            Patient p = patientService.getPatientFromAuth(auth);
+            if(appointment.getPatient()==null||appointment.getPatient().getPatientId()!=p.getPatientId()){
+                throw new BadRequestException(Message.noPermission);
+            }
+        }
+        if(status==EAppointmentStatus.CANCELLED){
+            freeSchedule(appointment);
+        }
+        appointment.setStatus(status);
+        return appointmentRepo.save(appointment);
+    
+}
+    private void freeSchedule(Appointment appointment) {
+        StaffSchedule schedule = staffScheduleRepo.findByStaff_StaffIdAndStartTimeAndScheduleDate(appointment.getDoctorId(), appointment.getAppointmentTime(), appointment.getAppointmentDate());
+        schedule.setStatus(EScheduleStatus.AVAILABLE);
+        staffScheduleRepo.save(schedule);
+    }
 }

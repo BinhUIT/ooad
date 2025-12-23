@@ -21,7 +21,6 @@ import com.example.ooad.domain.enums.EReceptionStatus;
 import com.example.ooad.dto.request.CreateReceptionRequest;
 import com.example.ooad.dto.request.UpdateReceptionRequest;
 import com.example.ooad.dto.response.GlobalResponse;
-import com.example.ooad.dto.response.PatientResponse;
 import com.example.ooad.service.account.interfaces.AccountService;
 import com.example.ooad.service.patient.interfaces.PatientService;
 import com.example.ooad.service.reception.interfaces.ReceptionService;
@@ -64,11 +63,6 @@ public class ReceptionController {
         GlobalResponse<Reception> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-    @GetMapping("/receptionist/find_patient")
-    public ResponseEntity<GlobalResponse<PatientResponse>> findPatientByIdCard(@RequestParam(defaultValue = "") String idCard) {
-        PatientResponse result = patientService.findPatientByIdCard(idCard);
-        GlobalResponse<PatientResponse> response = new GlobalResponse<>(result,Message.success,200);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+    
 
 }
