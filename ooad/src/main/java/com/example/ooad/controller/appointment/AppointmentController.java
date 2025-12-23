@@ -109,6 +109,12 @@ public class AppointmentController {
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     } 
+    @GetMapping("/unsecure/appointment/scheduleId/{appointmentId}")
+    public ResponseEntity<GlobalResponse<Integer>> getScheduleId(@PathVariable int appointmentId) {
+        Integer result = appointmentService.getScheduleId(appointmentId);
+        GlobalResponse<Integer> response = new GlobalResponse<>(result, Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
 
 

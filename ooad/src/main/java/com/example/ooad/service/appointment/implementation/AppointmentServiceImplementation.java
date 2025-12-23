@@ -55,7 +55,7 @@ public class AppointmentServiceImplementation implements AppointmentService {
     @Transactional
     public Appointment bookAppointment(BookAppointmentRequest request, Patient patient) {
         StaffSchedule schedule = staffScheduleRepo.findById(request.getScheduleId()).orElseThrow(()->new NotFoundException(Message.scheduleNotFound));
-        if(!checkSchedule(schedule)) {
+        if(!checkSchedule(schedule)||schedule.getStatus()!=EScheduleStatus.AVAILABLE) {
             throw new BadRequestException(Message.cannotBookAppointment);
         }
         Appointment appointment = new Appointment();
@@ -167,9 +167,7 @@ public class AppointmentServiceImplementation implements AppointmentService {
         if(!schedule.getStaff().getPosition().equalsIgnoreCase("Doctor")) {
             return false;
         }
-        if(schedule.getStatus()!=EScheduleStatus.AVAILABLE) {
-            return false;
-        } 
+        
         Date currentDate = Date.valueOf(LocalDate.now());
         if(schedule.getScheduleDate().after(currentDate)) {
             return true;
@@ -203,5 +201,13 @@ public class AppointmentServiceImplementation implements AppointmentService {
         schedule.setStatus(EScheduleStatus.BOOKED);
         staffScheduleRepo.save(schedule);
         return appointmentRepo.save(appointment);
+    }
+
+    @Override
+    public Integer getScheduleId(int appointmentId) {
+        Appointment appointment = findAppointmentById(appointmentId);
+        StaffSchedule staffSchedule = staffScheduleRepo.findByStaff_StaffIdAndStartTimeAndScheduleDate(appointment.getDoctorId(), appointment.getAppointmentTime(), appointment.getAppointmentDate());
+        if(staffSchedule==null) return 0;
+        return staffSchedule.getScheduleId();
     }
 }

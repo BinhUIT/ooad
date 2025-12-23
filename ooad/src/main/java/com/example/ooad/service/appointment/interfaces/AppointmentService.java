@@ -24,4 +24,5 @@ public interface AppointmentService {
     public Appointment receptionistBookAppointment(AppointmentRequest request);
     public Appointment changeAppointmentStatus(Authentication auth, int appointmentId,EAppointmentStatus status);
     public Appointment editAppointment(Authentication auth, int appointmentId,AppointmentRequest request);
+    public Integer getScheduleId(int appointmentId);
 }
