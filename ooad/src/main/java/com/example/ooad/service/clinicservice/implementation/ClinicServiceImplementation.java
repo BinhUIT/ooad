@@ -3,6 +3,7 @@ package com.example.ooad.service.clinicservice.implementation;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -68,6 +69,12 @@ public class ClinicServiceImplementation implements ClinicService {
         }
         invoiceServiceDetailRepo.saveAll(listInvoiceServiceDetails);
         serviceRepo.delete(deletedService);
+    }
+    @Override
+    public Page<Service> searchService(int pageNumber, int pageSize, Optional<String> keyWord) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        String key = keyWord.orElse(null);
+        return serviceRepo.searchService(pageable, key);
     }
     
 }

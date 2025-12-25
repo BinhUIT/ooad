@@ -49,7 +49,7 @@ public class ReceptionController {
         GlobalResponse<Reception> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     } 
-    @PutMapping({"/receptionist/reception/update","/doctor/reception/update"})
+    @PutMapping({"/receptionist/reception/update"})
     public ResponseEntity<GlobalResponse<Reception>> updateReception(@RequestBody UpdateReceptionRequest request) {
         Reception result = receptionService.editReception(request);
         GlobalResponse<Reception> response = new GlobalResponse<>(result, Message.success,200);
