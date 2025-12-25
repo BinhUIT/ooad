@@ -33,6 +33,10 @@ public class ClinicServiceImplementation implements ClinicService {
        return serviceRepo.findAll(pageable);
     }
     @Override
+    public List<Service> findAllServices() {
+        return serviceRepo.findAll();
+    }
+    @Override
     public Service findServiceById(int serviceId) {
         return serviceRepo.findById(serviceId).orElseThrow(()-> new NotFoundException(Message.serviceNotFound));
     }
