@@ -1,273 +1,275 @@
-# ĐẶC TẢ CÁC USE CASE - PATIENT MANAGEMENT
-
-Tài liệu này mô tả các use case thuộc nhóm quản lý Bệnh nhân (Patient Management) dành cho Nhân viên/Quản trị trong hệ thống Private Clinic Management System.
-
-Gồm 5 use case chính:
-
-1. View and Filter Patients (Xem và lọc bệnh nhân)
-2. View Patient Details (Xem chi tiết bệnh nhân)
-3. Add New Patient (Thêm bệnh nhân mới)
-4. Edit Patient (Chỉnh sửa thông tin bệnh nhân)
-5. Delete Patient (Xóa bệnh nhân)
+# Manage Patient Use Case Specifications
 
 ---
 
-## UC_PATIENT_01: View and Filter Patients (Xem và lọc bệnh nhân)
+## 6.2.1. c
 
-### Mô tả
+### 6.2.1.1. Brief Description
 
-Nhân viên xem danh sách bệnh nhân và lọc theo nhiều tiêu chí.
+Allows staff to view a list of all patients and filter by various criteria such as name, phone, email, age, or gender.
 
-### Tác nhân chính
+### 6.2.1.2. Event Flow
 
-- Receptionist (Lễ tân)
-- Doctor (Bác sĩ)
-- Admin (Quản trị viên)
+#### 6.2.1.2.1. Main Event Flow
 
-### Điều kiện tiên quyết
+1. The staff member selects the "Patient Management" option from the navigation menu.
+2. The system retrieves and displays a paginated list of patients with PatientID, full name, phone, email, date of birth, appointment count, and medical record count.
+3. The staff applies filters or enters search keywords (name, phone, email, age range, gender).
+4. The staff clicks "Apply" or presses Enter to execute the search.
+5. The system filters the list according to the selected criteria.
+6. The system displays the filtered results with pagination.
 
-- Người dùng đã đăng nhập với vai trò Staff hoặc Admin
+#### 6.2.1.2.2. Alternative Event Flows
 
-### Điều kiện hậu
+##### 6.2.1.2.2.1. No Patients in System
 
-- Hiển thị danh sách bệnh nhân theo tiêu chí lọc với phân trang
+If no patients exist in the system, the system displays "No patients in the system yet."
 
-### Luồng sự kiện chính
+##### 6.2.1.2.2.2. No Matching Results
 
-| Bước | Staff                      | Hệ thống                                                                                                                                                                                                                                                                                                                                         |
-| ---- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1    | Chọn "Quản lý bệnh nhân"   |                                                                                                                                                                                                                                                                                                                                                  |
-| 2    |                            | Query danh sách bệnh nhân:<br>`SELECT p.*, COUNT(a.id) as appointment_count, COUNT(mr.id) as record_count`<br>`FROM Patient p`<br>`LEFT JOIN Appointment a ON p.patientID = a.patientID`<br>`LEFT JOIN MedicalRecord mr ON p.patientID = mr.patientID`<br>`GROUP BY p.patientID`<br>`ORDER BY p.patientID DESC`<br>`LIMIT :limit OFFSET :offset` |
-| 3    |                            | Hiển thị danh sách với các cột:<br>- PatientID<br>- Full name<br>- Phone<br>- Email<br>- DOB<br>- Số lượng appointments<br>- Số lượng medical records<br>- Nút hành động                                                                                                                                                                         |
-| 4    | Nhập tiêu chí lọc/tìm kiếm |                                                                                                                                                                                                                                                                                                                                                  |
-| 5    | Click "Áp dụng"            |                                                                                                                                                                                                                                                                                                                                                  |
-| 6    |                            | Query với điều kiện WHERE:<br>- Tên (LIKE '%keyword%')<br>- Số điện thoại (LIKE hoặc =)<br>- Email (LIKE hoặc =)<br>- Độ tuổi<br>- Giới tính                                                                                                                                                                                                     |
-| 7    |                            | Hiển thị kết quả lọc                                                                                                                                                                                                                                                                                                                             |
-| 8    | Xem kết quả                |                                                                                                                                                                                                                                                                                                                                                  |
+If no patients match the filter criteria, the system displays "No patients found matching your criteria" and allows the user to clear filters.
 
-### Luồng sự kiện phụ
+### 6.2.1.3. Special Requirements
 
-**2a. Không có bệnh nhân:**
+- Pagination should display 20-50 records per page.
+- Database indexes on phone_number, email, and full_name for performance.
+- Support export to Excel/PDF formats.
 
-- 2a.1. Hiển thị: "Chưa có bệnh nhân trong hệ thống"
+### 6.2.1.4. Pre-condition
 
-**6a. Không tìm thấy kết quả:**
+- The user is authenticated as Staff (Receptionist, Doctor, or Admin).
 
-- 6a.1. Hiển thị: "Không tìm thấy bệnh nhân phù hợp"
-- 6a.2. Cho phép xóa bộ lọc
+### 6.2.1.5. Post-condition
 
-### Ràng buộc nghiệp vụ
+- If successful: The patient list is displayed according to the applied filters with pagination.
+- If unsuccessful: An error message is shown.
 
-- Phân trang: 20-50 records/page
-- Index trên: phone_number, email, full_name
-- Hỗ trợ export danh sách ra Excel/PDF
+### 6.2.1.6. Extension Points
+
+- Clicking on a patient row opens View Patient Details.
+- Staff can access Add New Patient function from this view.
 
 ---
 
-## UC_PATIENT_02: View Patient Details (Xem chi tiết bệnh nhân)
+## 6.2.2. Use-case Specification: "View Patient Details"
 
-### Mô tả
+### 6.2.2.1. Brief Description
 
-Xem đầy đủ thông tin bệnh nhân bao gồm lịch sử khám, đơn thuốc, hóa đơn.
+Allows staff to view complete patient information including personal data, appointment history, medical records, and invoices.
 
-### Tác nhân chính
+### 6.2.2.2. Event Flow
 
-- Receptionist
-- Doctor
-- Pharmacist
-- Admin
+#### 6.2.2.2.1. Main Event Flow
 
-### Điều kiện tiên quyết
+1. The staff selects a patient and clicks "View Details."
+2. The system retrieves the patient record and associated data.
+3. The system displays a detailed view with multiple tabs:
+   - Tab 1: Personal Information (name, phone, email, DOB, gender, address)
+   - Tab 2: Appointment History (showing last 10 with "View All" option)
+   - Tab 3: Medical Records (showing last 10 with doctor name, diagnosis, disease type)
+   - Tab 4: Invoices (showing last 10 with date, amount, payment method, status)
+4. The staff navigates between tabs to view different information.
 
-- Bệnh nhân tồn tại trong hệ thống
+#### 6.2.2.2.2. Alternative Event Flows
 
-### Điều kiện hậu
+##### 6.2.2.2.2.1. Patient Not Found
 
-- Hiển thị chi tiết bệnh nhân với các tab thông tin
+If the patient has been deleted, the system displays "Patient not found" and returns to the list.
 
-### Luồng sự kiện chính
+##### 6.2.2.2.2.2. No Records in Tab
 
-| Bước | Staff                               | Hệ thống                                                                                                                                                                                                                                                                                                                                                                          |
-| ---- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Click "Xem chi tiết" trên bệnh nhân |                                                                                                                                                                                                                                                                                                                                                                                   |
-| 2    |                                     | Query thông tin bệnh nhân:<br>`SELECT * FROM Patient WHERE patientID = :id`                                                                                                                                                                                                                                                                                                       |
-| 3    |                                     | Query danh sách appointments:<br>`SELECT a.*, s.full_name as doctor_name, ss.date, ss.start_time, ss.end_time`<br>`FROM Appointment a`<br>`JOIN Staff s ON a.doctorID = s.staffID`<br>`JOIN StaffSchedule ss ON a.scheduleID = ss.scheduleID`<br>`WHERE a.patientID = :id`<br>`ORDER BY ss.date DESC, ss.start_time DESC`                                                         |
-| 4    |                                     | Query medical records:<br>`SELECT mr.*, s.full_name as doctor_name, dt.name as disease_name, p.total_cost`<br>`FROM MedicalRecord mr`<br>`JOIN Staff s ON mr.doctorID = s.staffID`<br>`JOIN DiseaseType dt ON mr.diseaseTypeID = dt.diseaseTypeID`<br>`LEFT JOIN Prescription p ON mr.recordID = p.recordID`<br>`WHERE mr.patientID = :id`<br>`ORDER BY mr.examination_date DESC` |
-| 5    |                                     | Query invoices:<br>`SELECT i.*, mp.name as payment_method`<br>`FROM Invoice i`<br>`JOIN MethodPay mp ON i.methodPayID = mp.methodPayID`<br>`WHERE i.patientID = :id`<br>`ORDER BY i.invoice_date DESC`                                                                                                                                                                            |
-| 6    |                                     | Hiển thị trang chi tiết với tabs:<br>- **Tab 1**: Thông tin cá nhân<br>- **Tab 2**: Danh sách appointments<br>- **Tab 3**: Medical records<br>- **Tab 4**: Invoices<br>- Nút: Chỉnh sửa, Xóa                                                                                                                                                                                      |
-| 7    | Xem thông tin                       |                                                                                                                                                                                                                                                                                                                                                                                   |
+If a specific tab has no records (e.g., no appointments), the system displays "No records found" in that tab section.
 
-### Luồng sự kiện phụ
+### 6.2.2.3. Special Requirements
 
-**2a. Bệnh nhân không tồn tại:**
+- Display only 10 most recent records per tab for performance.
+- Provide "View All" option for complete history.
+- Medical records and prescriptions must be handled with privacy considerations.
 
-- 2a.1. Hiển thị: "Không tìm thấy bệnh nhân"
-- 2a.2. Kết thúc use case
+### 6.2.2.4. Pre-condition
 
-### Ràng buộc nghiệp vụ
+- The user is authenticated as Staff (Receptionist, Doctor, Pharmacist, or Admin).
+- The patient exists in the system.
 
-- Chỉ hiển thị 10 records gần nhất cho mỗi tab
-- Có nút "Xem tất cả" để xem đầy đủ
-- Medical records và Prescriptions phải được bảo mật
+### 6.2.2.5. Post-condition
 
----
+- If successful: Complete patient details are displayed with associated history.
+- If unsuccessful: An error message is shown and user is returned to the list.
 
-## UC_PATIENT_03: Add New Patient (Thêm bệnh nhân mới)
+### 6.2.2.6. Extension Points
 
-### Mô tả
-
-Thêm thông tin bệnh nhân mới vào hệ thống.
-
-### Tác nhân chính
-
-- Receptionist
-- Admin
-
-### Điều kiện tiên quyết
-
-- Người dùng có quyền tạo bệnh nhân
-
-### Điều kiện hậu
-
-- Bệnh nhân mới được tạo trong hệ thống
-- Có thể tạo account cho bệnh nhân (optional)
-
-### Luồng sự kiện chính
-
-| Bước | Staff                           | Hệ thống                                                                                                                                                                                                                                                                                                                 |
-| ---- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1    | Click "Thêm bệnh nhân mới"      |                                                                                                                                                                                                                                                                                                                          |
-| 2    |                                 | Hiển thị form với các trường:<br>- Full name (_)<br>- Phone (_)<br>- Email<br>- Date of Birth (_)<br>- Gender (_)<br>- Address<br>- Checkbox: Tạo tài khoản đăng nhập                                                                                                                                                    |
-| 3    | Nhập thông tin bệnh nhân        |                                                                                                                                                                                                                                                                                                                          |
-| 4    | Click "Lưu"                     |                                                                                                                                                                                                                                                                                                                          |
-| 5    |                                 | Validate dữ liệu                                                                                                                                                                                                                                                                                                         |
-| 6    |                                 | Kiểm tra trùng lặp:<br>`SELECT COUNT(*) FROM Patient WHERE phone = :phone OR email = :email`                                                                                                                                                                                                                             |
-| 7    |                                 | Tạo patient:<br>`INSERT INTO Patient (accountID, full_name, phone, email, DOB, gender, address)`<br>`VALUES (NULL, ...) RETURNING patientID`                                                                                                                                                                             |
-| 8    |                                 | Nếu checkbox "Tạo tài khoản" được chọn:<br>- Sinh username tự động (từ phone hoặc email)<br>- Sinh password ngẫu nhiên<br>- Tạo Account:<br>`INSERT INTO Account (username, password, role)`<br>`VALUES (:username, :hashed_password, 'PATIENT')`<br>- Cập nhật accountID cho Patient<br>- Gửi email thông tin đăng nhập |
-| 9    |                                 | Hiển thị success và chuyển đến trang chi tiết bệnh nhân                                                                                                                                                                                                                                                                  |
-| 10   | Xem thông tin bệnh nhân vừa tạo |                                                                                                                                                                                                                                                                                                                          |
-
-### Luồng sự kiện phụ
-
-**5a. Dữ liệu không hợp lệ:**
-
-- 5a.1. Hiển thị lỗi chi tiết
-- 5a.2. Quay lại bước 2
-
-**6a. Phone hoặc email đã tồn tại:**
-
-- 6a.1. Hiển thị: "Bệnh nhân với số điện thoại/email này đã tồn tại"
-- 6a.2. Hỏi: "Bạn có muốn xem thông tin bệnh nhân này?"
-- 6a.3. Quay lại bước 2
-
-### Ràng buộc nghiệp vụ
-
-- Phone và Email phải unique
-- Phone: 10-11 chữ số
-- Email: đúng format
-- DOB: phải trong quá khứ
-- Nếu tạo account, gửi thông tin qua email hoặc SMS
+- Staff can Edit Patient or Delete Patient from the details view.
+- Staff can create new appointment for the patient.
+- Staff can create new reception for the patient.
 
 ---
 
-## UC_PATIENT_04: Edit Patient (Chỉnh sửa bệnh nhân)
+## 6.2.3. Use-case Specification: "Add New Patient"
 
-### Mô tả
+### 6.2.3.1. Brief Description
 
-Cập nhật thông tin bệnh nhân đã có trong hệ thống.
+Allows receptionist or admin to register a new patient in the system with the option to create a login account.
 
-### Tác nhân chính
+### 6.2.3.2. Event Flow
 
-- Receptionist
-- Admin
+#### 6.2.3.2.1. Main Event Flow
 
-### Điều kiện tiên quyết
+1. The staff selects "Add New Patient" from the patient management screen.
+2. The system displays a form with required fields (marked with _): Full Name_, Phone*, Date of Birth*, Gender\*, and optional fields: Email, Address, plus a checkbox "Create login account."
+3. The staff enters the patient information.
+4. The staff clicks "Save" to create the patient record.
+5. The system validates the input data (format validation).
+6. The system checks for duplicate phone number or email.
+7. The system creates the patient record.
+8. If "Create login account" is checked:
+   - The system generates a username (from phone or email)
+   - The system generates a random password
+   - The system creates an Account record with role "PATIENT"
+   - The system sends login credentials via email or SMS
+9. The system displays a success message and navigates to the patient details page.
 
-- Bệnh nhân tồn tại
+#### 6.2.3.2.2. Alternative Event Flows
 
-### Điều kiện hậu
+##### 6.2.3.2.2.1. Validation Error
 
-- Thông tin bệnh nhân được cập nhật
+If required fields are empty or data format is invalid, the system displays specific error messages and highlights the problematic fields.
 
-### Luồng sự kiện chính
+##### 6.2.3.2.2.2. Duplicate Phone or Email
 
-| Bước | Staff                            | Hệ thống                                                                                            |
-| ---- | -------------------------------- | --------------------------------------------------------------------------------------------------- |
-| 1    | Click "Chỉnh sửa" trên bệnh nhân |                                                                                                     |
-| 2    |                                  | Query thông tin hiện tại:<br>`SELECT * FROM Patient WHERE patientID = :id`                          |
-| 3    |                                  | Hiển thị form với dữ liệu hiện tại                                                                  |
-| 4    | Cập nhật thông tin               |                                                                                                     |
-| 5    | Click "Lưu"                      |                                                                                                     |
-| 6    |                                  | Validate dữ liệu mới                                                                                |
-| 7    |                                  | Cập nhật:<br>`UPDATE Patient SET full_name = :name, phone = :phone, ...`<br>`WHERE patientID = :id` |
-| 8    |                                  | Hiển thị success                                                                                    |
-| 9    | Xem thông tin đã cập nhật        |                                                                                                     |
+If the phone number or email already exists, the system displays "A patient with this phone number/email already exists. Would you like to view their information?" with options to view existing patient or correct the data.
 
-### Luồng sự kiện phụ
+### 6.2.3.3. Special Requirements
 
-**2a. Bệnh nhân không tồn tại:**
+- Phone and email must be unique across all patients.
+- Phone number format: 10-11 digits.
+- Email must follow standard email format.
+- Date of birth must be in the past.
+- If account is created, credentials must be sent securely.
 
-- 2a.1. Hiển thị lỗi
-- 2a.2. Kết thúc use case
+### 6.2.3.4. Pre-condition
 
-**6a. Dữ liệu không hợp lệ:**
+- The user is authenticated as Receptionist or Admin.
+- The phone/email is not already registered.
 
-- 6a.1. Hiển thị lỗi
-- 6a.2. Quay lại bước 3
+### 6.2.3.5. Post-condition
 
-### Ràng buộc nghiệp vụ
+- If successful: A new patient record is created, optionally with a login account.
+- If unsuccessful: No record is created and error messages guide the staff.
 
-- Không cho phép sửa patientID
-- Phone và Email mới phải unique
-- Ghi log mọi thay đổi
+### 6.2.3.6. Extension Points
+
+- After creation, staff can immediately create an appointment or reception for the patient.
+- The patient can log in to the patient portal if account was created.
+
+---
+
+## 6.2.4. Use-case Specification: "Edit Patient"
+
+### 6.2.4.1. Brief Description
+
+Allows receptionist or admin to update the information of an existing patient.
+
+### 6.2.4.2. Event Flow
+
+#### 6.2.4.2.1. Main Event Flow
+
+1. The staff selects a patient and clicks "Edit."
+2. The system retrieves the current patient information.
+3. The system displays a form pre-populated with existing data.
+4. The staff modifies the patient information (name, phone, email, DOB, gender, address).
+5. The staff clicks "Save" to update the record.
+6. The system validates the new data.
+7. The system checks that new phone/email doesn't conflict with other patients.
+8. The system updates the patient record.
+9. The system logs the changes for audit purposes.
+10. The system displays a success message.
+
+#### 6.2.4.2.2. Alternative Event Flows
+
+##### 6.2.4.2.2.1. Patient Not Found
+
+If the patient has been deleted during editing, the system displays "Patient not found" and returns to the list.
+
+##### 6.2.4.2.2.2. Validation Error
+
+If the new data is invalid, the system displays error messages and keeps the form open for correction.
+
+##### 6.2.4.2.2.3. Duplicate Phone/Email
+
+If the new phone or email conflicts with another patient, the system displays "This phone number/email is already in use by another patient."
+
+### 6.2.4.3. Special Requirements
+
+- PatientID cannot be modified.
+- Phone and email must remain unique.
+- All changes must be logged for audit trail.
+
+### 6.2.4.4. Pre-condition
+
+- The user is authenticated as Receptionist or Admin.
+- The patient exists in the system.
+
+### 6.2.4.5. Post-condition
+
+- If successful: The patient information is updated in the database.
+- If unsuccessful: The original data remains unchanged with an appropriate message.
+
+### 6.2.4.6. Extension Points
+
+- Staff can manage patient's account (reset password, deactivate) from this view.
 
 ---
 
-## UC_PATIENT_05: Delete Patient (Xóa bệnh nhân)
+## 6.2.5. Use-case Specification: "Delete Patient"
 
-### Mô tả
+### 6.2.5.1. Brief Description
 
-Xóa bệnh nhân khỏi hệ thống.
+Allows admin to remove a patient from the system, provided the patient has no medical records.
 
-### Tác nhân chính
+### 6.2.5.2. Event Flow
 
-- Admin
+#### 6.2.5.2.1. Main Event Flow
 
-### Điều kiện tiên quyết
+1. The admin selects a patient and clicks "Delete."
+2. The system displays a confirmation dialog with patient information.
+3. The admin confirms the deletion.
+4. The system checks if the patient has any medical records.
+5. If no medical records exist, the system deletes associated appointments.
+6. The system deletes the associated account (if exists).
+7. The system deletes the patient record.
+8. The system logs the deletion for audit trail.
+9. The system displays a success message and refreshes the list.
 
-- Bệnh nhân tồn tại
-- Bệnh nhân không có medical records
+#### 6.2.5.2.2. Alternative Event Flows
 
-### Điều kiện hậu
+##### 6.2.5.2.2.1. Has Medical Records
 
-- Bệnh nhân và dữ liệu liên quan được xóa
+If the patient has medical records, the system displays "Cannot delete patient with medical records. Medical data must be preserved." and suggests deactivating the patient instead.
 
-### Luồng sự kiện chính
+##### 6.2.5.2.2.2. Deletion Cancelled
 
-| Bước | Admin                      | Hệ thống                                                                                                               |
-| ---- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 1    | Click "Xóa" trên bệnh nhân |                                                                                                                        |
-| 2    |                            | Hiển thị dialog xác nhận                                                                                               |
-| 3    | Xác nhận xóa               |                                                                                                                        |
-| 4    |                            | Kiểm tra medical records:<br>`SELECT COUNT(*) FROM MedicalRecord WHERE patientID = :id`                                |
-| 5    |                            | Xóa appointments:<br>`DELETE FROM Appointment WHERE patientID = :id`                                                   |
-| 6    |                            | Xóa account (nếu có):<br>`DELETE FROM Account WHERE accountID = (SELECT accountID FROM Patient WHERE patientID = :id)` |
-| 7    |                            | Xóa patient:<br>`DELETE FROM Patient WHERE patientID = :id`                                                            |
-| 8    |                            | Hiển thị success và refresh danh sách                                                                                  |
+If the admin cancels the confirmation, the patient record remains unchanged.
 
-### Luồng sự kiện phụ
+### 6.2.5.3. Special Requirements
 
-**4a. Bệnh nhân có medical records:**
+- Only Admin role can delete patients.
+- Patients with medical records cannot be deleted (medical data preservation requirement).
+- Deletion cascades to: Appointments and Account.
+- All deletions must be logged in audit trail.
+- Consider implementing soft delete (deactivation) instead of hard delete.
 
-- 4a.1. Hiển thị: "Không thể xóa bệnh nhân có hồ sơ khám bệnh"
-- 4a.2. Đề xuất: "Bạn có thể ẩn bệnh nhân thay vì xóa"
-- 4a.3. Kết thúc use case
+### 6.2.5.4. Pre-condition
 
-### Ràng buộc nghiệp vụ
+- The user is authenticated as Admin.
+- The patient exists in the system.
+- The patient has no medical records.
 
-- Chỉ Admin mới có quyền xóa
-- Không xóa nếu có medical records (bảo vệ dữ liệu y tế)
-- Xóa cascade: Appointments, Account
-- Ghi log vào audit trail
+### 6.2.5.5. Post-condition
 
----
+- If successful: The patient and related data (appointments, account) are removed from the system.
+- If unsuccessful: The patient record remains with an explanatory message.
+
+### 6.2.5.6. Extension Points
+
+- If deletion is blocked, admin can deactivate the patient instead.
+- Admin can view the medical records that are blocking deletion.

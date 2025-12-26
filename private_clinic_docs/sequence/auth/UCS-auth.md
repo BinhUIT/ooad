@@ -1,287 +1,233 @@
-# ĐẶC TẢ CÁC USE CASE - AUTHENTICATION & ACCOUNT MANAGEMENT
-
-Tài liệu này mô tả các use case thuộc nhóm Xác thực và Quản lý tài khoản người dùng (Authentication & Account Management) cho hệ thống Private Clinic Management System.
-
-Gồm 4 use case chính:
-
-1. Sign In (Đăng nhập)
-2. Sign Up (Đăng ký)
-3. Forgot Password (Quên mật khẩu)
-4. Manage Profile (Quản lý hồ sơ cá nhân)
+# Authentication & Account Management Use Case Specifications
 
 ---
 
-## UC_AUTH_01: Sign In (Đăng nhập)
+## 6.2.1. Use-case Specification: "Sign In"
 
-### Mô tả
+### 6.2.1.1. Brief Description
 
-Người dùng đăng nhập vào hệ thống để sử dụng các chức năng theo vai trò của mình.
+Allows users to log into the system to perform available functions based on their assigned role.
 
-### Tác nhân chính
+### 6.2.1.2. Event Flow
 
-- Patient (Bệnh nhân)
-- Doctor (Bác sĩ)
-- Receptionist (Lễ tân)
-- Pharmacist/Warehouse Staff (Nhân viên kho/Dược sĩ)
-- Admin (Quản trị viên)
+#### 6.2.1.2.1. Main Event Flow
 
-### Điều kiện tiên quyết
+1. The user selects the "Login" function on the system interface.
+2. The system prompts the user to enter their email/username and password.
+3. The user enters the login information and clicks "Login."
+4. The system verifies the login information against the database.
+5. If the information is correct, the system authenticates the user, generates a JWT token, and redirects them to the appropriate dashboard based on their role (Doctor Dashboard, Receptionist Dashboard, Pharmacy Dashboard, Admin Dashboard, or Patient Dashboard).
 
-- Người dùng đã có tài khoản trong hệ thống
-- Tài khoản chưa bị khóa (is_lock = false)
+#### 6.2.1.2.2. Alternative Event Flows
 
-### Điều kiện hậu
+##### 6.2.1.2.2.1. Incorrect Email/Username or Password
 
-- Người dùng được xác thực thành công
-- JWT token được sinh và lưu trữ
-- Chuyển hướng đến dashboard tương ứng với vai trò
+If the information is incorrect, the system displays the error message "Incorrect email or password" and asks the user to try again. The system increments the failed login attempt counter.
 
-### Luồng sự kiện chính
+##### 6.2.1.2.2.2. Account Locked
 
-| Bước | User                      | Hệ thống                                                                                                                                                                                                           |
-| ---- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1    | Truy cập trang đăng nhập  |                                                                                                                                                                                                                    |
-| 2    |                           | Hiển thị form đăng nhập với username và password                                                                                                                                                                   |
-| 3    | Nhập username và password |                                                                                                                                                                                                                    |
-| 4    | Click "Sign In"           |                                                                                                                                                                                                                    |
-| 5    |                           | Validate định dạng dữ liệu đầu vào                                                                                                                                                                                 |
-| 6    |                           | Kiểm tra thông tin đăng nhập: `SELECT * FROM Account WHERE username = :username`                                                                                                                                   |
-| 7    |                           | Verify password (compare hashed)                                                                                                                                                                                   |
-| 8    |                           | Kiểm tra trạng thái tài khoản (is_lock = false)                                                                                                                                                                    |
-| 9    |                           | Sinh JWT token chứa: accountID, username, role, email                                                                                                                                                              |
-| 10   |                           | Trả về Success với token và thông tin user                                                                                                                                                                         |
-| 11   |                           | Chuyển hướng đến dashboard theo role:<br>- Doctor → Doctor Dashboard<br>- Receptionist → Receptionist Dashboard<br>- Pharmacist → Pharmacy Dashboard<br>- Admin → Admin Dashboard<br>- Patient → Patient Dashboard |
-| 12   | Xem dashboard tương ứng   |                                                                                                                                                                                                                    |
+If the account is locked (is_lock = true), the system displays the error message "Your account has been locked. Please contact administrator."
 
-### Luồng sự kiện phụ
+##### 6.2.1.2.2.3. Too Many Failed Attempts
 
-**6a. Username không tồn tại:**
+If the user fails to login more than 5 times within 15 minutes, the system temporarily locks the account for 30 minutes and displays an appropriate message.
 
-- 6a.1. Trả về lỗi: "Invalid username or password"
-- 6a.2. Hiển thị thông báo lỗi
-- 6a.3. Quay lại bước 2
+### 6.2.1.3. Special Requirements
 
-**7a. Password không đúng:**
+- The password must be encrypted using bcrypt (cost ≥ 10) before being stored.
+- JWT Token expiry: Access Token (1 hour), Refresh Token (7 days).
+- All login attempts (successful and failed) must be logged for security auditing.
+- Rate limiting must be implemented to prevent brute force attacks.
 
-- 7a.1. Trả về lỗi: "Invalid username or password"
-- 7a.2. Tăng số lần đăng nhập thất bại
-- 7a.3. Nếu thất bại > 5 lần trong 15 phút → khóa tài khoản tạm thời 30 phút
-- 7a.4. Hiển thị thông báo lỗi
-- 7a.5. Quay lại bước 2
+### 6.2.1.4. Pre-condition
 
-**8a. Tài khoản bị khóa:**
+- The user has an account in the system but has not logged in.
+- The account is not locked (is_lock = false).
 
-- 8a.1. Trả về lỗi: "Account is locked. Please contact administrator"
-- 8a.2. Hiển thị thông báo
-- 8a.3. Kết thúc use case
+### 6.2.1.5. Post-condition
 
-### Ràng buộc nghiệp vụ
+- If successful: The system grants access to system features based on user role, JWT token is generated and stored.
+- If unsuccessful: The system prompts the user to try again with an error message.
 
-- JWT Token Expiry: Access Token (1 giờ), Refresh Token (7 ngày)
-- Password phải được hash bằng bcrypt (cost ≥ 10)
-- Giới hạn số lần đăng nhập thất bại để tránh brute force attack
-- Ghi log mỗi lần đăng nhập thành công/thất bại
+### 6.2.1.6. Extension Points
+
+- If the user does not have an account, they can register one by themselves (patients only).
+- If the user forgot their password, they can use the "Forgot Password" function.
+- Doctor, Receptionist, Pharmacist, and Admin accounts must be created by the admin (cannot be self-registered).
 
 ---
 
-## UC_AUTH_02: Sign Up (Đăng ký)
+## 6.2.2. Use-case Specification: "Sign Up"
 
-### Mô tả
+### 6.2.2.1. Brief Description
 
-Bệnh nhân mới đăng ký tài khoản để sử dụng dịch vụ của phòng khám.
+Allows new patients to register an account to use the clinic's services through the online portal.
 
-### Tác nhân chính
+### 6.2.2.2. Event Flow
 
-- Patient (chưa có tài khoản)
+#### 6.2.2.2.1. Main Event Flow
 
-### Điều kiện tiên quyết
+1. The user selects the "Sign Up" or "Register" function on the system interface.
+2. The system displays a registration form with required fields: Username, Password, Full name, Email, Phone number, Date of Birth, Gender, and Address.
+3. The user enters the registration information and clicks "Sign Up."
+4. The system validates the input data format and business rules.
+5. The system checks if the username and email are unique in the database.
+6. The system hashes the password and creates a new Account record with role 'PATIENT'.
+7. The system creates a corresponding Patient record linked to the account.
+8. The system generates a JWT token and automatically logs the user in.
+9. The system redirects the user to the Patient Dashboard.
 
-- Username và email chưa tồn tại trong hệ thống
+#### 6.2.2.2.2. Alternative Event Flows
 
-### Điều kiện hậu
+##### 6.2.2.2.2.1. Invalid Data Format
 
-- Tạo mới Account và Patient record
-- Người dùng được đăng nhập tự động với JWT token
+If any input data is invalid (e.g., invalid email format, password too short), the system displays specific error messages for each field and retains the entered data (except password) for correction.
 
-### Luồng sự kiện chính
+##### 6.2.2.2.2.2. Username or Email Already Exists
 
-| Bước | User                            | Hệ thống                                                                                                                                                                                                            |
-| ---- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Truy cập trang đăng ký          |                                                                                                                                                                                                                     |
-| 2    |                                 | Hiển thị form đăng ký với các trường:<br>- Username (*bắt buộc)<br>- Password (*bắt buộc, ≥8 ký tự)<br>- Full name (*bắt buộc)<br>- Email (*bắt buộc)<br>- Phone number<br>- Date of Birth<br>- Gender<br>- Address |
-| 3    | Nhập thông tin đăng ký          |                                                                                                                                                                                                                     |
-| 4    | Click "Sign Up"                 |                                                                                                                                                                                                                     |
-| 5    |                                 | Validate định dạng dữ liệu                                                                                                                                                                                          |
-| 6    |                                 | Kiểm tra username và email chưa tồn tại:<br>`SELECT COUNT(*) FROM Account WHERE username = :username OR email = :email`                                                                                             |
-| 7    |                                 | Hash password (bcrypt)                                                                                                                                                                                              |
-| 8    |                                 | Tạo Account mới:<br>`INSERT INTO Account (username, password, role) VALUES (:username, :hashed_password, 'PATIENT')`                                                                                                |
-| 9    |                                 | Tạo Patient record:<br>`INSERT INTO Patient (accountID, full_name, email, phone, DOB, gender, address) VALUES (...)`                                                                                                |
-| 10   |                                 | Sinh JWT token                                                                                                                                                                                                      |
-| 11   |                                 | Trả về Success và chuyển hướng đến Patient Dashboard                                                                                                                                                                |
-| 12   | Được đăng nhập và xem dashboard |                                                                                                                                                                                                                     |
+If the username or email already exists in the system, the system displays the error message "Username or email already exists" and asks the user to provide different credentials.
 
-### Luồng sự kiện phụ
+### 6.2.2.3. Special Requirements
 
-**5a. Dữ liệu không hợp lệ:**
+- Username: Must be unique, no whitespace, 3-50 characters.
+- Email: Must be unique and in valid email format.
+- Password: Minimum 8 characters, must contain uppercase, lowercase, and numbers.
+- Phone: Must be 10-11 digits.
+- Password must be hashed using bcrypt before storage.
 
-- 5a.1. Hiển thị thông báo lỗi chi tiết
-- 5a.2. Giữ nguyên dữ liệu đã nhập (trừ password)
-- 5a.3. Quay lại bước 2
+### 6.2.2.4. Pre-condition
 
-**6a. Username hoặc email đã tồn tại:**
+- The user does not have an existing account in the system.
+- The username and email are not already registered.
 
-- 6a.1. Trả về lỗi: "Username or email already exists"
-- 6a.2. Hiển thị thông báo
-- 6a.3. Quay lại bước 2
+### 6.2.2.5. Post-condition
 
-### Ràng buộc nghiệp vụ
+- If successful: A new Account and Patient record are created, user is automatically logged in with JWT token.
+- If unsuccessful: The system displays error messages and allows the user to correct the input.
 
-- Username: Unique, không chứa khoảng trắng, 3-50 ký tự
-- Email: Unique, validate format
-- Password: ≥8 ký tự, chứa chữ hoa, chữ thường, số
-- Phone: 10-11 chữ số
-- Role mặc định: 'PATIENT'
+### 6.2.2.6. Extension Points
+
+- Only patient accounts can be self-registered.
+- Staff accounts (Doctor, Receptionist, Pharmacist, Admin) must be created by an administrator through the Staff Management module.
 
 ---
 
-## UC_AUTH_03: Forgot Password (Quên mật khẩu)
+## 6.2.3. Use-case Specification: "Forgot Password"
 
-### Mô tả
+### 6.2.3.1. Brief Description
 
-Người dùng quên mật khẩu và yêu cầu đặt lại mật khẩu mới qua email.
+Allows users who have forgotten their password to reset it through email verification.
 
-### Tác nhân chính
+### 6.2.3.2. Event Flow
 
-- User (bất kỳ vai trò nào)
+#### 6.2.3.2.1. Main Event Flow
 
-### Điều kiện tiên quyết
+1. The user selects the "Forgot Password" link on the login page.
+2. The system displays a form requesting the user's registered email address.
+3. The user enters their email and clicks "Send Reset Link."
+4. The system searches for the account associated with the email.
+5. The system generates a unique reset token with a 1-hour expiration time.
+6. The system stores the token and sends an email containing a password reset link.
+7. The system displays a confirmation message: "Check your email for reset instructions."
+8. The user clicks the reset link from their email.
+9. The system validates the token and its expiration.
+10. The system displays a form to enter a new password (with confirmation).
+11. The user enters and confirms the new password, then clicks "Reset Password."
+12. The system validates the new password, hashes it, and updates the account.
+13. The system invalidates the reset token and redirects to the login page with a success message.
 
-- Email đã được đăng ký trong hệ thống
+#### 6.2.3.2.2. Alternative Event Flows
 
-### Điều kiện hậu
+##### 6.2.3.2.2.1. Email Not Found
 
-- Password được cập nhật thành công
-- Người dùng có thể đăng nhập với mật khẩu mới
+If the email is not registered in the system, the system still displays the same success message (for security reasons) but does not send any email.
 
-### Luồng sự kiện chính
+##### 6.2.3.2.2.2. Invalid or Expired Token
 
-| Bước | User                             | Hệ thống                                                                                                                        |
-| ---- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Truy cập trang "Forgot Password" |                                                                                                                                 |
-| 2    |                                  | Hiển thị form nhập email                                                                                                        |
-| 3    | Nhập email                       |                                                                                                                                 |
-| 4    | Click "Send Reset Link"          |                                                                                                                                 |
-| 5    |                                  | Tìm account theo email                                                                                                          |
-| 6    |                                  | Sinh reset token (random, expire 1 giờ)                                                                                         |
-| 7    |                                  | Lưu token: `UPDATE Account SET reset_token = :token, reset_token_expire = :expire_time WHERE email = :email`                    |
-| 8    |                                  | Gửi email chứa reset link với token                                                                                             |
-| 9    |                                  | Hiển thị: "Check your email for reset instructions"                                                                             |
-| 10   | Click reset link từ email        |                                                                                                                                 |
-| 11   |                                  | Validate token và thời hạn                                                                                                      |
-| 12   |                                  | Hiển thị form nhập mật khẩu mới                                                                                                 |
-| 13   | Nhập mật khẩu mới (2 lần)        |                                                                                                                                 |
-| 14   | Click "Reset Password"           |                                                                                                                                 |
-| 15   |                                  | Validate mật khẩu mới                                                                                                           |
-| 16   |                                  | Hash password mới                                                                                                               |
-| 17   |                                  | Cập nhật password và xóa token:<br>`UPDATE Account SET password = :new_password, reset_token = NULL WHERE reset_token = :token` |
-| 18   |                                  | Hiển thị success và chuyển đến trang đăng nhập                                                                                  |
-| 19   | Đăng nhập với mật khẩu mới       |                                                                                                                                 |
+If the reset link contains an invalid or expired token, the system displays the error message "Reset link is invalid or expired" and prompts the user to request a new reset link.
 
-### Luồng sự kiện phụ
+##### 6.2.3.2.2.3. Password Validation Failed
 
-**5a. Email không tồn tại:**
+If the new password does not meet requirements, the system displays specific error messages and allows the user to re-enter.
 
-- 5a.1. Vẫn hiển thị success message (để bảo mật, không tiết lộ email có tồn tại hay không)
-- 5a.2. Không gửi email
-- 5a.3. Kết thúc use case
+### 6.2.3.3. Special Requirements
 
-**11a. Token không hợp lệ hoặc hết hạn:**
+- Reset token must be cryptographically random and expire after 1 hour.
+- For security, the system should not reveal whether an email exists in the database.
+- New password must meet the same requirements as registration (min 8 chars, uppercase, lowercase, numbers).
+- Old reset tokens must be invalidated when a new one is requested.
 
-- 11a.1. Hiển thị: "Reset link is invalid or expired"
+### 6.2.3.4. Pre-condition
+
+- The user has a registered account with a valid email address.
+
+### 6.2.3.5. Post-condition
+
+- If successful: The password is updated, user can log in with the new password.
+- If unsuccessful: The system displays appropriate error messages and guides the user.
+
+### 6.2.3.6. Extension Points
+
+- User can request a new reset link if the previous one expired.
+- After successful reset, user is redirected to login page to authenticate with new credentials.
+
+---
+
+## 6.2.4. Use-case Specification: "Manage Profile"
+
+### 6.2.4.1. Brief Description
+
+Allows authenticated users to view and update their personal profile information.
+
+### 6.2.4.2. Event Flow
+
+#### 6.2.4.2.1. Main Event Flow
+
+1. The user selects the "Profile" or "My Account" option from the navigation menu.
+2. The system retrieves and displays the user's current profile information (name, email, phone, address, etc.).
+3. The user clicks "Edit Profile" to modify their information.
+4. The system displays an editable form with the current values pre-populated.
+5. The user modifies the desired fields and clicks "Save Changes."
+6. The system validates the updated information.
+7. The system updates the user's profile in the database.
+8. The system displays a success message: "Profile updated successfully."
+
+#### 6.2.4.2.2. Alternative Event Flows
+
+##### 6.2.4.2.2.1. Validation Error
+
+If any updated field contains invalid data, the system displays specific error messages and retains the form for correction.
+
+##### 6.2.4.2.2.2. Email Already In Use
+
+If the user tries to change their email to one that is already registered, the system displays "This email is already in use" and prevents the update.
+
+##### 6.2.4.2.2.3. Change Password
+
+If the user wants to change their password, they must provide the current password for verification before setting a new one.
+
+### 6.2.4.3. Special Requirements
+
+- Users cannot change their username or role.
+- Email changes may require re-verification depending on security settings.
+- Password changes require current password verification.
+- Profile changes should be logged for audit purposes.
+
+### 6.2.4.4. Pre-condition
+
+- The user is authenticated and logged into the system.
+
+### 6.2.4.5. Post-condition
+
+- If successful: The user's profile information is updated in the database.
+- If unsuccessful: The system displays error messages and retains the original data.
+
+### 6.2.4.6. Extension Points
+
+- Users can upload or change their profile picture.
+- Users can enable/disable notification preferences.
+- Password change functionality is available within the profile management
 - 11a.2. Cho phép yêu cầu reset mới
 - 11a.3. Quay lại bước 1
 
 ### Ràng buộc nghiệp vụ
-
-- Reset token expire sau 1 giờ
-- Token chỉ sử dụng được 1 lần
-- Gửi email qua SMTP service
-- Password mới phải khác password cũ
-
----
-
-## UC_AUTH_04: Manage Profile (Quản lý hồ sơ)
-
-### Mô tả
-
-Người dùng xem và cập nhật thông tin cá nhân của mình.
-
-### Tác nhân chính
-
-- Patient
-- Doctor
-- Receptionist
-- Pharmacist
-- Admin
-
-### Điều kiện tiên quyết
-
-- Người dùng đã đăng nhập
-
-### Điều kiện hậu
-
-- Thông tin cá nhân được cập nhật thành công
-
-### Luồng sự kiện chính
-
-| Bước | User                                       | Hệ thống                                                                                                                           |
-| ---- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Click "Profile" từ menu                    |                                                                                                                                    |
-| 2    |                                            | Lấy thông tin user từ JWT token                                                                                                    |
-| 3    |                                            | Query thông tin chi tiết theo role:<br>- Patient: từ bảng Patient<br>- Staff: từ bảng Staff (Doctor/Receptionist/Pharmacist/Admin) |
-| 4    |                                            | Hiển thị form profile với thông tin hiện tại                                                                                       |
-| 5    | Cập nhật thông tin (phone, address, email) |                                                                                                                                    |
-| 6    | Click "Update Profile"                     |                                                                                                                                    |
-| 7    |                                            | Validate dữ liệu mới                                                                                                               |
-| 8    |                                            | Cập nhật thông tin:<br>`UPDATE Patient/Staff SET phone = :phone, address = :address, email = :email WHERE id = :id`                |
-| 9    |                                            | Hiển thị success message                                                                                                           |
-| 10   |                                            | Refresh thông tin hiển thị                                                                                                         |
-
-**Change Password:**
-
-| Bước | User                    | Hệ thống                                                                                 |
-| ---- | ----------------------- | ---------------------------------------------------------------------------------------- |
-| 11   | Click "Change Password" |                                                                                          |
-| 12   |                         | Hiển thị form với old_password, new_password, confirm_password                           |
-| 13   | Nhập mật khẩu cũ và mới |                                                                                          |
-| 14   | Click "Change Password" |                                                                                          |
-| 15   |                         | Verify old password                                                                      |
-| 16   |                         | Validate new password                                                                    |
-| 17   |                         | Hash và cập nhật:<br>`UPDATE Account SET password = :new_password WHERE accountID = :id` |
-| 18   |                         | Hiển thị success                                                                         |
-
-### Luồng sự kiện phụ
-
-**7a. Email mới đã tồn tại:**
-
-- 7a.1. Hiển thị: "Email already in use"
-- 7a.2. Quay lại bước 4
-
-**15a. Old password không đúng:**
-
-- 15a.1. Hiển thị: "Current password is incorrect"
-- 15a.2. Quay lại bước 12
-
-**16a. New password không hợp lệ:**
-
-- 16a.1. Hiển thị lỗi validation
-- 16a.2. Quay lại bước 12
-
-### Ràng buộc nghiệp vụ
-
-- Email phải unique trong toàn hệ thống
-- Không cho phép thay đổi username
-- New password phải khác old password
-- Phone number phải đúng định dạng
-
----

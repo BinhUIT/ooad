@@ -48,6 +48,20 @@ public class ServiceController {
         GlobalResponse<Page<Service>> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @GetMapping("/admin/services/all")
+    public ResponseEntity<GlobalResponse<java.util.List<Service>>> getAllServicesForAdmin() {
+        java.util.List<Service> result = clinicService.findAllServices();
+        GlobalResponse<java.util.List<Service>> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/receptionist/services/all")
+    public ResponseEntity<GlobalResponse<java.util.List<Service>>> getAllServicesForReceptionist() {
+        java.util.List<Service> result = clinicService.findAllServices();
+        GlobalResponse<java.util.List<Service>> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
     @PostMapping("/unsecure/test-body")
 public ResponseEntity<String> testBody(HttpServletRequest request) throws IOException {
     System.out.println("Content-Type: " + request.getContentType());
