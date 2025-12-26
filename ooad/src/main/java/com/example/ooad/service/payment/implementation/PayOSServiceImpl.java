@@ -1,6 +1,5 @@
 package com.example.ooad.service.payment.implementation;
 
-import java.math.BigDecimal;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.Map;
@@ -21,10 +20,13 @@ import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.repository.InvoiceRepository;
 import com.example.ooad.repository.RefPaymentMethodRepository;
 import com.example.ooad.service.payment.interfaces.PayOSService;
-import com.example.ooad.service.payment.internal.PayOSCheckoutResponse;
-import com.example.ooad.service.payment.internal.PayOSClient;
-import com.example.ooad.service.payment.internal.PayOSCreateRequest;
-import com.example.ooad.service.payment.internal.PayOSPaymentLinkResponse;
+
+import vn.payos.PayOS;
+import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
+import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
+import vn.payos.model.v2.paymentRequests.PaymentLink;
+import vn.payos.model.v2.paymentRequests.PaymentLinkItem;
+// -----------------------------------------------------
 
 @Service
 public class PayOSServiceImpl implements PayOSService {
@@ -34,7 +36,16 @@ public class PayOSServiceImpl implements PayOSService {
 
     private final InvoiceRepository invoiceRepository;
     private final RefPaymentMethodRepository paymentMethodRepository;
-    private final PayOSClient payOSClient;
+
+    // Cấu hình PayOS trực tiếp
+    @Value("${payos.client-id}")
+    private String clientId;
+
+    @Value("${payos.api-key}")
+    private String apiKey;
+
+    @Value("${payos.checksum-key}")
+    private String checksumKey;
 
     @Value("${payos.return-url:http://localhost:5173/payment/success}")
     private String returnUrl;
@@ -42,25 +53,20 @@ public class PayOSServiceImpl implements PayOSService {
     @Value("${payos.cancel-url:http://localhost:5173/payment/cancel}")
     private String cancelUrl;
 
-    public PayOSServiceImpl(InvoiceRepository invoiceRepository,
-            RefPaymentMethodRepository paymentMethodRepository,
-            PayOSClient payOSClient) {
-        this.invoiceRepository = invoiceRepository;
-        this.paymentMethodRepository = paymentMethodRepository;
-        this.payOSClient = payOSClient;
+    // Khởi tạo PayOS SDK
+    private PayOS getPayOS() {
+        return new PayOS(clientId, apiKey, checksumKey);
     }
 
-    private void ensurePayOSClientConfigured() {
-        if (payOSClient == null) {
-            throw new BadRequestException("PayOS client is not configured");
-        }
+    public PayOSServiceImpl(InvoiceRepository invoiceRepository,
+            RefPaymentMethodRepository paymentMethodRepository) {
+        this.invoiceRepository = invoiceRepository;
+        this.paymentMethodRepository = paymentMethodRepository;
     }
 
     @Override
     @Transactional
     public PaymentLinkResponse createPaymentLink(CreatePaymentRequest request) {
-        ensurePayOSClientConfigured();
-
         try {
             Invoice invoice = invoiceRepository.findById(request.getInvoiceId())
                     .orElseThrow(() -> new NotFoundException("Invoice not found"));
@@ -69,37 +75,62 @@ public class PayOSServiceImpl implements PayOSService {
                 throw new BadRequestException("Invoice is already paid");
             }
 
-            BigDecimal amount = request.getAmount();
-            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-                amount = invoice.getTotalAmount();
+            // Tính toán số tiền (Dùng int cho chuẩn SDK PayOS v2.0.1)
+            int amount;
+            if (request.getAmount() == null || request.getAmount().intValue() <= 0) {
+                amount = invoice.getTotalAmount().intValue();
+            } else {
+                amount = request.getAmount().intValue();
             }
-            int amountInt = amount.intValue();
+            
+            // DEMO MODE: Giảm số tiền xuống dưới 100,000 VND cho mục đích test
+            // PayOS sandbox có giới hạn số tiền thanh toán
+            int originalAmount = amount;
+            if (amount >= 100000) {
+                if (amount >= 1000000) {
+                    amount = amount / 1000; // Chia cho 1000 nếu >= 1 triệu
+                } else if (amount >= 100000) {
+                    amount = amount / 100;  // Chia cho 100 nếu >= 100k
+                }
+            }
+            // Đảm bảo amount tối thiểu là 2000 VND (yêu cầu của PayOS)
+            if (amount < 2000) {
+                amount = 2000;
+            }
+            log.info("DEMO MODE: Original amount: {} VND -> Demo amount: {} VND", originalAmount, amount);
+            
             long orderCode = System.currentTimeMillis();
+            String invoiceCode = String.valueOf(invoice.getInvoiceId());
+            
+            // Xây dựng description chuẩn: "HD" + mã (Không dấu cách, không ký tự lạ)
+            String description = "HD" + invoiceCode;
 
-            String invoiceCode = buildInvoiceCode(invoice);
-            String description = buildDescription(request.getDescription(), invoiceCode);
-
-            PayOSCreateRequest.Item item = PayOSCreateRequest.Item.builder()
-                    .name("Invoice " + invoiceCode)
+            // Tạo Item data cho PayOS
+            PaymentLinkItem item = PaymentLinkItem.builder()
+                    .name("ThanhToanDonHang")
                     .quantity(1)
-                    .price(amountInt)
+                    .price((long) amount)
                     .build();
 
-            PayOSCreateRequest payOSRequest = PayOSCreateRequest.builder()
+            // Build Request sử dụng SDK PayOS
+            CreatePaymentLinkRequest paymentRequest = CreatePaymentLinkRequest.builder()
                     .orderCode(orderCode)
-                    .amount(amountInt)
-                    .currency(DEFAULT_CURRENCY)
+                    .amount((long) amount)
                     .description(description)
                     .returnUrl(returnUrl + "?invoiceId=" + invoice.getInvoiceId())
                     .cancelUrl(cancelUrl + "?invoiceId=" + invoice.getInvoiceId())
-                    .addItem(item)
+                    .item(item)
                     .build();
 
-            PayOSCheckoutResponse response = payOSClient.createPaymentLink(payOSRequest);
+            // Gọi API tạo link
+            PayOS payOS = getPayOS();
+            CreatePaymentLinkResponse response = payOS.paymentRequests().create(paymentRequest);
+            
             log.info("Payment link created successfully for invoice: {}, orderCode: {}",
                     invoice.getInvoiceId(), orderCode);
 
             return toPaymentLinkResponse(response, description, orderCode);
+
         } catch (NotFoundException | BadRequestException e) {
             throw e;
         } catch (Exception e) {
@@ -110,10 +141,12 @@ public class PayOSServiceImpl implements PayOSService {
 
     @Override
     public PaymentInfoResponse getPaymentInfo(Long orderCode) {
-        ensurePayOSClientConfigured();
-
         try {
-            PayOSPaymentLinkResponse paymentLink = payOSClient.getPaymentLink(orderCode);
+            PayOS payOS = getPayOS();
+            // Gọi SDK để lấy thông tin thanh toán
+            PaymentLink paymentLink = payOS.paymentRequests().get(orderCode);
+            
+            // Map từ object SDK sang DTO của project
             return toPaymentInfoResponse(paymentLink);
         } catch (Exception e) {
             log.error("Error getting payment info: ", e);
@@ -123,11 +156,11 @@ public class PayOSServiceImpl implements PayOSService {
 
     @Override
     public PaymentInfoResponse cancelPaymentLink(Long orderCode, String cancellationReason) {
-        ensurePayOSClientConfigured();
-
         try {
-            PayOSPaymentLinkResponse response = payOSClient.cancelPaymentLink(orderCode,
+            PayOS payOS = getPayOS();
+            PaymentLink response = payOS.paymentRequests().cancel(orderCode,
                     cancellationReason != null ? cancellationReason : "User cancelled");
+            
             log.info("Payment link cancelled for orderCode: {}", orderCode);
             return toPaymentInfoResponse(response);
         } catch (Exception e) {
@@ -139,9 +172,8 @@ public class PayOSServiceImpl implements PayOSService {
     @Override
     @Transactional
     public PaymentInfoResponse verifyAndUpdatePayment(int invoiceId, Long orderCode) {
-        ensurePayOSClientConfigured();
-
         try {
+            // Lấy thông tin mới nhất từ PayOS
             PaymentInfoResponse paymentInfo = getPaymentInfo(orderCode);
 
             if (paymentInfo != null && "PAID".equals(paymentInfo.getStatus())) {
@@ -152,6 +184,7 @@ public class PayOSServiceImpl implements PayOSService {
                     invoice.setPaymentStatus(EPaymentStatus.PAID);
                     invoice.setInvoiceDate(Date.valueOf(LocalDate.now()));
 
+                    // Set default method nếu chưa có
                     if (invoice.getPaymentMethod() == null) {
                         paymentMethodRepository.findByMethodCode("BANK_TRANSFER")
                                 .ifPresent(invoice::setPaymentMethod);
@@ -161,7 +194,6 @@ public class PayOSServiceImpl implements PayOSService {
                     log.info("Invoice status updated to PAID for invoice: {}", invoiceId);
                 }
             }
-
             return paymentInfo;
         } catch (NotFoundException e) {
             throw e;
@@ -207,10 +239,18 @@ public class PayOSServiceImpl implements PayOSService {
                 Object descObj = data.get("description");
                 if (descObj != null) {
                     String desc = descObj.toString();
+                    // Parse "HD41" -> 41
                     if (desc.startsWith("HD")) {
                         try {
-                            int invoiceId = Integer.parseInt(desc.substring(2).trim());
-                            verifyAndUpdatePayment(invoiceId, orderCode);
+                            // Cắt bỏ chữ HD và lấy phần số
+                            String idPart = desc.substring(2).trim();
+                            // Đảm bảo chỉ lấy số (phòng trường hợp ngân hàng nối thêm nội dung)
+                            idPart = idPart.replaceAll("[^0-9]", "");
+                            
+                            if (!idPart.isEmpty()) {
+                                int invoiceId = Integer.parseInt(idPart);
+                                verifyAndUpdatePayment(invoiceId, orderCode);
+                            }
                         } catch (NumberFormatException e) {
                             log.warn("Could not parse invoice ID from description: {}", desc);
                         }
@@ -226,7 +266,9 @@ public class PayOSServiceImpl implements PayOSService {
         }
     }
 
-    private PaymentLinkResponse toPaymentLinkResponse(PayOSCheckoutResponse response, String description,
+    // --- Helper Mappers: Map từ SDK Object sang DTO ---
+
+    private PaymentLinkResponse toPaymentLinkResponse(CreatePaymentLinkResponse response, String description,
             long orderCode) {
         if (response == null) {
             return null;
@@ -238,73 +280,29 @@ public class PayOSServiceImpl implements PayOSService {
                 .amount(response.getAmount())
                 .description(description)
                 .orderCode(orderCode)
-                .currency(response.getCurrency())
+                .currency(DEFAULT_CURRENCY)
                 .paymentLinkId(response.getPaymentLinkId())
-                .status(response.getStatus())
+                .status(response.getStatus() != null ? response.getStatus().name() : null)
                 .checkoutUrl(response.getCheckoutUrl())
                 .qrCode(response.getQrCode())
                 .build();
     }
 
-    private PaymentInfoResponse toPaymentInfoResponse(PayOSPaymentLinkResponse paymentLink) {
+    private PaymentInfoResponse toPaymentInfoResponse(PaymentLink paymentLink) {
         if (paymentLink == null) {
             return null;
         }
+        
         return PaymentInfoResponse.builder()
                 .id(paymentLink.getId())
                 .orderCode(paymentLink.getOrderCode())
                 .amount(paymentLink.getAmount())
                 .amountPaid(paymentLink.getAmountPaid())
                 .amountRemaining(paymentLink.getAmountRemaining())
-                .status(paymentLink.getStatus())
+                .status(paymentLink.getStatus() != null ? paymentLink.getStatus().name() : null)
                 .createdAt(paymentLink.getCreatedAt())
                 .canceledAt(paymentLink.getCanceledAt())
                 .cancellationReason(paymentLink.getCancellationReason())
                 .build();
-    }
-
-    private String buildInvoiceCode(Invoice invoice) {
-        return String.valueOf(invoice.getInvoiceId());
-    }
-
-    private String buildDescription(String requested, String invoiceCode) {
-        // Use simple ASCII characters only - no Vietnamese diacritics
-        // Keep it short (under 25 characters) for VietQR compatibility
-        String description;
-        if (requested != null && !requested.isEmpty()) {
-            // Remove Vietnamese diacritics and special characters
-            description = removeVietnameseDiacritics(requested);
-        } else {
-            description = "HD" + invoiceCode;
-        }
-        // Ensure max 25 characters and only alphanumeric + space
-        description = description.replaceAll("[^a-zA-Z0-9 ]", "").trim();
-        if (description.length() > 25) {
-            description = description.substring(0, 25);
-        }
-        if (description.isEmpty()) {
-            description = "HD" + invoiceCode;
-        }
-        return description;
-    }
-    
-    private String removeVietnameseDiacritics(String str) {
-        String result = str;
-        // Vietnamese vowels with diacritics
-        result = result.replaceAll("[àáạảãâầấậẩẫăằắặẳẵ]", "a");
-        result = result.replaceAll("[ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ]", "A");
-        result = result.replaceAll("[èéẹẻẽêềếệểễ]", "e");
-        result = result.replaceAll("[ÈÉẸẺẼÊỀẾỆỂỄ]", "E");
-        result = result.replaceAll("[ìíịỉĩ]", "i");
-        result = result.replaceAll("[ÌÍỊỈĨ]", "I");
-        result = result.replaceAll("[òóọỏõôồốộổỗơờớợởỡ]", "o");
-        result = result.replaceAll("[ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ]", "O");
-        result = result.replaceAll("[ùúụủũưừứựửữ]", "u");
-        result = result.replaceAll("[ÙÚỤỦŨƯỪỨỰỬỮ]", "U");
-        result = result.replaceAll("[ỳýỵỷỹ]", "y");
-        result = result.replaceAll("[ỲÝỴỶỸ]", "Y");
-        result = result.replaceAll("[đ]", "d");
-        result = result.replaceAll("[Đ]", "D");
-        return result;
     }
 }
