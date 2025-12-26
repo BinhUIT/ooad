@@ -32,3 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 .env
+
+### Output directories ###
+out/
+private_clinic_docs/out/
