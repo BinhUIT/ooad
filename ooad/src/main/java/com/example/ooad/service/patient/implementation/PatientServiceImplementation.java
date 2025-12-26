@@ -1,7 +1,11 @@
 package com.example.ooad.service.patient.implementation;
 
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
@@ -12,6 +16,7 @@ import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Reception;
+import com.example.ooad.domain.enums.EGender;
 import com.example.ooad.domain.enums.EReceptionStatus;
 import com.example.ooad.dto.request.PatientRequest;
 import com.example.ooad.dto.response.PatientResponse;
@@ -166,6 +171,14 @@ public class PatientServiceImplementation implements PatientService {
     @Override
     public PatientResponse getPatientResponseFromAuth(Authentication auth) {
         return PatientMapper.getResponseFromPatient(this.getPatientFromAuth(auth));
+    }
+
+    @Override
+    public Page<Patient> searchPatient(int pageNumber, int pageSize, Optional<String> keyword, Optional<EGender> gender) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        String keyWordString = keyword.orElse(null);
+        EGender genderParam = gender.orElse(null);
+        return patientRepo.searchPatient(pageable, keyWordString, genderParam);
     }
 
     

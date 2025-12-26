@@ -1,6 +1,7 @@
 package com.example.ooad.service.clinicservice.interfaces;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 
@@ -14,4 +15,5 @@ public interface ClinicService {
     public Service createService(ServiceRequest request);
     public Service updateService(ServiceRequest request, int serviceId);
     public void deleteService(int serviceId);
+    public Page<Service> searchService(int pageNumber, int pageSize, Optional<String> keyWord);
 }

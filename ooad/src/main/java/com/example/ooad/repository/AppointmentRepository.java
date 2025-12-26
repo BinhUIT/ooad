@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.ooad.domain.entity.Appointment;
@@ -18,4 +20,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     public Page<Appointment> findByPatient_PatientIdAndStatus(Pageable pageable, int patientId, EAppointmentStatus status);
     public Page<Appointment> findByPatient_PatientIdAndAppointmentDate(Pageable pageable, int patientId, Date appointmentDate);
     public Page<Appointment> findByPatient_PatientIdAndAppointmentDateAndStatus(Pageable pageable, int patientId,EAppointmentStatus status, Date appointmentDate);
+
+    @Query("SELECT a FROM Appointment a WHERE "+ "(:status IS NULL or a.status =:status) AND "+ "(:appointmentDate IS NULL or a.appointmentDate =:appointmentDate) AND"+"(:patientName IS NULL or UPPER(a.patient.fullName) LIKE UPPER (CONCAT('%', :patientName, '%')))")
+    public Page<Appointment> getAppointments(Pageable pageable, @Param("status") EAppointmentStatus status, @Param("appointmentDate") Date appointmentDate, @Param("patientName") String patientName);
+
+    public List<Appointment> findByStatus(EAppointmentStatus status);
 }

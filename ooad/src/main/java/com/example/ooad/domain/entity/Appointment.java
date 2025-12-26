@@ -71,6 +71,7 @@ public class Appointment {
     public Date getAppointmentDate() {
         return appointmentDate;
     }
+    
 
     public void setAppointmentDate(Date appointmentDate) {
         this.appointmentDate = appointmentDate;

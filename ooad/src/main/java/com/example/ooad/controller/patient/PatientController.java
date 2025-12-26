@@ -1,9 +1,11 @@
 package com.example.ooad.controller.patient;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.example.ooad.domain.entity.Invoice;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -14,11 +16,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
+import com.example.ooad.domain.enums.EGender;
 import com.example.ooad.dto.request.PatientRequest;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.dto.response.PatientResponse;
@@ -184,6 +188,19 @@ public class PatientController {
     public ResponseEntity<GlobalResponse<PatientResponse>> getPatientFromAuth(Authentication auth) {
         PatientResponse result = patientService.getPatientResponseFromAuth(auth);
         GlobalResponse<PatientResponse> response = new GlobalResponse<>(result, Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @GetMapping({"/receptionist/find_patient","/admin/find_patient"})
+    public ResponseEntity<GlobalResponse<PatientResponse>> findPatientByIdCard(@RequestParam(defaultValue = "") String idCard) {
+        PatientResponse result = patientService.findPatientByIdCard(idCard);
+        GlobalResponse<PatientResponse> response = new GlobalResponse<>(result,Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    @GetMapping("/unsecure/patients")
+    public ResponseEntity<GlobalResponse<Page<Patient>>> searchPatient(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "7") int pageSize,@RequestParam("keyword") Optional<String> keyword, Optional<EGender> gender) {
+        Page<Patient> result = patientService.searchPatient(pageNumber, pageSize, keyword, gender);
+        GlobalResponse<Page<Patient>> response = new GlobalResponse<>(result,Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

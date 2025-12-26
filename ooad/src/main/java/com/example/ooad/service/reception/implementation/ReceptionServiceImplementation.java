@@ -2,6 +2,7 @@ package com.example.ooad.service.reception.implementation;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -90,5 +91,19 @@ public class ReceptionServiceImplementation implements ReceptionService {
         reception.setStatus(EReceptionStatus.WAITING);
         return receptionRepo.save(reception);
     }
+    @Override
+    public void endSession() {
+        List<Reception> receptions = receptionRepo.findByReceptionDateLessThanEqual(Date.valueOf(LocalDate.now()));
+        for(Reception r:receptions) {
+            if(r.getStatus()==EReceptionStatus.WAITING) {
+                r.setStatus(EReceptionStatus.CANCELLED);
+            }
+            if(r.getStatus()==EReceptionStatus.IN_EXAMINATION) {
+                r.setStatus(EReceptionStatus.DONE);
+            }
+        }
+        receptionRepo.saveAll(receptions);
+    }
+   
 
 }

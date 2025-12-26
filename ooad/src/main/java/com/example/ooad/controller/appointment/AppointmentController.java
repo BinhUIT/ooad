@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +21,7 @@ import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.entity.StaffSchedule;
 import com.example.ooad.domain.enums.EAppointmentStatus;
+import com.example.ooad.dto.request.AppointmentRequest;
 import com.example.ooad.dto.request.BookAppointmentRequest;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.service.appointment.interfaces.AppointmentService;
@@ -45,11 +47,24 @@ public class AppointmentController {
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    @GetMapping({"/receptionist/appointments","/admin/appointments"})
+    public ResponseEntity<GlobalResponse<Page<Appointment>>> getAppointmentsList(@RequestParam(defaultValue = "0") int pageNumber,
+@RequestParam(defaultValue = "7") int pageSize, @RequestParam("patientName") Optional<String> patientName, @RequestParam("status") Optional<EAppointmentStatus> status, @RequestParam("appointmentDate") Optional<Date> appointmentDate) {
+     Page<Appointment> result = appointmentService.getAppointmens(pageNumber, pageSize, patientName, status, appointmentDate);
+    GlobalResponse<Page<Appointment>> response = new GlobalResponse<>(result, Message.success, 200);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+}
 
     @PostMapping("/patient/book_appointment") 
     public ResponseEntity<GlobalResponse<Appointment>> bookAppointment(@RequestBody BookAppointmentRequest request, Authentication auth) {
         Patient p = patientService.getPatientFromAuth(auth);
         Appointment result = appointmentService.bookAppointment(request, p);
+        GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @PostMapping("/receptionist/book_appointment") 
+    public ResponseEntity<GlobalResponse<Appointment>> receptionistBookAppointment(@RequestBody AppointmentRequest request) {
+        Appointment result = appointmentService.receptionistBookAppointment(request);
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -81,4 +96,26 @@ public class AppointmentController {
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @GetMapping({"/patient/change_appointment_status/{appointmentId}","/receptionist/change_appointment_status/{appointmentId}"})
+    public ResponseEntity<GlobalResponse<Appointment>> changeAppointmentStatus(@PathVariable int appointmentId, Authentication auth, @RequestParam(defaultValue="CANCELLED") EAppointmentStatus status) {
+        Appointment result = appointmentService.changeAppointmentStatus(auth, appointmentId, status);
+        GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @PutMapping({"/patient/appointment/update/{appointmentId}","/receptionist/appointment/update/{appointmentId}"})
+    public ResponseEntity<GlobalResponse<Appointment>> updateAppointment(@PathVariable int appointmentId, @RequestBody AppointmentRequest request, Authentication auth) {
+        Appointment result = appointmentService.editAppointment(auth, appointmentId, request);
+        GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    } 
+    @GetMapping("/unsecure/appointment/scheduleId/{appointmentId}")
+    public ResponseEntity<GlobalResponse<Integer>> getScheduleId(@PathVariable int appointmentId) {
+        Integer result = appointmentService.getScheduleId(appointmentId);
+        GlobalResponse<Integer> response = new GlobalResponse<>(result, Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+
 }

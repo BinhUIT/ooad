@@ -17,4 +17,5 @@ public interface ReceptionService {
     public Reception getReceptionById(int receptionId);
     public Reception editReception(UpdateReceptionRequest request);
     public Reception createReception(CreateReceptionRequest request, Staff receptionist);
+    public void endSession();
 }

@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,12 +106,13 @@ public ResponseEntity<Map<String, Object>> test(@RequestBody HashMap<String,Obje
         GlobalResponse<String> response = new GlobalResponse<String>(Message.success,Message.success, 200);
         return new ResponseEntity<>(response,HttpStatus.OK);
     }
+
+    @GetMapping("/admin/service/search")
+    public ResponseEntity<GlobalResponse<Page<Service>>> searchService(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "10") int pageSize, @RequestParam Optional<String> keyWord) {
+        Page<Service> result = clinicService.searchService(pageNumber, pageSize,keyWord);
+        GlobalResponse<Page<Service>> response = new GlobalResponse<>(result, Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
     
-@PostConstruct
-public void printConverters() {
-    System.out.println("=== MESSAGE CONVERTERS ===");
-    adapter.getMessageConverters()
-           .forEach(c -> System.out.println(c.getClass().getName()));
-}
 
 }

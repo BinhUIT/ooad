@@ -123,13 +123,6 @@ activate DMV
 deactivate DMV
 
 deactivate DMV
-    IC --> V: (23) 409 Conflict
-    V --> PS: (24) Display error message
-end
-
-deactivate MI
-deactivate IC
-deactivate V
 
 @enduml
 ```
