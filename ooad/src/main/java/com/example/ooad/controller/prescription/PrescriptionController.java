@@ -24,37 +24,56 @@ import com.example.ooad.utils.Message;
 @RestController
 public class PrescriptionController {
     private final PrescriptionService prescriptionService;
+
     public PrescriptionController(PrescriptionService prescriptionService) {
-        this.prescriptionService= prescriptionService;
+        this.prescriptionService = prescriptionService;
     }
-    @GetMapping("/unsecure/prescriptions") 
-    public ResponseEntity<GlobalResponse<Page<Prescription>>> getAllPrescription(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "7") int pageSize, @RequestParam Optional<Date> prescriptionDate) {
+
+    @GetMapping("/unsecure/prescriptions")
+    public ResponseEntity<GlobalResponse<Page<Prescription>>> getAllPrescription(
+            @RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "7") int pageSize,
+            @RequestParam Optional<Date> prescriptionDate) {
         Page<Prescription> result = prescriptionService.getAllPrescription(pageNumber, pageSize, prescriptionDate);
-        GlobalResponse<Page<Prescription>> response = new GlobalResponse<>(result, Message.success,200);
+        GlobalResponse<Page<Prescription>> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
     @GetMapping("/unsecure/prescription/{prescriptionId}")
     public ResponseEntity<GlobalResponse<Prescription>> getPrescriptionById(@PathVariable int prescriptionId) {
         Prescription result = prescriptionService.getPrescriptionById(prescriptionId);
-        GlobalResponse<Prescription> response = new GlobalResponse<>(result, Message.success,200);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    } 
-    @GetMapping("/unsecure/prescription_details/{prescriotionId}")
-    public ResponseEntity<GlobalResponse<Page<PrescriptionDetail>>> getPrescriptionDetails(@PathVariable int prescriptionId,@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "7") int pageSize ) {
-        Page<PrescriptionDetail> result = prescriptionService.getPrescriptionDetailOfPrescription(pageNumber,pageSize,prescriptionId);
-        GlobalResponse<Page<PrescriptionDetail>> response = new GlobalResponse<>(result, Message.success,200);
+        GlobalResponse<Prescription> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @GetMapping("/unsecure/prescription_details/{prescriptionId}")
+    public ResponseEntity<GlobalResponse<Page<PrescriptionDetail>>> getPrescriptionDetails(
+            @PathVariable int prescriptionId, @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "7") int pageSize) {
+        Page<PrescriptionDetail> result = prescriptionService.getPrescriptionDetailOfPrescription(pageNumber, pageSize,
+                prescriptionId);
+        GlobalResponse<Page<PrescriptionDetail>> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/patient/prescription_by_record/{recordId}")
+    public ResponseEntity<GlobalResponse<Prescription>> getPrescriptionByRecordId(@PathVariable int recordId) {
+        Prescription result = prescriptionService.getPrescriptionByRecordId(recordId);
+        GlobalResponse<Prescription> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @PostMapping("/doctor/prescription/create")
     public ResponseEntity<GlobalResponse<Prescription>> createPrescription(@RequestBody PrescriptionRequest request) {
-         Prescription result = prescriptionService.createPrescription(request);
-        GlobalResponse<Prescription> response = new GlobalResponse<>(result, Message.success,200);
+        Prescription result = prescriptionService.createPrescription(request);
+        GlobalResponse<Prescription> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
     @PutMapping("/doctor/prescription/update/{prescriptionId}")
-    public ResponseEntity<GlobalResponse<Prescription>> updatePrescription(@RequestBody PrescriptionRequest request, @PathVariable int prescriptionId) {
-         Prescription result = prescriptionService.updatePrescription(request, prescriptionId);
-        GlobalResponse<Prescription> response = new GlobalResponse<>(result, Message.success,200);
+    public ResponseEntity<GlobalResponse<Prescription>> updatePrescription(@RequestBody PrescriptionRequest request,
+            @PathVariable int prescriptionId) {
+        Prescription result = prescriptionService.updatePrescription(request, prescriptionId);
+        GlobalResponse<Prescription> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

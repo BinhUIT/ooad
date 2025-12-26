@@ -11,8 +11,15 @@ import com.example.ooad.dto.request.PrescriptionRequest;
 
 public interface PrescriptionService {
     public Page<Prescription> getAllPrescription(int pageNumber, int pageSize, Optional<Date> prescriptionDate);
+
     public Prescription getPrescriptionById(int prescriptionId);
-    public Page<PrescriptionDetail> getPrescriptionDetailOfPrescription(int pageNumber, int pageSize,int prescriptionId);
+
+    public Prescription getPrescriptionByRecordId(int recordId);
+
+    public Page<PrescriptionDetail> getPrescriptionDetailOfPrescription(int pageNumber, int pageSize,
+            int prescriptionId);
+
     public Prescription createPrescription(PrescriptionRequest request);
+
     public Prescription updatePrescription(PrescriptionRequest request, int prescriptionId);
 }
