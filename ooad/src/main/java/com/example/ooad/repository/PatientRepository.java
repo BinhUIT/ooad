@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.ooad.domain.entity.Patient;
+import com.example.ooad.domain.enums.EGender;
 
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Integer> {
@@ -21,4 +22,7 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
      */
     @Query("SELECT p FROM Patient p WHERE p.account.accountId = :accountId")
     Optional<Patient> findByAccountId(@Param("accountId") int accountId);
+
+    @Query("SELECT p FROM Patient p WHERE"+" (:keyWord is null or upper(p.fullName) like upper(concat('%',:keyWord,'%'))) and" +" (:gender is null or :gender=p.gender )")
+    public Page<Patient> searchPatient(Pageable pageable, @Param("keyWord") String keyWord, @Param("gender") EGender gender);
 }

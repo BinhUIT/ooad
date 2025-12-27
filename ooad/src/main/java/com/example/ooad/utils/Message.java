@@ -39,4 +39,5 @@ public class Message {
     public static final String invalidData="Invalid data";
     public static final String medicineNotFound = "Medicine not found";
     public static final String scheduleNotFound="Schedule not found";
+    public static final String cannotEdit="Can not edit";
 }

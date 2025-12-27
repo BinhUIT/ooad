@@ -10,6 +10,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.example.ooad.domain.compositekey.PrescriptionDetailKey;
+import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Medicine;
 import com.example.ooad.domain.entity.Prescription;
 import com.example.ooad.domain.entity.PrescriptionDetail;
@@ -42,13 +44,20 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
         this.medicineRepo = medicineRepo;
     }
 
+    // 3-param version (backward compatibility) - delegates to 4-param version
     @Override
     public Page<Prescription> getAllPrescription(int pageNumber, int pageSize, Optional<Date> prescriptionDate) {
+        return getAllPrescription(pageNumber, pageSize, prescriptionDate, Optional.empty());
+    }
+
+    // 4-param version with patientName filter
+    @Override
+    public Page<Prescription> getAllPrescription(int pageNumber, int pageSize, Optional<Date> prescriptionDate,
+            Optional<String> patientName) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        if (prescriptionDate.isPresent()) {
-            return prescriptionRepo.findByPrescriptionDate(pageable, prescriptionDate.get());
-        }
-        return prescriptionRepo.findAll(pageable);
+        Date pDate = prescriptionDate.orElse(null);
+        String pName = patientName.orElse(null);
+        return prescriptionRepo.findPrescriptions(pageable, pDate, pName);
     }
 
     @Override
@@ -63,6 +72,13 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
                 .orElse(null); // Return null if no prescription found for this record
     }
 
+    // List version (no pagination)
+    @Override
+    public List<PrescriptionDetail> getPrescriptionDetailOfPrescription(int prescriptionId) {
+        return prescriptionDetailRepo.findByPrescription_PrescriptionId(prescriptionId);
+    }
+
+    // Page version (with pagination)
     @Override
     public Page<PrescriptionDetail> getPrescriptionDetailOfPrescription(int pageNumber, int pageSize,
             int prescriptionId) {
@@ -74,17 +90,19 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
     @Transactional
     public Prescription createPrescription(PrescriptionRequest request) {
         Prescription prescription = new Prescription();
-        return fillInfoToPrescription(prescription, request);
+
+        return fillInfoToPrescription(prescription, request, true);
     }
 
     @Override
     @Transactional
     public Prescription updatePrescription(PrescriptionRequest request, int prescriptionId) {
         Prescription prescription = this.getPrescriptionById(prescriptionId);
-        return fillInfoToPrescription(prescription, request);
+        return fillInfoToPrescription(prescription, request, false);
     }
 
-    private Prescription fillInfoToPrescription(Prescription prescription, PrescriptionRequest request) {
+    private Prescription fillInfoToPrescription(Prescription prescription, PrescriptionRequest request,
+            boolean isCreate) {
         clearPrescriptionDetail(prescription);
         prescription.setNotes(request.getNotes());
         prescription.setRecord(medicalRecordService.findMedicalRecordById(request.getRecordId()));
@@ -95,8 +113,7 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
         List<Medicine> medicines = medicineRepo.findByMedicineId_In(listMedicineIds);
 
         for (PrescriptionDetailRequest detailRequest : request.getPrescriptionDetails()) {
-
-            prescriptionDetails.add(fromRequestToPrescriptionDetail(prescription, detailRequest, medicines));
+            prescriptionDetails.add(fromRequestToPrescriptionDetail(prescription, detailRequest, medicines, isCreate));
         }
         prescriptionDetailRepo.saveAll(prescriptionDetails);
         return prescription;
@@ -104,17 +121,19 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
     }
 
     private PrescriptionDetail fromRequestToPrescriptionDetail(Prescription prescription,
-            PrescriptionDetailRequest detailRequest, List<Medicine> medicines) {
-        if (prescription.getPrescriptionId() != 0
-                && prescription.getPrescriptionId() != detailRequest.getPrescriptionId()) {
+            PrescriptionDetailRequest detailRequest, List<Medicine> medicines, boolean isCreate) {
+        if (!isCreate && prescription.getPrescriptionId() != detailRequest.getPrescriptionId()) {
             throw new BadRequestException(Message.invalidData);
         }
         PrescriptionDetail prescriptionDetail = new PrescriptionDetail();
         prescriptionDetail.setDays(detailRequest.getDays());
         prescriptionDetail.setDosage(detailRequest.getDosage());
         prescriptionDetail.setQuantity(detailRequest.getQuantity());
-        prescriptionDetail.setPrescription(prescription);
+
         Medicine med = findByMedicineIdInList(medicines, detailRequest.getMedicineId());
+        PrescriptionDetailKey key = new PrescriptionDetailKey(prescription.getPrescriptionId(), med.getMedicineId());
+        prescriptionDetail.setPrescriptionDetailId(key);
+        prescriptionDetail.setPrescription(prescription);
         prescriptionDetail.setMedicine(med);
         return prescriptionDetail;
     }
@@ -134,4 +153,13 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
         prescriptionDetailRepo.deleteAll(prescriptionDetails);
     }
 
+    @Override
+    public List<MedicalRecord> getRecords() {
+        return medicalRecordService.findAllRecords();
+    }
+
+    @Override
+    public List<Medicine> getMedicines() {
+        return medicineRepo.findAll();
+    }
 }

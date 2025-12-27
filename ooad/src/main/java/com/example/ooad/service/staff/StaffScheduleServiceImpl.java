@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.entity.StaffSchedule;
 import com.example.ooad.domain.enums.EScheduleStatus;
@@ -30,8 +31,9 @@ import com.example.ooad.dto.response.DailyScheduleResponse;
 import com.example.ooad.dto.response.MonthlyScheduleResponse;
 import com.example.ooad.dto.response.ScheduleSlotResponse;
 import com.example.ooad.dto.response.ShiftResponse;
-import com.example.ooad.dto.response.StaffScheduleResponse;
+import com.example.ooad.dto.response.TimeSlotWithAppointmentResponse;
 import com.example.ooad.exception.NotFoundException;
+import com.example.ooad.repository.AppointmentRepository;
 import com.example.ooad.repository.StaffRepository;
 import com.example.ooad.repository.StaffScheduleRepository;
 
@@ -40,6 +42,7 @@ public class StaffScheduleServiceImpl implements StaffScheduleService {
 
     private final StaffScheduleRepository scheduleRepository;
     private final StaffRepository staffRepository;
+    private final AppointmentRepository appointmentRepository;
 
     // Định nghĩa các time slots chuẩn
     private static final LocalTime[] MORNING_SLOTS_START = {
@@ -56,9 +59,11 @@ public class StaffScheduleServiceImpl implements StaffScheduleService {
     };
 
     public StaffScheduleServiceImpl(StaffScheduleRepository scheduleRepository, 
-                                   StaffRepository staffRepository) {
+                                   StaffRepository staffRepository,
+                                   AppointmentRepository appointmentRepository) {
         this.scheduleRepository = scheduleRepository;
         this.staffRepository = staffRepository;
+        this.appointmentRepository = appointmentRepository;
     }
 
     // ==================== BASIC CRUD ====================
@@ -632,16 +637,25 @@ public class StaffScheduleServiceImpl implements StaffScheduleService {
                 morningShift.setShiftType(ShiftAssignmentRequest.ShiftType.MORNING);
                 morningShift.setStartTime(LocalTime.of(8, 0));
                 morningShift.setEndTime(LocalTime.of(12, 0));
-                morningShift.setStatus(morningSlots.get(0).getStatus());
-                morningShift.setTimeSlots(morningSlots.stream()
-                        .map(slot -> {
-                            StaffScheduleResponse slotResponse = new StaffScheduleResponse();
-                            slotResponse.setStaffScheduleId(slot.getScheduleId());
-                            return slotResponse;
-                        })
-                        .collect(Collectors.toList()));
+                
+                // Build time slots with appointment info
+                List<TimeSlotWithAppointmentResponse> timeSlots = buildTimeSlotsWithAppointments(morningSlots, staff.getStaffId(), date);
+                morningShift.setTimeSlots(timeSlots);
+                
+                // Count booked slots and determine shift status
+                int bookedCount = (int) timeSlots.stream().filter(ts -> ts.getAppointmentId() != null).count();
+                morningShift.setBookedSlotsCount(bookedCount);
                 morningShift.setTotalSlotsCount(morningSlots.size());
-                morningShift.setBookedSlotsCount(0); // TODO: Count booked slots
+                
+                // Set status based on bookings
+                if (bookedCount == 0) {
+                    morningShift.setStatus(EScheduleStatus.AVAILABLE);
+                } else if (bookedCount == morningSlots.size()) {
+                    morningShift.setStatus(EScheduleStatus.BOOKED);
+                } else {
+                    morningShift.setStatus(EScheduleStatus.AVAILABLE); // Partially booked still shows as available
+                }
+                
                 shifts.add(morningShift);
             }
 
@@ -655,16 +669,25 @@ public class StaffScheduleServiceImpl implements StaffScheduleService {
                 afternoonShift.setShiftType(ShiftAssignmentRequest.ShiftType.AFTERNOON);
                 afternoonShift.setStartTime(LocalTime.of(13, 0));
                 afternoonShift.setEndTime(LocalTime.of(17, 0));
-                afternoonShift.setStatus(afternoonSlots.get(0).getStatus());
-                afternoonShift.setTimeSlots(afternoonSlots.stream()
-                        .map(slot -> {
-                            StaffScheduleResponse slotResponse = new StaffScheduleResponse();
-                            slotResponse.setStaffScheduleId(slot.getScheduleId());
-                            return slotResponse;
-                        })
-                        .collect(Collectors.toList()));
+                
+                // Build time slots with appointment info
+                List<TimeSlotWithAppointmentResponse> timeSlots = buildTimeSlotsWithAppointments(afternoonSlots, staff.getStaffId(), date);
+                afternoonShift.setTimeSlots(timeSlots);
+                
+                // Count booked slots and determine shift status
+                int bookedCount = (int) timeSlots.stream().filter(ts -> ts.getAppointmentId() != null).count();
+                afternoonShift.setBookedSlotsCount(bookedCount);
                 afternoonShift.setTotalSlotsCount(afternoonSlots.size());
-                afternoonShift.setBookedSlotsCount(0); // TODO: Count booked slots
+                
+                // Set status based on bookings
+                if (bookedCount == 0) {
+                    afternoonShift.setStatus(EScheduleStatus.AVAILABLE);
+                } else if (bookedCount == afternoonSlots.size()) {
+                    afternoonShift.setStatus(EScheduleStatus.BOOKED);
+                } else {
+                    afternoonShift.setStatus(EScheduleStatus.AVAILABLE); // Partially booked still shows as available
+                }
+                
                 shifts.add(afternoonShift);
             }
         }
@@ -673,5 +696,48 @@ public class StaffScheduleServiceImpl implements StaffScheduleService {
         response.setTotalShifts(shifts.size());
 
         return response;
+    }
+    
+    /**
+     * Helper method to build time slots with appointment and patient information
+     */
+    private List<TimeSlotWithAppointmentResponse> buildTimeSlotsWithAppointments(
+            List<StaffSchedule> slots, int staffId, Date date) {
+        
+        List<TimeSlotWithAppointmentResponse> timeSlotResponses = new ArrayList<>();
+        
+        for (StaffSchedule slot : slots) {
+            TimeSlotWithAppointmentResponse timeSlot = new TimeSlotWithAppointmentResponse();
+            timeSlot.setStaffScheduleId(slot.getScheduleId());
+            timeSlot.setStartTime(slot.getStartTime());
+            timeSlot.setEndTime(slot.getEndTime());
+            
+            // Find appointment for this time slot
+            Optional<Appointment> appointment = appointmentRepository
+                    .findByStaff_StaffIdAndAppointmentDateAndAppointmentTime(
+                            staffId, date, slot.getStartTime());
+            
+            if (appointment.isPresent()) {
+                Appointment appt = appointment.get();
+                timeSlot.setStatus(EScheduleStatus.BOOKED);
+                timeSlot.setAppointmentId(appt.getAppointmentId());
+                timeSlot.setAppointmentStatus(appt.getStatus().name());
+                
+                if (appt.getPatient() != null) {
+                    timeSlot.setPatientId(appt.getPatient().getPatientId());
+                    timeSlot.setPatientName(appt.getPatient().getFullName());
+                }
+            } else {
+                timeSlot.setStatus(slot.getStatus());
+                timeSlot.setAppointmentId(null);
+                timeSlot.setAppointmentStatus(null);
+                timeSlot.setPatientId(null);
+                timeSlot.setPatientName(null);
+            }
+            
+            timeSlotResponses.add(timeSlot);
+        }
+        
+        return timeSlotResponses;
     }
 }

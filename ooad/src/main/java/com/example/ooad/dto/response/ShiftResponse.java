@@ -23,8 +23,8 @@ public class ShiftResponse {
     private LocalTime endTime;
     private EScheduleStatus status;
     
-    // Danh sách các time slot trong ca
-    private List<StaffScheduleResponse> timeSlots;
+    // Danh sách các time slot trong ca (bao gồm thông tin appointment và patient)
+    private List<TimeSlotWithAppointmentResponse> timeSlots;
     
     // Số slot đã có appointment
     private int bookedSlotsCount;
@@ -105,11 +105,11 @@ public class ShiftResponse {
         this.status = status;
     }
 
-    public List<StaffScheduleResponse> getTimeSlots() {
+    public List<TimeSlotWithAppointmentResponse> getTimeSlots() {
         return timeSlots;
     }
 
-    public void setTimeSlots(List<StaffScheduleResponse> timeSlots) {
+    public void setTimeSlots(List<TimeSlotWithAppointmentResponse> timeSlots) {
         this.timeSlots = timeSlots;
     }
 

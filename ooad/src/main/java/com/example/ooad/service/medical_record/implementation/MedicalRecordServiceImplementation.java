@@ -6,12 +6,13 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.stereotype.Service;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 
 import com.example.ooad.domain.entity.Account;
@@ -205,4 +206,10 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
 
         return medicalRecordRepo.findByReception_ReceptionIdIn(receptionIds);
     }
+
+    @Override
+    public List<MedicalRecord> findAllRecords() {
+        return medicalRecordRepo.findAllByOrderByRecordIdDesc();
+    }
+
 }

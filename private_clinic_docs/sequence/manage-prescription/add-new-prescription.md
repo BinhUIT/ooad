@@ -108,13 +108,5 @@ deactivate PV
 
 deactivate PV
 
-    PC --> V: (18) 201 Created\nwith warnings
-    V --> D: (19) Display warning:\n"Some medicines unavailable"
-end
-
-deactivate MI
-deactivate PC
-deactivate V
-
 @enduml
 ```

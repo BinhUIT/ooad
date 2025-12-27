@@ -4,11 +4,12 @@ import java.sql.Date;
 import java.util.List;
 import java.util.Optional;
 
+import com.example.ooad.domain.entity.MedicalRecord;
+
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 
-import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.dto.request.CreateMedicalRecordRequest;
 import com.example.ooad.dto.request.UpdateMedicalRecordRequest;
 
@@ -27,4 +28,6 @@ public interface MedicalRecordService {
 
     // Patient endpoints
     public List<MedicalRecord> getMedicalRecordsOfPatient(Authentication auth);
+
+    public List<MedicalRecord> findAllRecords();
 }

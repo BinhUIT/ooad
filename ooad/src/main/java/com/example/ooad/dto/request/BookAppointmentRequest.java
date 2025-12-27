@@ -14,6 +14,6 @@ import lombok.Setter;
 @Setter
 @Builder
 public class BookAppointmentRequest {
-    private int scheduleId;
+    protected int scheduleId;
 
 }

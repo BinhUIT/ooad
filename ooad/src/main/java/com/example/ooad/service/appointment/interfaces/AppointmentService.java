@@ -5,11 +5,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
 
 import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.StaffSchedule;
 import com.example.ooad.domain.enums.EAppointmentStatus;
+import com.example.ooad.dto.request.AppointmentRequest;
 import com.example.ooad.dto.request.BookAppointmentRequest;
 public interface AppointmentService {
     public Appointment findAppointmentById(int appointmentId);
@@ -17,4 +19,10 @@ public interface AppointmentService {
     public Page<Appointment> getAppointmentHistory(int pageNumber, int pageSize,Patient patient, Optional<EAppointmentStatus> status, Optional<Date> appointmentDate);
     public Appointment patientGetAppointmentById(Patient patient, int appointmentId);
     public List<StaffSchedule> getScheduleOfDoctor(int doctorId, Date selectedDate);
+    public Page<Appointment> getAppointmens(int pageNumber, int pageSize, Optional<String> patientName, Optional<EAppointmentStatus> status, Optional<Date> appointmentDate);
+    public void endSession();
+    public Appointment receptionistBookAppointment(AppointmentRequest request);
+    public Appointment changeAppointmentStatus(Authentication auth, int appointmentId,EAppointmentStatus status);
+    public Appointment editAppointment(Authentication auth, int appointmentId,AppointmentRequest request);
+    public Integer getScheduleId(int appointmentId);
 }
