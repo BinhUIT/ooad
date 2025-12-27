@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.entity.StaffSchedule;
-import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.enums.EScheduleStatus;
 import com.example.ooad.dto.request.BulkShiftAssignmentRequest;
 import com.example.ooad.dto.request.CopyScheduleFromPreviousMonthRequest;
@@ -33,9 +33,9 @@ import com.example.ooad.dto.response.ScheduleSlotResponse;
 import com.example.ooad.dto.response.ShiftResponse;
 import com.example.ooad.dto.response.TimeSlotWithAppointmentResponse;
 import com.example.ooad.exception.NotFoundException;
+import com.example.ooad.repository.AppointmentRepository;
 import com.example.ooad.repository.StaffRepository;
 import com.example.ooad.repository.StaffScheduleRepository;
-import com.example.ooad.repository.AppointmentRepository;
 
 @Service
 public class StaffScheduleServiceImpl implements StaffScheduleService {
