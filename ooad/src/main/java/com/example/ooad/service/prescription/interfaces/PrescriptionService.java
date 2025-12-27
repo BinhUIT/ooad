@@ -13,11 +13,25 @@ import com.example.ooad.domain.entity.PrescriptionDetail;
 import com.example.ooad.dto.request.PrescriptionRequest;
 
 public interface PrescriptionService {
-    public Page<Prescription> getAllPrescription(int pageNumber, int pageSize, Optional<Date> prescriptionDate, Optional<String> patientName);
+    public Page<Prescription> getAllPrescription(int pageNumber, int pageSize, Optional<Date> prescriptionDate);
+
     public Prescription getPrescriptionById(int prescriptionId);
+
+    public Prescription getPrescriptionByRecordId(int recordId);
+
+    public Page<PrescriptionDetail> getPrescriptionDetailOfPrescription(int pageNumber, int pageSize,
+            int prescriptionId);
+
+    public Page<Prescription> getAllPrescription(int pageNumber, int pageSize, Optional<Date> prescriptionDate,
+            Optional<String> patientName);
+
     public List<PrescriptionDetail> getPrescriptionDetailOfPrescription(int prescriptionId);
+
     public Prescription createPrescription(PrescriptionRequest request);
+
     public Prescription updatePrescription(PrescriptionRequest request, int prescriptionId);
+
     public List<MedicalRecord> getRecords();
+
     public List<Medicine> getMedicines();
 }
