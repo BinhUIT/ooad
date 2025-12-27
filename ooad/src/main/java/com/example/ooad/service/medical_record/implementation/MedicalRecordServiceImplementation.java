@@ -120,6 +120,10 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
 
         record = medicalRecordRepo.save(record);
 
+        // Update reception status to DONE after creating medical record
+        reception.setStatus(EReceptionStatus.DONE);
+        receptionRepo.save(reception);
+
         // Create invoice if requested
         if (request.getCreateInvoice() != null && request.getCreateInvoice()) {
             Invoice invoice = new Invoice();
@@ -198,6 +202,12 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
     @Override
     public List<MedicalRecord> getMedicalRecordsOfPatient(Authentication auth) {
         Account account = authService.getAccountFromAuth(auth);
+
+        // Validate user role first
+        if (account.getRole() != ERole.PATIENT) {
+            throw new BadRequestException("Only patients can view their medical records");
+        }
+
         Patient patient = patientRepo.findByAccountId(account.getAccountId())
                 .orElseThrow(() -> new NotFoundException(Message.patientNotFound));
 
