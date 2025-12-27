@@ -1,7 +1,9 @@
 package com.example.ooad.repository;
 
 import java.sql.Date;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,4 +27,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     public Page<Appointment> getAppointments(Pageable pageable, @Param("status") EAppointmentStatus status, @Param("appointmentDate") Date appointmentDate, @Param("patientName") String patientName);
 
     public List<Appointment> findByStatus(EAppointmentStatus status);
+    
+    // Find appointment by staff, date and time slot
+    Optional<Appointment> findByStaff_StaffIdAndAppointmentDateAndAppointmentTime(int staffId, Date appointmentDate, LocalTime appointmentTime);
 }
