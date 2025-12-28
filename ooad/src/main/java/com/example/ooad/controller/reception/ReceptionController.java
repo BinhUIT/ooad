@@ -38,8 +38,8 @@ public class ReceptionController {
     }
     @GetMapping("/receptionist/all_receptions")
     public ResponseEntity<GlobalResponse<Page<Reception>>> getAllReceptions(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "7") int pageSize,
-@RequestParam Optional<EReceptionStatus> status, @RequestParam Optional<Date> date) {
-        Page<Reception> result = receptionService.getListReceptions(pageNumber, pageSize, status , date);
+@RequestParam Optional<EReceptionStatus> status, @RequestParam Optional<Date> date, @RequestParam Optional<String> patientName) {
+        Page<Reception> result = receptionService.getListReceptions(pageNumber, pageSize, status , date,patientName);
         GlobalResponse<Page<Reception>> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

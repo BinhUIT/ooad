@@ -54,7 +54,7 @@ public class ReceptionServiceImplementationTest {
        
         when(receptionRepo.findAllByOrderByReceptionDateDesc(any(Pageable.class))).thenReturn(fakeResult);
         
-        Page<Reception> result = receptionService.getListReceptions(7, 10, Optional.empty(), Optional.empty());
+        Page<Reception> result = receptionService.getListReceptions(7, 10, Optional.empty(), Optional.empty(),Optional.empty());
 
         assertNotNull(result);
         assertNotEquals(result.getContent().size(),0);

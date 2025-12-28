@@ -38,19 +38,13 @@ public class ReceptionServiceImplementation implements ReceptionService {
     }
 
     @Override
-    public Page<Reception> getListReceptions(int pageNumber, int pageSize, Optional<EReceptionStatus> status, Optional<Date> date) {
+    public Page<Reception> getListReceptions(int pageNumber, int pageSize, Optional<EReceptionStatus> status, Optional<Date> date, Optional<String> patientName) {
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        if(status.isPresent()) {
-            if(date.isPresent()) {
-                return receptionRepo.findAllByStatusAndReceptionDate(status.get(), date.get(),pageable);
-            }
-            return receptionRepo.findAllByStatusOrderByReceptionDateDesc(status.get(), pageable);
-        }
-        if(date.isPresent()) {
-            return receptionRepo.findAllByReceptionDate(date.get(), pageable);
-        }
-        return receptionRepo.findAllByOrderByReceptionDateDesc(pageable);
+        EReceptionStatus filterStatus = status.orElse(null);
+        Date filterDate = date.orElse(null);
+        String name = patientName.orElse(null);
+        return receptionRepo.filterReception(pageable, filterStatus, filterDate, name);
     }
 
     @Override

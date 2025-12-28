@@ -39,9 +39,15 @@ public class Appointment {
     public Appointment() {
     }
     public int getDoctorId() {
+        if(staff==null) {
+            return -1;
+        }
         return staff.getStaffId();
     }
     public String getDoctorName() {
+        if(staff==null) {
+            return "";
+        }
         return staff.getFullName();
     }
     public int getAppointmentId() {
