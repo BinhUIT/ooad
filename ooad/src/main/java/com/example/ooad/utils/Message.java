@@ -40,4 +40,5 @@ public class Message {
     public static final String medicineNotFound = "Medicine not found";
     public static final String scheduleNotFound="Schedule not found";
     public static final String cannotEdit="Can not edit";
+    public static final String patientExist = "Id card or email is already existed";
 }

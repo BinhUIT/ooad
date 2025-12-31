@@ -3,9 +3,9 @@ package com.example.ooad.dto.request;
 import com.example.ooad.domain.enums.ERole;
 
 public class CreateAccountDto {
-    private String username;
-    private ERole role;
-    private String password;
+    protected String username;
+    protected ERole role;
+    protected String password;
 
     public CreateAccountDto(String password, ERole role, String username) {
         this.password = password;
