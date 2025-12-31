@@ -1,6 +1,7 @@
 package com.example.ooad.repository;
 
 import java.sql.Date;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,18 +13,18 @@ import com.example.ooad.domain.entity.MedicineInventory;
 
 @Repository
 public interface MedicineInventoryRepository extends JpaRepository<MedicineInventory, MedicineInventoryKey> {
-    
-    /**
-     * Get total available quantity for a medicine with expiry date after a certain date
-     */
+
     @Query("SELECT COALESCE(SUM(mi.quantityInStock), 0) FROM MedicineInventory mi " +
-           "WHERE mi.medicine.medicineId = :medicineId AND mi.expiryDate > :minExpiryDate AND mi.quantityInStock > 0")
+            "WHERE mi.medicine.medicineId = :medicineId AND mi.expiryDate > :minExpiryDate AND mi.quantityInStock > 0")
     int getTotalAvailableQuantity(@Param("medicineId") int medicineId, @Param("minExpiryDate") Date minExpiryDate);
-    
-    /**
-     * Get the nearest expiry date for a medicine
-     */
+
     @Query("SELECT MIN(mi.expiryDate) FROM MedicineInventory mi " +
-           "WHERE mi.medicine.medicineId = :medicineId AND mi.expiryDate > :minExpiryDate AND mi.quantityInStock > 0")
+            "WHERE mi.medicine.medicineId = :medicineId AND mi.expiryDate > :minExpiryDate AND mi.quantityInStock > 0")
     Date getNearestExpiryDate(@Param("medicineId") int medicineId, @Param("minExpiryDate") Date minExpiryDate);
+
+    @Query("SELECT mi FROM MedicineInventory mi WHERE mi.medicine.medicineId = :medicineId ORDER BY mi.expiryDate ASC")
+    List<MedicineInventory> findByMedicineId(@Param("medicineId") int medicineId);
+
+    @Query("SELECT COALESCE(SUM(mi.quantityInStock), 0) FROM MedicineInventory mi WHERE mi.medicine.medicineId = :medicineId")
+    int getTotalQuantityByMedicineId(@Param("medicineId") int medicineId);
 }
