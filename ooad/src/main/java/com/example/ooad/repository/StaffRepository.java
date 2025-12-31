@@ -25,4 +25,6 @@ public interface StaffRepository extends JpaRepository<Staff, Integer>, JpaSpeci
      * Lấy danh sách tất cả doctors (position = 'DOCTOR')
      */
     List<Staff> findByPositionIgnoreCase(String position);
+
+    public Staff findByEmail(String email);
 }

@@ -7,19 +7,23 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ooad.domain.entity.Account;
 import com.example.ooad.dto.request.ChangePasswordRequest;
 import com.example.ooad.dto.request.CreateAccountDto;
 import com.example.ooad.dto.request.CreateActorAccountDto;
+import com.example.ooad.dto.request.ForgetPasswordRequest;
 import com.example.ooad.dto.request.GetAcessTokenDto;
 import com.example.ooad.dto.request.LoginDto;
 import com.example.ooad.dto.request.LogoutDto;
 import com.example.ooad.dto.request.RegisterRequest;
+import com.example.ooad.dto.request.ResetpasswordRequest;
 import com.example.ooad.dto.response.AccountResponse;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.dto.response.LoginResponse;
+import com.example.ooad.dto.response.VerifyCodeResponse;
 import com.example.ooad.service.auth.interfaces.AuthService;
 import com.example.ooad.utils.Message;
 
@@ -162,6 +166,27 @@ public class AuthController {
     @PostMapping("/auth/link_account")
     public ResponseEntity<GlobalResponse<AccountResponse>> linkAccount(@RequestBody CreateActorAccountDto dto) {
         AccountResponse result = authService.linkAccount(dto);
+        GlobalResponse<AccountResponse> response= new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/auth/forget_password")
+    public ResponseEntity<GlobalResponse<String>> sendResetCode(@RequestBody ForgetPasswordRequest request) {
+        authService.sendVerificationEmail(request);
+        GlobalResponse<String> response = new GlobalResponse<>(Message.success, Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/auth/verify_code")
+    public ResponseEntity<GlobalResponse<VerifyCodeResponse>> verifyCode(@RequestParam(defaultValue="") String code) {
+        VerifyCodeResponse result = authService.verifyCode(code);
+        GlobalResponse<VerifyCodeResponse> response = new GlobalResponse<>(result, Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/auth/reset_password")
+    public ResponseEntity<GlobalResponse<AccountResponse>> resetPassword(@RequestBody ResetpasswordRequest request) {
+        AccountResponse result = authService.resetPassword(request);
         GlobalResponse<AccountResponse> response= new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

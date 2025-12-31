@@ -2,6 +2,7 @@ package com.example.ooad.service.auth.implementation;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,17 +18,20 @@ import com.example.ooad.domain.entity.Account;
 import com.example.ooad.domain.entity.Actor;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Staff;
+import com.example.ooad.domain.entity.VerificationCode;
 import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.domain.enums.EStatus;
 import com.example.ooad.dto.request.ChangePasswordRequest;
 import com.example.ooad.dto.request.CreateAccountDto;
 import com.example.ooad.dto.request.CreateActorAccountDto;
-
+import com.example.ooad.dto.request.ForgetPasswordRequest;
 import com.example.ooad.dto.request.LoginDto;
 import com.example.ooad.dto.request.LogoutDto;
 import com.example.ooad.dto.request.RegisterRequest;
+import com.example.ooad.dto.request.ResetpasswordRequest;
 import com.example.ooad.dto.response.AccountResponse;
 import com.example.ooad.dto.response.LoginResponse;
+import com.example.ooad.dto.response.VerifyCodeResponse;
 import com.example.ooad.exception.BadCredentialException;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.ConflictException;
@@ -36,9 +40,13 @@ import com.example.ooad.exception.UnauthorizedException;
 import com.example.ooad.repository.AccountRepository;
 import com.example.ooad.repository.PatientRepository;
 import com.example.ooad.repository.StaffRepository;
+import com.example.ooad.repository.VerificationCodeRepository;
 import com.example.ooad.service.auth.interfaces.AuthService;
 import com.example.ooad.service.auth.interfaces.JwtService;
+import com.example.ooad.service.email.interfaces.EmailService;
+import com.example.ooad.utils.DateTimeUtil;
 import com.example.ooad.utils.Message;
+import com.example.ooad.utils.UUIDGenerator;
 import com.example.ooad.validator.AccountValidator;
 
 import jakarta.transaction.Transactional;
@@ -52,8 +60,10 @@ public class AuthServiceImplementation implements UserDetailsService, AuthServic
     private final JwtService jwtService;
     private final PatientRepository patientRepo;
     private final StaffRepository staffRepo;
+    private final VerificationCodeRepository verificationCodeRepo;
+    private final EmailService emailService;
     public AuthServiceImplementation(AccountRepository accountRepo, AccountValidator taiKhoanValidator, PasswordEncoder passwordEncoder, @Lazy AuthenticationManager authManager,
-         JwtService jwtService, PatientRepository patientRepo, StaffRepository staffRepo) {
+         JwtService jwtService, PatientRepository patientRepo, StaffRepository staffRepo, VerificationCodeRepository verificationCodeRepo, EmailService emailService) {
         this.accountRepo= accountRepo;
         this.taiKhoanValidator = taiKhoanValidator;
         this.passwordEncoder= passwordEncoder;
@@ -61,6 +71,8 @@ public class AuthServiceImplementation implements UserDetailsService, AuthServic
         this.jwtService= jwtService;
         this.patientRepo = patientRepo;
         this.staffRepo = staffRepo;
+        this.verificationCodeRepo = verificationCodeRepo;
+        this.emailService=emailService;
     } 
     @Override
     public AccountResponse createAccount(CreateAccountDto dto) throws RuntimeException {
@@ -217,5 +229,54 @@ public class AuthServiceImplementation implements UserDetailsService, AuthServic
         return new AccountResponse(account);
 
         
+    }
+    @Override
+    @Transactional
+    public boolean sendVerificationEmail(ForgetPasswordRequest request) {
+        VerificationCode code = new VerificationCode();
+        code.setEmail(request.getEmail());
+        code.setCreateAt(new java.util.Date());
+        code.setCode(UUIDGenerator.generateRandomCode());
+        List<VerificationCode> listCodes = verificationCodeRepo.findByEmail(request.getEmail());
+        verificationCodeRepo.deleteAll(listCodes);
+        verificationCodeRepo.save(code);
+        emailService.sendCode(code.getCode(), request.getEmail());
+        return true;
+
+    }
+    
+    @Override
+    public VerifyCodeResponse verifyCode(String code) {
+        VerificationCode verificationCode = verificationCodeRepo.findByCode(code);
+        if(verificationCode==null) {
+            throw new BadRequestException("Wrong code");
+        }
+        if(DateTimeUtil.isCodeExpire(verificationCode)) {
+            throw new BadRequestException("Code expired");
+        } 
+
+        return new VerifyCodeResponse(code, verificationCode.getEmail());
+    }
+    @Override
+    public AccountResponse resetPassword( ResetpasswordRequest request) {
+        if(!request.getConfirmNewPassword().equals(request.getNewPassword())) {
+            throw new BadRequestException("Password and confirm password does not match");
+        }
+        verifyCode(request.getVerificationCode());
+        Account account = findByEmail(request.getEmail());
+        account.setUserPassword(passwordEncoder.encode(request.getNewPassword()));
+        account = accountRepo.save(account);
+        return new AccountResponse(account);
+    }
+    @Override
+    public Account findByEmail(String email) {
+        Patient p = patientRepo.findByEmail(email);
+        if(p!=null)
+        {
+            return p.getAccount();
+        }
+        Staff s = staffRepo.findByEmail(email);
+        if(s==null) return null;
+        return s.getAccount();
     }
 }
