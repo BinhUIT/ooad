@@ -7,7 +7,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ooad.domain.entity.Account;
@@ -20,6 +19,7 @@ import com.example.ooad.dto.request.LoginDto;
 import com.example.ooad.dto.request.LogoutDto;
 import com.example.ooad.dto.request.RegisterRequest;
 import com.example.ooad.dto.request.ResetpasswordRequest;
+import com.example.ooad.dto.request.VerifyCodeRequest;
 import com.example.ooad.dto.response.AccountResponse;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.dto.response.LoginResponse;
@@ -178,8 +178,8 @@ public class AuthController {
     }
 
     @PostMapping("/auth/verify_code")
-    public ResponseEntity<GlobalResponse<VerifyCodeResponse>> verifyCode(@RequestParam(defaultValue="") String code) {
-        VerifyCodeResponse result = authService.verifyCode(code);
+    public ResponseEntity<GlobalResponse<VerifyCodeResponse>> verifyCode(@RequestBody VerifyCodeRequest request) {
+        VerifyCodeResponse result = authService.verifyCode(request);
         GlobalResponse<VerifyCodeResponse> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

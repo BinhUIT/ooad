@@ -15,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.ooad.domain.entity.Account;
-import com.example.ooad.domain.entity.Actor;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.entity.VerificationCode;
@@ -29,6 +28,7 @@ import com.example.ooad.dto.request.LoginDto;
 import com.example.ooad.dto.request.LogoutDto;
 import com.example.ooad.dto.request.RegisterRequest;
 import com.example.ooad.dto.request.ResetpasswordRequest;
+import com.example.ooad.dto.request.VerifyCodeRequest;
 import com.example.ooad.dto.response.AccountResponse;
 import com.example.ooad.dto.response.LoginResponse;
 import com.example.ooad.dto.response.VerifyCodeResponse;
@@ -246,23 +246,25 @@ public class AuthServiceImplementation implements UserDetailsService, AuthServic
     }
     
     @Override
-    public VerifyCodeResponse verifyCode(String code) {
-        VerificationCode verificationCode = verificationCodeRepo.findByCode(code);
+    public VerifyCodeResponse verifyCode(VerifyCodeRequest request) {
+        VerificationCode verificationCode = verificationCodeRepo.findByCode(request.getCode());
         if(verificationCode==null) {
             throw new BadRequestException("Wrong code");
         }
         if(DateTimeUtil.isCodeExpire(verificationCode)) {
             throw new BadRequestException("Code expired");
         } 
-
-        return new VerifyCodeResponse(code, verificationCode.getEmail());
+        if(!verificationCode.getEmail().equals(request.getEmail())) {
+            throw new BadRequestException("Wrong code");
+        }
+        return new VerifyCodeResponse(request.getCode(), verificationCode.getEmail());
     }
     @Override
     public AccountResponse resetPassword( ResetpasswordRequest request) {
         if(!request.getConfirmNewPassword().equals(request.getNewPassword())) {
             throw new BadRequestException("Password and confirm password does not match");
         }
-        verifyCode(request.getVerificationCode());
+        verifyCode(new VerifyCodeRequest(request.getVerificationCode(), request.getEmail()));
         Account account = findByEmail(request.getEmail());
         account.setUserPassword(passwordEncoder.encode(request.getNewPassword()));
         account = accountRepo.save(account);
