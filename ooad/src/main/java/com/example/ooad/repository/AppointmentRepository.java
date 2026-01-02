@@ -30,4 +30,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     
     // Find appointment by staff, date and time slot
     Optional<Appointment> findByStaff_StaffIdAndAppointmentDateAndAppointmentTime(int staffId, Date appointmentDate, LocalTime appointmentTime);
+
+     @Query("SELECT a FROM Appointment a WHERE "+ "(a.staff.staffId=:staffId) and "+"(:status IS NULL or a.status =:status) AND "+ "(:appointmentDate IS NULL or a.appointmentDate =:appointmentDate) AND"+"(:patientName IS NULL or UPPER(a.patient.fullName) LIKE UPPER (CONCAT('%', :patientName, '%')))")
+     public Page<Appointment> getAppointmentsOfDoctor(Pageable pageable, @Param("staffId") int staffId,@Param("status") EAppointmentStatus status, @Param("appointmentDate") Date appointmentDate, @Param("patientName") String patientName);
+
 }

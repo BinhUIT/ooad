@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,7 +45,18 @@ public class PrescriptionController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping({ "/unsecure/prescription/{prescriptionId}", "/doctor/prescription/{prescriptionId}" })
+    @GetMapping("/patient/prescriptions")
+    public ResponseEntity<GlobalResponse<Page<Prescription>>> getPatientPrescription(
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "7") int pageSize,
+            @RequestParam Optional<Date> prescriptionDate,
+           Authentication auth) {
+        Page<Prescription> result = prescriptionService.getPrescriptionsOfPatient(auth, pageNumber, pageSize, prescriptionDate);
+        GlobalResponse<Page<Prescription>> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping({ "/unsecure/prescription/{prescriptionId}", "/doctor/prescription/{prescriptionId}","/patient/prescription/{prescriptionId}" })
     public ResponseEntity<GlobalResponse<Prescription>> getPrescriptionById(@PathVariable int prescriptionId) {
         Prescription result = prescriptionService.getPrescriptionById(prescriptionId);
         GlobalResponse<Prescription> response = new GlobalResponse<>(result, Message.success, 200);
@@ -65,13 +77,14 @@ public class PrescriptionController {
 
     // Get prescription details as List (for simple usage without pagination)
     @GetMapping({ "/unsecure/prescription_details_list/{prescriptionId}",
-            "/doctor/prescription_details_list/{prescriptionId}" })
+            "/doctor/prescription_details_list/{prescriptionId}","/patient/prescription_details_list/{prescriptionId}" })
     public ResponseEntity<GlobalResponse<List<PrescriptionDetail>>> getPrescriptionDetailsList(
             @PathVariable int prescriptionId) {
         List<PrescriptionDetail> result = prescriptionService.getPrescriptionDetailOfPrescription(prescriptionId);
         GlobalResponse<List<PrescriptionDetail>> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    
 
     @GetMapping("/patient/prescription_by_record/{recordId}")
     public ResponseEntity<GlobalResponse<Prescription>> getPrescriptionByRecordId(@PathVariable int recordId) {

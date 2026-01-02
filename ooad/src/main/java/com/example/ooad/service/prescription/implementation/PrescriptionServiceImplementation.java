@@ -8,11 +8,13 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.example.ooad.domain.compositekey.PrescriptionDetailKey;
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Medicine;
+import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Prescription;
 import com.example.ooad.domain.entity.PrescriptionDetail;
 import com.example.ooad.dto.request.PrescriptionDetailRequest;
@@ -23,6 +25,7 @@ import com.example.ooad.repository.MedicineRepository;
 import com.example.ooad.repository.PrescriptionDetailRepository;
 import com.example.ooad.repository.PrescriptionRepository;
 import com.example.ooad.service.medical_record.interfaces.MedicalRecordService;
+import com.example.ooad.service.patient.interfaces.PatientService;
 import com.example.ooad.service.prescription.interfaces.PrescriptionService;
 import com.example.ooad.utils.Message;
 
@@ -34,14 +37,16 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
     private final PrescriptionDetailRepository prescriptionDetailRepo;
     private final MedicalRecordService medicalRecordService;
     private final MedicineRepository medicineRepo;
+    private final PatientService patientService;
 
     public PrescriptionServiceImplementation(PrescriptionRepository prescriptionRepo,
             PrescriptionDetailRepository prescriptionDetailRepo,
-            MedicalRecordService medicalRecordService, MedicineRepository medicineRepo) {
+            MedicalRecordService medicalRecordService, MedicineRepository medicineRepo, PatientService patientService) {
         this.prescriptionRepo = prescriptionRepo;
         this.prescriptionDetailRepo = prescriptionDetailRepo;
         this.medicalRecordService = medicalRecordService;
         this.medicineRepo = medicineRepo;
+        this.patientService = patientService;
     }
 
     // 3-param version (backward compatibility) - delegates to 4-param version
@@ -161,5 +166,13 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
     @Override
     public List<Medicine> getMedicines() {
         return medicineRepo.findAll();
+    }
+
+    @Override
+    public Page<Prescription> getPrescriptionsOfPatient(Authentication auth, int pageNumber, int pageSize, Optional<Date> prescriptionDate) {
+        Patient p = patientService.getPatientFromAuth(auth);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Date filterDate=  prescriptionDate.orElse(null);
+        return prescriptionRepo.findPrescriptionsOfPatient(pageable,filterDate,p.getPatientId());
     }
 }

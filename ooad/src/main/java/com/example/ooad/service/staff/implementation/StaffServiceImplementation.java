@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
@@ -256,5 +257,15 @@ public class StaffServiceImplementation implements StaffService {
     @Override
     public List<Staff> findStaffByRole(String role) {
        return staffRepo.findByPositionIgnoreCase(role);
+    }
+
+    @Override
+    public Staff getStaffFromAuth(Authentication auth) {
+        Account account = authService.getAccountFromAuth(auth);
+        if(account==null) {
+            throw new BadRequestException("Bad credential");
+        }
+        return staffRepo.findByAccountId(account.getAccountId()).orElseThrow(()->new NotFoundException("Staff not found"));
+        
     }
 }

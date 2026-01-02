@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.Patient;
+import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.entity.StaffSchedule;
 import com.example.ooad.domain.enums.EAppointmentStatus;
 import com.example.ooad.domain.enums.ERole;
@@ -28,6 +29,7 @@ import com.example.ooad.repository.PatientRepository;
 import com.example.ooad.repository.StaffScheduleRepository;
 import com.example.ooad.service.appointment.interfaces.AppointmentService;
 import com.example.ooad.service.patient.interfaces.PatientService;
+import com.example.ooad.service.staff.interfaces.StaffService;
 import com.example.ooad.utils.Message;
 
 import jakarta.transaction.Transactional;
@@ -38,12 +40,15 @@ public class AppointmentServiceImplementation implements AppointmentService {
     private final StaffScheduleRepository staffScheduleRepo;
     private final PatientRepository patientRepo;
     private final PatientService patientService;
+    private final StaffService staffService;
     public AppointmentServiceImplementation(AppointmentRepository appointmentRepo,
-         StaffScheduleRepository staffScheduleRepo, PatientRepository patientRepo, PatientService patientService) {
+         StaffScheduleRepository staffScheduleRepo, PatientRepository patientRepo,
+          PatientService patientService, StaffService staffService) {
         this.appointmentRepo = appointmentRepo;
         this.patientRepo = patientRepo;
         this.staffScheduleRepo = staffScheduleRepo;
         this.patientService= patientService;
+        this.staffService= staffService;
     }
 
     @Override
@@ -209,5 +214,15 @@ public class AppointmentServiceImplementation implements AppointmentService {
         StaffSchedule staffSchedule = staffScheduleRepo.findByStaff_StaffIdAndStartTimeAndScheduleDate(appointment.getDoctorId(), appointment.getAppointmentTime(), appointment.getAppointmentDate());
         if(staffSchedule==null) return 0;
         return staffSchedule.getScheduleId();
+    }
+
+    @Override
+    public Page<Appointment> getAppointmentOfDoctor(Authentication auth, int pageNumber, int pageSize, Optional<String> patientName, Optional<EAppointmentStatus> status, Optional<Date> appointmentDate) {
+       Staff staff = staffService.getStaffFromAuth(auth);
+       Pageable pageable = PageRequest.of(pageNumber, pageSize);
+       EAppointmentStatus filterStatus = status.orElse(null);
+       Date filterDate = appointmentDate.orElse(null);
+       String searchKey = patientName.orElse(null);
+       return appointmentRepo.getAppointmentsOfDoctor(pageable, staff.getStaffId(),filterStatus,filterDate,searchKey);
     }
 }

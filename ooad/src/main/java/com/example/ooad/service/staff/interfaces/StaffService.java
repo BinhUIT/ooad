@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 
 import com.example.ooad.domain.entity.Staff;
@@ -28,4 +29,7 @@ public interface StaffService {
     public void deleteStaff(int id);
 
     public List<Staff> findStaffByRole(String role);
+
+    public Staff getStaffFromAuth(Authentication auth);
+    
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
 
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Medicine;
@@ -34,4 +35,6 @@ public interface PrescriptionService {
     public List<MedicalRecord> getRecords();
 
     public List<Medicine> getMedicines();
+
+    public Page<Prescription> getPrescriptionsOfPatient(Authentication auth, int pageNumber, int pageSize, Optional<Date> prescriptionDate);
 }

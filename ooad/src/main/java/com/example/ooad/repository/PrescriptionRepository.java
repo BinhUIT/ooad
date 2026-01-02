@@ -25,4 +25,9 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Inte
             + "(:patientName is null or upper(p.record.reception.patient.fullName) like UPPER (CONCAT('%', :patientName, '%')))")
     public Page<Prescription> findPrescriptions(Pageable pageable, @Param("prescriptionDate") Date prescriptionDate,
             @Param("patientName") String patientName);
+@Query("SELECT p FROM Prescription p where "
+            + "(:prescriptionDate is null or p.prescriptionDate =:prescriptionDate) and "
+            + "p.record.reception.patient.patientId=:patientId")
+    public Page<Prescription> findPrescriptionsOfPatient(Pageable pageable, @Param("prescriptionDate") Date prescriptionDate,
+            @Param("patientId") int patientId);
 }

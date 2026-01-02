@@ -55,6 +55,14 @@ public class AppointmentController {
     return new ResponseEntity<>(response, HttpStatus.OK);
 }
 
+    @GetMapping("/doctor/appointments") 
+    public ResponseEntity<GlobalResponse<Page<Appointment>>> getAppointmentsListOfDoctor(@RequestParam(defaultValue = "0") int pageNumber,
+@RequestParam(defaultValue = "7") int pageSize, @RequestParam("patientName") Optional<String> patientName, @RequestParam("status") Optional<EAppointmentStatus> status, @RequestParam("appointmentDate") Optional<Date> appointmentDate, Authentication auth) {
+     Page<Appointment> result = appointmentService.getAppointmentOfDoctor(auth, pageNumber,  pageSize, patientName, status, appointmentDate);
+    GlobalResponse<Page<Appointment>> response = new GlobalResponse<>(result, Message.success, 200);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+}
+
     @PostMapping("/patient/book_appointment") 
     public ResponseEntity<GlobalResponse<Appointment>> bookAppointment(@RequestBody BookAppointmentRequest request, Authentication auth) {
         Patient p = patientService.getPatientFromAuth(auth);
@@ -115,6 +123,8 @@ public class AppointmentController {
         GlobalResponse<Integer> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+
 
 
 

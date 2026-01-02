@@ -25,4 +25,5 @@ public interface AppointmentService {
     public Appointment changeAppointmentStatus(Authentication auth, int appointmentId,EAppointmentStatus status);
     public Appointment editAppointment(Authentication auth, int appointmentId,AppointmentRequest request);
     public Integer getScheduleId(int appointmentId);
+    public Page<Appointment> getAppointmentOfDoctor(Authentication auth,int pageNumber, int pageSize, Optional<String> patientName, Optional<EAppointmentStatus> status, Optional<Date> appointmentDate);
 }
