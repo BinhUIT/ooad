@@ -27,4 +27,10 @@ public interface MedicineInventoryRepository extends JpaRepository<MedicineInven
 
     @Query("SELECT COALESCE(SUM(mi.quantityInStock), 0) FROM MedicineInventory mi WHERE mi.medicine.medicineId = :medicineId")
     int getTotalQuantityByMedicineId(@Param("medicineId") int medicineId);
+
+    @Query("SELECT COUNT(mi) FROM MedicineInventory mi WHERE mi.expiryDate <= :expiryDate AND mi.quantityInStock > 0")
+    long countExpiringBatches(@Param("expiryDate") Date expiryDate);
+
+    @Query("SELECT COUNT(m) FROM Medicine m WHERE (SELECT COALESCE(SUM(mi.quantityInStock), 0) FROM MedicineInventory mi WHERE mi.medicine = m) <= :threshold")
+    long countLowStockMedicines(@Param("threshold") int threshold);
 }
