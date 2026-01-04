@@ -1,12 +1,15 @@
 package com.example.ooad.controller.inventory;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -103,6 +106,100 @@ public class InventoryController {
     public ResponseEntity<GlobalResponse<List<String>>> getSuppliers() {
         List<String> result = inventoryService.getSuppliers();
         GlobalResponse<List<String>> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    // ============== APIs for Invoice/Dispensing Integration ==============
+    
+    /**
+     * Get available quantity for a medicine
+     * Endpoint: GET /api/inventory/{medicineId}/available
+     */
+    @GetMapping("/api/inventory/{medicineId}/available")
+    @Operation(summary = "Get available quantity", 
+               description = "Get available quantity of a medicine considering expiry date. Default minimum 3 months before expiry.")
+    public ResponseEntity<GlobalResponse<Integer>> getAvailableQuantity(
+            @PathVariable int medicineId,
+            @RequestParam(required = false, defaultValue = "3") int minMonthsBeforeExpiry) {
+        int quantity = inventoryService.getAvailableQuantity(medicineId, minMonthsBeforeExpiry);
+        GlobalResponse<Integer> response = new GlobalResponse<>(quantity, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    /**
+     * Check availability for a single medicine
+     * Endpoint: GET /api/inventory/{medicineId}/check-availability
+     */
+    @GetMapping("/api/inventory/{medicineId}/check-availability")
+    @Operation(summary = "Check medicine availability", 
+               description = "Check if required quantity is available for a medicine")
+    public ResponseEntity<GlobalResponse<Boolean>> checkAvailability(
+            @PathVariable int medicineId,
+            @RequestParam int requiredQuantity,
+            @RequestParam(required = false, defaultValue = "3") int minMonthsBeforeExpiry) {
+        boolean available = inventoryService.checkAvailability(medicineId, requiredQuantity, minMonthsBeforeExpiry);
+        GlobalResponse<Boolean> response = new GlobalResponse<>(available, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    /**
+     * Check bulk availability for multiple medicines
+     * Endpoint: POST /api/inventory/check-bulk-availability
+     */
+    @PostMapping("/api/inventory/check-bulk-availability")
+    @Operation(summary = "Check bulk availability", 
+               description = "Check availability for multiple medicines at once. Request body: Map of medicineId to required quantity")
+    public ResponseEntity<GlobalResponse<Map<Integer, Boolean>>> checkBulkAvailability(
+            @RequestBody Map<Integer, Integer> medicineQuantities,
+            @RequestParam(required = false, defaultValue = "3") int minMonthsBeforeExpiry) {
+        Map<Integer, Boolean> result = inventoryService.checkBulkAvailability(medicineQuantities, minMonthsBeforeExpiry);
+        GlobalResponse<Map<Integer, Boolean>> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    /**
+     * Deduct inventory when dispensing medicine (FEFO - First Expiry First Out)
+     * Endpoint: POST /api/inventory/{medicineId}/deduct
+     */
+    @PostMapping("/api/inventory/{medicineId}/deduct")
+    @Operation(summary = "Deduct inventory", 
+               description = "Deduct quantity from inventory using FEFO (First Expiry First Out) logic")
+    public ResponseEntity<GlobalResponse<String>> deductInventory(
+            @PathVariable int medicineId,
+            @RequestParam int quantity,
+            @RequestParam(required = false, defaultValue = "3") int minMonthsBeforeExpiry) {
+        inventoryService.deductInventory(medicineId, quantity, minMonthsBeforeExpiry);
+        GlobalResponse<String> response = new GlobalResponse<>("Đã trừ số lượng thuốc thành công", Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    /**
+     * Deduct inventory for multiple medicines at once
+     * Endpoint: POST /api/inventory/deduct-bulk
+     */
+    @PostMapping("/api/inventory/deduct-bulk")
+    @Operation(summary = "Deduct bulk inventory", 
+               description = "Deduct quantities for multiple medicines at once. All or nothing - if any medicine is insufficient, nothing is deducted.")
+    public ResponseEntity<GlobalResponse<String>> deductBulkInventory(
+            @RequestBody Map<Integer, Integer> medicineQuantities,
+            @RequestParam(required = false, defaultValue = "3") int minMonthsBeforeExpiry) {
+        inventoryService.deductBulkInventory(medicineQuantities, minMonthsBeforeExpiry);
+        GlobalResponse<String> response = new GlobalResponse<>("Đã trừ số lượng thuốc thành công", Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    /**
+     * Restore inventory (for cancellation/return)
+     * Endpoint: POST /api/inventory/{medicineId}/restore
+     */
+    @PostMapping("/api/inventory/{medicineId}/restore")
+    @Operation(summary = "Restore inventory", 
+               description = "Restore quantity to inventory when order is cancelled or medicine is returned")
+    public ResponseEntity<GlobalResponse<String>> restoreInventory(
+            @PathVariable int medicineId,
+            @RequestParam int quantity) {
+        inventoryService.restoreInventory(medicineId, quantity);
+        GlobalResponse<String> response = new GlobalResponse<>("Đã khôi phục số lượng thuốc thành công", Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

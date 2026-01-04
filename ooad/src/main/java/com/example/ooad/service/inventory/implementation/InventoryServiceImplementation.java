@@ -1,7 +1,10 @@
 package com.example.ooad.service.inventory.implementation;
 
 import java.sql.Date;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -9,6 +12,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.ooad.domain.entity.Medicine;
 import com.example.ooad.domain.entity.MedicineInventory;
@@ -16,6 +20,7 @@ import com.example.ooad.dto.request.inventory.InventoryFilterRequest;
 import com.example.ooad.dto.response.inventory.InventoryDetailResponse;
 import com.example.ooad.dto.response.inventory.InventoryItemResponse;
 import com.example.ooad.dto.response.inventory.MedicineSelectionResponse;
+import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.mapper.InventoryMapper;
 import com.example.ooad.repository.MedicineImportRepository;
@@ -140,6 +145,121 @@ public class InventoryServiceImplementation implements InventoryService {
     @Override
     public List<String> getSuppliers() {
         return medicineImportRepository.findDistinctSuppliers();
+    }
+    
+    // ==================== APIs for Invoice/Dispensing ====================
+    
+    @Override
+    public int getAvailableQuantity(int medicineId, int minMonthsBeforeExpiry) {
+        Date minExpiryDate = Date.valueOf(LocalDate.now().plusMonths(minMonthsBeforeExpiry));
+        return medicineInventoryRepository.getTotalAvailableQuantity(medicineId, minExpiryDate);
+    }
+    
+    @Override
+    public boolean checkAvailability(int medicineId, int requiredQuantity, int minMonthsBeforeExpiry) {
+        int available = getAvailableQuantity(medicineId, minMonthsBeforeExpiry);
+        return available >= requiredQuantity;
+    }
+    
+    @Override
+    public Map<Integer, Boolean> checkBulkAvailability(Map<Integer, Integer> requirements, int minMonthsBeforeExpiry) {
+        Map<Integer, Boolean> result = new HashMap<>();
+        for (Map.Entry<Integer, Integer> entry : requirements.entrySet()) {
+            result.put(entry.getKey(), checkAvailability(entry.getKey(), entry.getValue(), minMonthsBeforeExpiry));
+        }
+        return result;
+    }
+    
+    @Override
+    @Transactional
+    public void deductInventory(int medicineId, int quantity, int minMonthsBeforeExpiry) {
+        if (quantity <= 0) {
+            throw new BadRequestException("Quantity to deduct must be positive");
+        }
+        
+        // Check if medicine exists
+        Medicine medicine = medicineRepository.findById(medicineId)
+            .orElseThrow(() -> new NotFoundException("Medicine not found with id: " + medicineId));
+        
+        Date minExpiryDate = Date.valueOf(LocalDate.now().plusMonths(minMonthsBeforeExpiry));
+        
+        // Get available batches in FEFO order
+        List<MedicineInventory> batches = medicineInventoryRepository.findAvailableBatchesFEFO(medicineId, minExpiryDate);
+        
+        // Calculate total available
+        int totalAvailable = batches.stream().mapToInt(MedicineInventory::getQuantityInStock).sum();
+        
+        if (totalAvailable < quantity) {
+            throw new BadRequestException(
+                "Insufficient inventory for medicine: " + medicine.getMedicineName() + 
+                ". Available: " + totalAvailable + ", Requested: " + quantity);
+        }
+        
+        // Deduct from batches in FEFO order
+        int remaining = quantity;
+        for (MedicineInventory batch : batches) {
+            if (remaining <= 0) break;
+            
+            int batchQty = batch.getQuantityInStock();
+            if (batchQty <= remaining) {
+                // Use entire batch
+                batch.setQuantityInStock(0);
+                remaining -= batchQty;
+            } else {
+                // Partial use of batch
+                batch.setQuantityInStock(batchQty - remaining);
+                remaining = 0;
+            }
+            medicineInventoryRepository.save(batch);
+        }
+    }
+    
+    @Override
+    @Transactional
+    public void deductBulkInventory(Map<Integer, Integer> deductions, int minMonthsBeforeExpiry) {
+        // First, validate all medicines have sufficient stock
+        for (Map.Entry<Integer, Integer> entry : deductions.entrySet()) {
+            int medicineId = entry.getKey();
+            int requiredQty = entry.getValue();
+            
+            if (!checkAvailability(medicineId, requiredQty, minMonthsBeforeExpiry)) {
+                Medicine medicine = medicineRepository.findById(medicineId).orElse(null);
+                String medicineName = medicine != null ? medicine.getMedicineName() : "ID: " + medicineId;
+                int available = getAvailableQuantity(medicineId, minMonthsBeforeExpiry);
+                throw new BadRequestException(
+                    "Insufficient inventory for medicine: " + medicineName + 
+                    ". Available: " + available + ", Requested: " + requiredQty);
+            }
+        }
+        
+        // All validations passed, now deduct
+        for (Map.Entry<Integer, Integer> entry : deductions.entrySet()) {
+            deductInventory(entry.getKey(), entry.getValue(), minMonthsBeforeExpiry);
+        }
+    }
+    
+    @Override
+    @Transactional
+    public void restoreInventory(int medicineId, int quantity) {
+        if (quantity <= 0) {
+            throw new BadRequestException("Quantity to restore must be positive");
+        }
+        
+        // Check if medicine exists
+        medicineRepository.findById(medicineId)
+            .orElseThrow(() -> new NotFoundException("Medicine not found with id: " + medicineId));
+        
+        // Get the most recent batch for this medicine
+        List<MedicineInventory> batches = medicineInventoryRepository.findMostRecentBatch(medicineId);
+        
+        if (batches.isEmpty()) {
+            throw new BadRequestException("No inventory batch found for medicine id: " + medicineId);
+        }
+        
+        // Add to the most recent batch
+        MedicineInventory batch = batches.get(0);
+        batch.setQuantityInStock(batch.getQuantityInStock() + quantity);
+        medicineInventoryRepository.save(batch);
     }
     
     // Helper methods for sorting

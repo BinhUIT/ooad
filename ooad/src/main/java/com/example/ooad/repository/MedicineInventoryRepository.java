@@ -65,4 +65,23 @@ public interface MedicineInventoryRepository extends JpaRepository<MedicineInven
     @Query("SELECT MIN(mi.expiryDate) FROM MedicineInventory mi " +
            "WHERE mi.medicine.medicineId = :medicineId AND mi.quantityInStock > 0")
     Date getNearestExpiryDateByMedicineId(@Param("medicineId") int medicineId);
+    
+    /**
+     * Get available batches for dispensing (FEFO - First Expiry First Out)
+     * Returns batches with stock > 0 and expiry date after minExpiryDate, ordered by expiry date ascending
+     */
+    @Query("SELECT mi FROM MedicineInventory mi " +
+           "WHERE mi.medicine.medicineId = :medicineId " +
+           "AND mi.expiryDate > :minExpiryDate " +
+           "AND mi.quantityInStock > 0 " +
+           "ORDER BY mi.expiryDate ASC")
+    List<MedicineInventory> findAvailableBatchesFEFO(@Param("medicineId") int medicineId, @Param("minExpiryDate") Date minExpiryDate);
+    
+    /**
+     * Get the most recent batch for a medicine (for restoring inventory)
+     */
+    @Query("SELECT mi FROM MedicineInventory mi " +
+           "WHERE mi.medicine.medicineId = :medicineId " +
+           "ORDER BY mi.medicineImport.importDate DESC, mi.expiryDate DESC")
+    List<MedicineInventory> findMostRecentBatch(@Param("medicineId") int medicineId);
 }
