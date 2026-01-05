@@ -14,4 +14,8 @@ public class AppointmentRequest extends BookAppointmentRequest{
     public BookAppointmentRequest getRequest() {
         return new BookAppointmentRequest(this.scheduleId);
     }
+    public AppointmentRequest(int patientId, int scheduleId) {
+        this.patientId=patientId;
+        this.scheduleId=scheduleId;
+    }
 }

@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.ooad.domain.entity.Account;
 import com.example.ooad.domain.entity.Staff;
+import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.repository.AccountRepository;
 import com.example.ooad.repository.StaffRepository;
 import com.example.ooad.service.account.interfaces.AccountService;
@@ -18,6 +19,9 @@ public class AccountServiceImplementation implements AccountService{
     @Override
     public Staff getStaffIdFromAccountName(String accountName) {
         Account account = accountRepo.findByUsername(accountName);
+        if(account==null) {
+            throw new NotFoundException("Account not found");
+        }
         return staffRepo.findByAccount_AccountId(account.getAccountId());
     }
     
