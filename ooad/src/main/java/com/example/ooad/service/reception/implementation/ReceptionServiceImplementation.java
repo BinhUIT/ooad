@@ -24,6 +24,8 @@ import com.example.ooad.repository.ReceptionRepository;
 import com.example.ooad.service.reception.interfaces.ReceptionService;
 import com.example.ooad.utils.Message;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class ReceptionServiceImplementation implements ReceptionService {
     private final ReceptionRepository receptionRepo;
@@ -68,6 +70,7 @@ public class ReceptionServiceImplementation implements ReceptionService {
     }
 
     @Override
+    @Transactional
     public Reception createReception(CreateReceptionRequest request, Staff receptionist) {
         Patient patient = patientRepo.findById(request.getPatientId())
                 .orElseThrow(() -> new NotFoundException(Message.patientNotFound));
@@ -80,6 +83,11 @@ public class ReceptionServiceImplementation implements ReceptionService {
         }
         Reception reception = new Reception();
         reception.setPatient(patient);
+        if(patient.getFirstVisitDate()==null) {
+            patient.setFirstVisitDate(currentDate);
+            patientRepo.save(patient);
+        }
+        
         reception.setReceptionDate(request.getReceptionDate());
         reception.setReceptionist(receptionist);
         reception.setStatus(EReceptionStatus.WAITING);
