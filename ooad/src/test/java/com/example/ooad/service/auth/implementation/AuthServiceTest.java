@@ -1,5 +1,6 @@
 package com.example.ooad.service.auth.implementation;import java.sql.Date;
 import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -7,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
@@ -26,7 +28,9 @@ import com.example.ooad.domain.entity.Account;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.enums.EGender;
 import com.example.ooad.domain.enums.ERole;
+import com.example.ooad.dto.request.ChangePasswordRequest;
 import com.example.ooad.dto.request.CreateAccountDto;
+import com.example.ooad.dto.request.CreateActorAccountDto;
 import com.example.ooad.dto.request.LoginDto;
 import com.example.ooad.dto.request.LogoutDto;
 import com.example.ooad.dto.request.RegisterRequest;
@@ -35,6 +39,7 @@ import com.example.ooad.dto.response.LoginResponse;
 import com.example.ooad.exception.BadCredentialException;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.ConflictException;
+import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.exception.UnauthorizedException;
 import com.example.ooad.repository.AccountRepository;
 import com.example.ooad.repository.PatientRepository;
@@ -259,5 +264,136 @@ public class AuthServiceTest {
 
         verify(accountRepo, never()).save(any());
         verify(patientRepo, never()).save(any());
+    }
+
+    @Test
+    void registerPatientFail_InvalidPassword() {
+        when(patientRepo.findPatientByIdCardOrEmail(any(), any())).thenReturn(null);
+        when(taiKhoanValidator.validPassword(any())).thenReturn(false);
+        BadRequestException exception = assertThrows(BadRequestException.class,()->{
+             authService.registerPatientAccount(new RegisterRequest("", Date.valueOf(LocalDate.now()), EGender.MALE, "", "", "", "", ""));
+        });
+
+        assertNotNull(exception);
+        assertEquals(Message.matKhauKoHopLe, exception.getMessage());
+
+        verify(accountRepo, never()).save(any());
+        verify(patientRepo, never()).save(any());
+    }
+
+    @Test
+    void changePasswordSuccess() {
+        Account fakeAccount = new Account();
+
+        when(auth.getName()).thenReturn("");
+        when(accountRepo.findByUsername(any(String.class))).thenReturn(fakeAccount);
+
+        when(passwordEncoder.matches(any(String.class), any())).thenReturn(true);
+        when(accountRepo.save(any())).thenReturn(fakeAccount);
+
+        AccountResponse response = authService.changePassword(new ChangePasswordRequest("",""), auth);
+
+        verify(accountRepo, times(1)).save(any());
+        assertNotNull(response);
+
+
+    }
+
+    @Test
+    void changePasswordAccountNotFound() {
+        when(auth.getName()).thenReturn("");
+        when(accountRepo.findByUsername(any(String.class))).thenReturn(null);
+
+        BadRequestException exception = assertThrows(BadRequestException.class,()->{
+            authService.changePassword(new ChangePasswordRequest("",""), auth);
+        });
+
+        assertNotNull(exception);
+        assertEquals("Account does not exist", exception.getMessage());
+
+        verify(accountRepo, never()).save(any());
+    }
+
+    @Test
+    void changePasswordPasswordDoesNotMatch() {
+        Account fakeAccount = new Account();
+
+        when(auth.getName()).thenReturn("");
+        when(accountRepo.findByUsername(any(String.class))).thenReturn(fakeAccount);
+
+        when(passwordEncoder.matches(any(String.class), any())).thenReturn(false);
+
+         BadRequestException exception = assertThrows(BadRequestException.class,()->{
+            authService.changePassword(new ChangePasswordRequest("",""), auth);
+        });
+
+        assertNotNull(exception);
+        assertEquals("Wrong password", exception.getMessage());
+
+        verify(accountRepo, never()).save(any());
+    }
+
+    @Test
+    void linkAccountPatientSuccess() {
+
+        Patient fakePatient = new Patient();
+        Account newAccount = new Account();
+        newAccount.setUsername("");
+        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
+        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
+        when(passwordEncoder.encode(any())).thenReturn("");
+        when(patientRepo.findById(anyInt())).thenReturn(Optional.of(fakePatient));
+        when(patientRepo.save(any())).thenReturn(fakePatient);
+        when(accountRepo.save(any())).thenReturn(newAccount);
+        AccountResponse response = authService.linkAccount(new CreateActorAccountDto(1,"",ERole.PATIENT,""));
+        assertNotNull(response);
+        verify(patientRepo, times(1)).save(any());
+        verify(accountRepo, times(1)).save(any());
+        verify(staffRepo, never()).save(any());
+    }
+    @Test
+    void linkAccountPatientFailPatientNotFound() {
+        Account newAccount = new Account();
+        newAccount.setUsername("");
+        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
+        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
+        when(passwordEncoder.encode(any())).thenReturn("");
+        when(patientRepo.findById(anyInt())).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(NotFoundException.class,()->{
+            authService.linkAccount(new CreateActorAccountDto(1,"",ERole.PATIENT,""));
+        });
+
+        assertNotNull(exception);
+        assertEquals("Patient not found",exception.getMessage());
+
+        verify(patientRepo, never()).save(any());
+        
+        verify(staffRepo, never()).save(any());
+    }
+
+    @Test
+    void linkAccountPatientFailPatientHadAccount() {
+        Patient fakePatient = new Patient();
+        Account newAccount = new Account();
+        fakePatient.setAccount(newAccount);
+        newAccount.setUsername("");
+        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
+        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
+        when(passwordEncoder.encode(any())).thenReturn("");
+        when(patientRepo.findById(anyInt())).thenReturn(Optional.of(fakePatient));
+        when(accountRepo.save(any())).thenReturn(newAccount);
+
+        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+            authService.linkAccount(new CreateActorAccountDto(1,"",ERole.PATIENT,""));
+        });
+
+         assertNotNull(exception);
+        assertEquals("Can not link account",exception.getMessage());
+
+        verify(patientRepo, never()).save(any());
+        
+        verify(staffRepo, never()).save(any());
+
     }
 }
