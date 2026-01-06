@@ -4,14 +4,20 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
+
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -26,6 +32,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.ooad.domain.entity.Account;
 import com.example.ooad.domain.entity.Patient;
+import com.example.ooad.domain.entity.Staff;
+import com.example.ooad.domain.entity.VerificationCode;
 import com.example.ooad.domain.enums.EGender;
 import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.dto.request.ChangePasswordRequest;
@@ -34,8 +42,11 @@ import com.example.ooad.dto.request.CreateActorAccountDto;
 import com.example.ooad.dto.request.LoginDto;
 import com.example.ooad.dto.request.LogoutDto;
 import com.example.ooad.dto.request.RegisterRequest;
+import com.example.ooad.dto.request.ResetpasswordRequest;
+import com.example.ooad.dto.request.VerifyCodeRequest;
 import com.example.ooad.dto.response.AccountResponse;
 import com.example.ooad.dto.response.LoginResponse;
+import com.example.ooad.dto.response.VerifyCodeResponse;
 import com.example.ooad.exception.BadCredentialException;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.ConflictException;
@@ -45,6 +56,7 @@ import com.example.ooad.repository.AccountRepository;
 import com.example.ooad.repository.PatientRepository;
 import com.example.ooad.repository.StaffRepository;
 import com.example.ooad.repository.VerificationCodeRepository;
+import com.example.ooad.service.account.interfaces.AccountService;
 import com.example.ooad.service.auth.interfaces.JwtService;
 import com.example.ooad.service.email.interfaces.EmailService;
 import com.example.ooad.utils.Message;
@@ -72,9 +84,12 @@ public class AuthServiceTest {
     private  EmailService emailService;
     @Mock
     private Authentication auth;
-
+    
     @InjectMocks
     private AuthServiceImplementation authService;
+
+    @Mock
+    private AccountService accountService;
 
     @Test
     void createAccountSuccess() {
@@ -396,4 +411,142 @@ public class AuthServiceTest {
         verify(staffRepo, never()).save(any());
 
     }
+
+    @Test
+    void linkAccountStaffSuccess() {
+        Staff fakeStaff = new Staff();
+        Account newAccount = new Account();
+        fakeStaff.setPosition("Receptionist");
+        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
+        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
+        when(passwordEncoder.encode(any())).thenReturn("");
+        when(staffRepo.findById(anyInt())).thenReturn(Optional.of(fakeStaff));
+        when(staffRepo.save(any())).thenReturn(fakeStaff);
+        when(accountRepo.save(any())).thenReturn(newAccount);
+
+        AccountResponse response = authService.linkAccount(new CreateActorAccountDto(1,"",ERole.RECEPTIONIST,""));
+        assertNotNull(response);
+        verify(staffRepo, times(1)).save(any());
+        verify(accountRepo, times(1)).save(any());
+        verify(patientRepo, never()).save(any());
+    }
+
+    @Test
+    void linkAccountStaffStaffNotFound() {
+        Account newAccount = new Account();
+        newAccount.setUsername("");
+        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
+        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
+        when(passwordEncoder.encode(any())).thenReturn("");
+        when(staffRepo.findById(anyInt())).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(NotFoundException.class, ()->{
+            authService.linkAccount(new CreateActorAccountDto(1,"",ERole.RECEPTIONIST,""));
+        });
+
+        assertNotNull(exception);
+        assertEquals("Staff not found", exception.getMessage());
+
+        
+        verify(staffRepo, never()).save(any());
+        verify(patientRepo, never()).save(any());
+
+    }
+
+    @Test
+    void linkAccountStaffHadAccount() {
+        Staff fakeStaff = new Staff();
+        Account newAccount = new Account();
+        fakeStaff.setPosition("Receptionist");
+        fakeStaff.setAccount(new Account());
+        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
+        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
+        when(passwordEncoder.encode(any())).thenReturn("");
+        when(staffRepo.findById(anyInt())).thenReturn(Optional.of(fakeStaff));
+        
+        when(accountRepo.save(any())).thenReturn(newAccount);
+
+        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+            authService.linkAccount(new CreateActorAccountDto(1,"",ERole.RECEPTIONIST,""));
+    });
+        assertNotNull(exception);
+        assertEquals("Can not link account", exception.getMessage());
+
+        verify(staffRepo, never()).save(any());
+        verify(patientRepo, never()).save(any());
+    }
+
+    @Test
+    void linkAccountStaffWrongRole() {
+        Staff fakeStaff = new Staff();
+        Account newAccount = new Account();
+        fakeStaff.setPosition("Doctor");
+        
+        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
+        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
+        when(passwordEncoder.encode(any())).thenReturn("");
+        when(staffRepo.findById(anyInt())).thenReturn(Optional.of(fakeStaff));
+        
+        when(accountRepo.save(any())).thenReturn(newAccount);
+
+        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+            authService.linkAccount(new CreateActorAccountDto(1,"",ERole.RECEPTIONIST,""));
+    });
+        assertNotNull(exception);
+        assertEquals("Role is not correct", exception.getMessage());
+
+        verify(staffRepo, never()).save(any());
+        verify(patientRepo, never()).save(any());
+    }
+    @Test
+    void verifyCodeSuccess() {
+        VerificationCode code = new VerificationCode();
+        code.setEmail("email");
+        code.setCreateAt(new java.util.Date());
+        when(verificationCodeRepo.findByCode(any())).thenReturn(code);
+
+        VerifyCodeResponse response = authService.verifyCode(new VerifyCodeRequest("", "email"));
+
+        assertNotNull(response);
+
+    }
+
+    @Test
+    void verifyCodeFailWrongCode() {
+        when(verificationCodeRepo.findByCode(any())).thenReturn(null);
+
+        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+            authService.verifyCode(new VerifyCodeRequest("",""));
+        });
+        assertNotNull(exception);
+        assertEquals("Wrong code", exception.getMessage());
+
+    }
+
+    @Test
+    void verifyCodeFailCodeExpire() {
+         VerificationCode code = new VerificationCode();
+        code.setEmail("email");
+        code.setCreateAt(new Date(0));
+        when(verificationCodeRepo.findByCode(any())).thenReturn(code);
+        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+            authService.verifyCode(new VerifyCodeRequest("",""));
+        });
+        assertNotNull(exception);
+        assertEquals("Code expired", exception.getMessage());
+
+    }
+    @Test
+    void verifyCodeFailWrongEmail() {
+        VerificationCode code = new VerificationCode();
+        code.setEmail("emails");
+        code.setCreateAt(new java.util.Date());
+        when(verificationCodeRepo.findByCode(any())).thenReturn(code);
+        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+            authService.verifyCode(new VerifyCodeRequest("",""));
+        });
+        assertNotNull(exception);
+        assertEquals("Wrong code", exception.getMessage());
+    }
+
 }
