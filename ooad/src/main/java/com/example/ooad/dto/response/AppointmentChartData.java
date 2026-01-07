@@ -15,4 +15,5 @@ public class AppointmentChartData {
     private int notshown;
     private int cancelled;
     private int waiting;
+    private int confirmed;
 }

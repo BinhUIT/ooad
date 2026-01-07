@@ -15,4 +15,5 @@ public class AppointmentStatistic {
     private int scheduled;
     private int cancelled;
     private int total;
+    private int confirmed;
 }

@@ -116,4 +116,6 @@ public interface StaffScheduleRepository extends JpaRepository<StaffSchedule, In
     void deleteByMonth(@Param("month") int month, @Param("year") int year);
 
     StaffSchedule findByStaff_StaffIdAndStartTimeAndScheduleDate(int staffId, LocalTime startTime, Date scheduleDate);
+
+    public List<StaffSchedule> findByScheduleDate(Date scheduleDate);
 }

@@ -41,4 +41,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     
     @Query("SELECT i FROM Invoice i WHERE i.patient.patientId = :patientId ORDER BY i.invoiceDate DESC, i.invoiceId DESC")
     Page<Invoice> findByPatientIdPaginated(@Param("patientId") int patientId, Pageable pageable);
+    @Query("SELECT i FROM Invoice i WHERE month(i.invoiceDate)=:month and year(i.invoiceDate)=:year and i.paymentStatus=:status")
+    List<Invoice> findByInvoiceDateAndPaymentStatus(@Param("month") int month, @Param("year") int year,@Param("status") EPaymentStatus status);
 }

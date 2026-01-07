@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ooad.dto.request.CreateScheduleRequest;
+import com.example.ooad.dto.response.AdminStatistic;
 import com.example.ooad.dto.response.AppointmentChartData;
 import com.example.ooad.dto.response.AppointmentStatistic;
 import com.example.ooad.dto.response.GlobalResponse;
@@ -72,6 +73,12 @@ public class AdminController {
     public ResponseEntity<GlobalResponse<AppointmentStatistic>> getAppointmentStatistic(@RequestParam(defaultValue="2025") int year) {
         AppointmentStatistic result = adminService.getAppointmentStatistic(year);
         GlobalResponse<AppointmentStatistic> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @GetMapping("/admin/statistic") 
+    public ResponseEntity<GlobalResponse<AdminStatistic>> getAdminStatistic() {
+        AdminStatistic result = adminService.getAdminStatistic();
+        GlobalResponse<AdminStatistic> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
