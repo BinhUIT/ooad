@@ -36,20 +36,20 @@ public class ReceptionController {
         this.accountService = accountService;
         this.patientService = patientServive;
     }
-    @GetMapping("/receptionist/all_receptions")
+    @GetMapping({"/receptionist/all_receptions","/admin/all_receptions","/doctor/all_receptions"})
     public ResponseEntity<GlobalResponse<Page<Reception>>> getAllReceptions(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "7") int pageSize,
 @RequestParam Optional<EReceptionStatus> status, @RequestParam Optional<Date> date, @RequestParam Optional<String> patientName) {
         Page<Reception> result = receptionService.getListReceptions(pageNumber, pageSize, status , date,patientName);
         GlobalResponse<Page<Reception>> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-    @GetMapping("/receptionist/reception/{id}")
+    @GetMapping({"/receptionist/reception/{id}","/admin/reception/{id}","/doctor/reception/{id}"})
     public ResponseEntity<GlobalResponse<Reception>> getReceptionById(@PathVariable int id) {
         Reception result = receptionService.getReceptionById(id);
         GlobalResponse<Reception> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     } 
-    @PutMapping({"/receptionist/reception/update"})
+    @PutMapping({"/receptionist/reception/update","/doctor/reception/update"})
     public ResponseEntity<GlobalResponse<Reception>> updateReception(@RequestBody UpdateReceptionRequest request) {
         Reception result = receptionService.editReception(request);
         GlobalResponse<Reception> response = new GlobalResponse<>(result, Message.success,200);
