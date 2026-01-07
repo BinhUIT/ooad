@@ -41,7 +41,7 @@ public class AppointmentController {
         this.patientService = patientService;
         this.staffService = staffService;
     }
-    @GetMapping({"/receptionist/appointment_by_id/{appointmentId}","/admin/appointment_by_id/{appointmentId}"})
+    @GetMapping({"/receptionist/appointment_by_id/{appointmentId}","/admin/appointment_by_id/{appointmentId}","/doctor/appointment_by_id/{appointmentId}"})
     public ResponseEntity<GlobalResponse<Appointment>> getAppointmentById(@PathVariable int appointmentId) {
         Appointment result = appointmentService.findAppointmentById(appointmentId);
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);
