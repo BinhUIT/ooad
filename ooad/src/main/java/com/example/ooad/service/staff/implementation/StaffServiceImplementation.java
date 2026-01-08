@@ -116,7 +116,7 @@ public class StaffServiceImplementation implements StaffService {
         staff.setEmail(request.getEmail());
         staff.setPhone(request.getPhone());
         staff.setIdCard(request.getIdCard());
-        staff.setPosition(request.getPosition());
+        staff.setPosition(request.getRole().toString()); // Set position from role
         staff.setAccount(null);
         staff = staffRepo.save(staff);
 
@@ -151,14 +151,6 @@ public class StaffServiceImplementation implements StaffService {
             }
         }
 
-        // Ensure username not used by other accounts (if staff has account)
-        Account existingAccountWithUsername = accountRepo.findByUsername(request.getEmail());
-        Account currentAccount = staff.getAccount();
-        if (existingAccountWithUsername != null && currentAccount != null
-                && existingAccountWithUsername.getAccountId() != currentAccount.getAccountId()) {
-            throw new ConflictException("Account username '" + request.getEmail() + "' already exists");
-        }
-
         // Update Staff fields
         staff.setFullName(request.getFullName());
         staff.setDateOfBirth(request.getDateOfBirth());
@@ -166,15 +158,7 @@ public class StaffServiceImplementation implements StaffService {
         staff.setEmail(request.getEmail());
         staff.setPhone(request.getPhone());
         staff.setIdCard(request.getIdCard());
-        staff.setPosition(request.getPosition());
-
-        // Update Account only if staff has one
-        if (currentAccount != null) {
-            currentAccount.setUsername(request.getEmail());
-            currentAccount.setRole(request.getRole());
-            currentAccount.setStatus(request.getIsActive() ? EStatus.ACTIVE : EStatus.LOCKED);
-            accountRepo.save(currentAccount);
-        }
+        staff.setPosition(request.getRole().toString()); // Set position from role
 
         staff = staffRepo.save(staff);
 
