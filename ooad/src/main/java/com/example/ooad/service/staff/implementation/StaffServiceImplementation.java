@@ -10,10 +10,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 
+import com.example.ooad.service.email.interfaces.EmailService;
 import com.example.ooad.domain.entity.Account;
 import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.entity.StaffSchedule;
@@ -43,22 +43,22 @@ public class StaffServiceImplementation implements StaffService {
     private final StaffScheduleRepository staffScheduleRepo;
     private final AccountRepository accountRepo;
     private final ActorValidator actorValidator;
-    private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
+    private final EmailService emailService;
 
     public StaffServiceImplementation(
             StaffRepository staffRepo,
             StaffScheduleRepository staffScheduleRepo,
             AccountRepository accountRepo,
             ActorValidator actorValidator,
-            PasswordEncoder passwordEncoder,
-            AuthService authService) {
+            AuthService authService,
+            EmailService emailService) {
         this.staffRepo = staffRepo;
         this.staffScheduleRepo = staffScheduleRepo;
         this.accountRepo = accountRepo;
         this.actorValidator = actorValidator;
-        this.passwordEncoder = passwordEncoder;
         this.authService = authService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -109,21 +109,6 @@ public class StaffServiceImplementation implements StaffService {
             }
         }
 
-        if (accountRepo.findByUsername(request.getEmail()) != null) {
-            throw new ConflictException("Account username '" + request.getEmail() + "' already exists");
-        }
-
-        CreateAccountDto accountDto = new CreateAccountDto("12345678", request.getRole(), request.getEmail());
-        authService.createAccount(accountDto);
-        Account account = accountRepo.findByUsername(request.getEmail());
-        if (account == null) {
-            throw new RuntimeException("Failed to create account for staff");
-        }
-        account.setStatus(request.getIsActive() ? EStatus.ACTIVE : EStatus.LOCKED);
-        account.setRole(request.getRole());
-        accountRepo.save(account);
-
-        // Create Staff
         Staff staff = new Staff();
         staff.setFullName(request.getFullName());
         staff.setDateOfBirth(request.getDateOfBirth());
@@ -132,8 +117,15 @@ public class StaffServiceImplementation implements StaffService {
         staff.setPhone(request.getPhone());
         staff.setIdCard(request.getIdCard());
         staff.setPosition(request.getPosition());
-        staff.setAccount(account);
+        staff.setAccount(null);
         staff = staffRepo.save(staff);
+
+        // Send email with staff ID for account registration
+        try {
+            emailService.sendStaffRegistrationEmail(staff.getStaffId(), request.getEmail(), request.getFullName());
+        } catch (Exception e) {
+            System.err.println("Failed to send registration email: " + e.getMessage());
+        }
 
         return new StaffResponse(staff);
     }
@@ -159,7 +151,7 @@ public class StaffServiceImplementation implements StaffService {
             }
         }
 
-        // Ensure username not used by other accounts
+        // Ensure username not used by other accounts (if staff has account)
         Account existingAccountWithUsername = accountRepo.findByUsername(request.getEmail());
         Account currentAccount = staff.getAccount();
         if (existingAccountWithUsername != null && currentAccount != null
@@ -176,12 +168,13 @@ public class StaffServiceImplementation implements StaffService {
         staff.setIdCard(request.getIdCard());
         staff.setPosition(request.getPosition());
 
-        // Update Account
-        Account account = staff.getAccount();
-        account.setUsername(request.getEmail());
-        account.setRole(request.getRole());
-        account.setStatus(request.getIsActive() ? EStatus.ACTIVE : EStatus.LOCKED);
-        accountRepo.save(account);
+        // Update Account only if staff has one
+        if (currentAccount != null) {
+            currentAccount.setUsername(request.getEmail());
+            currentAccount.setRole(request.getRole());
+            currentAccount.setStatus(request.getIsActive() ? EStatus.ACTIVE : EStatus.LOCKED);
+            accountRepo.save(currentAccount);
+        }
 
         staff = staffRepo.save(staff);
 
@@ -256,16 +249,17 @@ public class StaffServiceImplementation implements StaffService {
 
     @Override
     public List<Staff> findStaffByRole(String role) {
-       return staffRepo.findByPositionIgnoreCase(role);
+        return staffRepo.findByPositionIgnoreCase(role);
     }
 
     @Override
     public Staff getStaffFromAuth(Authentication auth) {
         Account account = authService.getAccountFromAuth(auth);
-        if(account==null) {
+        if (account == null) {
             throw new BadRequestException("Bad credential");
         }
-        return staffRepo.findByAccountId(account.getAccountId()).orElseThrow(()->new NotFoundException("Staff not found"));
-        
+        return staffRepo.findByAccountId(account.getAccountId())
+                .orElseThrow(() -> new NotFoundException("Staff not found"));
+
     }
 }
