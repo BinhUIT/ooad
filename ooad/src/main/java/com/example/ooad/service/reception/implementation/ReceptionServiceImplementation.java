@@ -88,6 +88,11 @@ public class ReceptionServiceImplementation implements ReceptionService {
             patientRepo.save(patient);
         }
         
+        List<Reception> receptions = receptionRepo.findByPatient_PatientIdAndStatusAndReceptionDate(patient.getPatientId(), EReceptionStatus.IN_EXAMINATION, currentDate);
+        if(receptions!=null&&!receptions.isEmpty()) {
+            throw new BadRequestException("Patient is in examination");
+        }
+        
         reception.setReceptionDate(request.getReceptionDate());
         reception.setReceptionist(receptionist);
         reception.setStatus(EReceptionStatus.WAITING);

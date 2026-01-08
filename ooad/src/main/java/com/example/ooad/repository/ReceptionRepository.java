@@ -22,4 +22,5 @@ public interface ReceptionRepository extends JpaRepository<Reception, Integer> {
     public Page<Reception> findAllByStatusAndReceptionDate(EReceptionStatus status, Date date,Pageable pageable);
     public List<Reception> findByPatient_PatientId(int patientId);
     public List<Reception> findByReceptionDateLessThanEqual(Date date);
+    public List<Reception> findByPatient_PatientIdAndStatusAndReceptionDate(int patientId, EReceptionStatus status, Date receptionDate);
 }
