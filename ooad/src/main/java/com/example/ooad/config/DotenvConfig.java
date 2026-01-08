@@ -9,6 +9,6 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class DotenvConfig {
     @Bean
     public Dotenv dotenv() {
-        return Dotenv.configure().load(); 
+        return Dotenv.configure().ignoreIfMissing().load();
     }
 }
