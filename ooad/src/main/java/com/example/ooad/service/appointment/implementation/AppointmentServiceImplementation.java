@@ -163,7 +163,7 @@ public class AppointmentServiceImplementation implements AppointmentService {
     public void checkAuthority(Authentication auth, Appointment appointment) {
         boolean isReceptionist = auth.getAuthorities().stream().anyMatch(grantedAuthority->{
             
-            return grantedAuthority.getAuthority().equals(ERole.RECEPTIONIST.name());
+            return grantedAuthority.getAuthority().equals(ERole.RECEPTIONIST.name())||grantedAuthority.getAuthority().equals(ERole.DOCTOR.name());
         });
          if(!isReceptionist) {
             Patient p = patientService.getPatientFromAuth(auth);
