@@ -18,15 +18,26 @@ import com.example.ooad.dto.response.VerifyCodeResponse;
 
 public interface AuthService {
     public AccountResponse createAccount(CreateAccountDto dto);
+
     public LoginResponse login(LoginDto dto);
+
     public String dangXuat(LogoutDto logoutDto);
+
     public String generateAcessToken(String refreshToken, String username);
+
     public Account getAccountFromAuth(Authentication auth);
+
     public AccountResponse registerPatientAccount(RegisterRequest request);
+
     public AccountResponse changePassword(ChangePasswordRequest request, Authentication auth);
+
     public AccountResponse linkAccount(CreateActorAccountDto dto);
+
     public boolean sendVerificationEmail(ForgetPasswordRequest request);
+
     public VerifyCodeResponse verifyCode(VerifyCodeRequest request);
+
     public AccountResponse resetPassword(ResetpasswordRequest request);
+
     public Account findByEmail(String email);
 }

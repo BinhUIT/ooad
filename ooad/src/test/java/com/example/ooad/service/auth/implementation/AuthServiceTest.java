@@ -1,4 +1,6 @@
-package com.example.ooad.service.auth.implementation;import java.sql.Date;
+package com.example.ooad.service.auth.implementation;
+
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -69,22 +71,22 @@ public class AuthServiceTest {
     @Mock
     private AccountValidator taiKhoanValidator;
     @Mock
-    private  PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
     @Mock
-    private  AuthenticationManager authManager;
+    private AuthenticationManager authManager;
     @Mock
-    private  JwtService jwtService;
+    private JwtService jwtService;
     @Mock
-    private  PatientRepository patientRepo;
+    private PatientRepository patientRepo;
     @Mock
-    private  StaffRepository staffRepo;
+    private StaffRepository staffRepo;
     @Mock
-    private  VerificationCodeRepository verificationCodeRepo;
+    private VerificationCodeRepository verificationCodeRepo;
     @Mock
-    private  EmailService emailService;
+    private EmailService emailService;
     @Mock
     private Authentication auth;
-    
+
     @InjectMocks
     private AuthServiceImplementation authService;
 
@@ -100,23 +102,23 @@ public class AuthServiceTest {
         when(passwordEncoder.encode(any(String.class))).thenReturn("");
         when(accountRepo.save(any(Account.class))).thenReturn(fakeAccount);
 
-        AccountResponse result = authService.createAccount(new CreateAccountDto("",ERole.PATIENT,""));
+        AccountResponse result = authService.createAccount(new CreateAccountDto("", ERole.PATIENT, ""));
 
         assertNotNull(result);
-        verify(passwordEncoder,times(1)).encode(any(String.class));
-        verify(accountRepo,times(1)).save(any(Account.class));
+        verify(passwordEncoder, times(1)).encode(any(String.class));
+        verify(accountRepo, times(1)).save(any(Account.class));
     }
 
     @Test
     void createAccountFail_NameUsed() {
         when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(true);
-        ConflictException exception = assertThrows(ConflictException.class, ()->{
-            authService.createAccount(new CreateAccountDto("",ERole.PATIENT,""));
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
+            authService.createAccount(new CreateAccountDto("", ERole.PATIENT, ""));
         });
 
         assertNotNull(exception);
         assertEquals(Message.tenDangNhapDaDuocSuDung, exception.getMessage());
-        verify(accountRepo,never()).save(any(Account.class));
+        verify(accountRepo, never()).save(any(Account.class));
     }
 
     @Test
@@ -124,12 +126,12 @@ public class AuthServiceTest {
         when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
         when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(false);
 
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
-            authService.createAccount(new CreateAccountDto("",ERole.PATIENT,""));
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            authService.createAccount(new CreateAccountDto("", ERole.PATIENT, ""));
         });
         assertNotNull(exception);
         assertEquals(Message.matKhauKoHopLe, exception.getMessage());
-        verify(accountRepo,never()).save(any(Account.class));
+        verify(accountRepo, never()).save(any(Account.class));
     }
 
     @Test
@@ -152,14 +154,14 @@ public class AuthServiceTest {
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(auth);
         when(auth.isAuthenticated()).thenReturn(false);
 
-        BadCredentialException exception = assertThrows(BadCredentialException.class, ()->{
+        BadCredentialException exception = assertThrows(BadCredentialException.class, () -> {
             authService.login(new LoginDto("", ""));
         });
 
         assertNotNull(exception);
         assertEquals(Message.saiTenDangNhapVaMatKhau, exception.getMessage());
 
-        verify(jwtService,never()).generateToken(any(String.class));
+        verify(jwtService, never()).generateToken(any(String.class));
         verify(jwtService, never()).generateRefreshToken(any(String.class));
     }
 
@@ -169,14 +171,14 @@ public class AuthServiceTest {
         when(auth.isAuthenticated()).thenReturn(true);
         when(auth.getPrincipal()).thenReturn("NotAnObject");
 
-        RuntimeException exception = assertThrows(RuntimeException.class, ()->{
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             authService.login(new LoginDto("", ""));
         });
 
         assertNotNull(exception);
         assertEquals(Message.loiServer, exception.getMessage());
 
-        verify(jwtService,never()).generateToken(any(String.class));
+        verify(jwtService, never()).generateToken(any(String.class));
         verify(jwtService, never()).generateRefreshToken(any(String.class));
     }
 
@@ -190,14 +192,14 @@ public class AuthServiceTest {
         assertNotNull(message);
         assertEquals(Message.dangXuatThanhCong, message);
 
-        verify(jwtService,times(1)).deleteRefreshToken(any(String.class));
+        verify(jwtService, times(1)).deleteRefreshToken(any(String.class));
         verify(jwtService, times(1)).saveUnusedAccessToken(any(String.class));
     }
 
     @Test
     void loadUserByUsernameSuccess() {
         UserDetails fakeAccount = new Account();
-        when(accountRepo.findByUsername(any(String.class))).thenReturn((Account)fakeAccount);
+        when(accountRepo.findByUsername(any(String.class))).thenReturn((Account) fakeAccount);
 
         UserDetails result = authService.loadUserByUsername("");
         assertNotNull(result);
@@ -207,13 +209,13 @@ public class AuthServiceTest {
     void loadUserByUsernameFail() {
         when(accountRepo.findByUsername(any(String.class))).thenReturn(null);
 
-        UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, ()->{
+        UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, () -> {
             authService.loadUserByUsername("");
         });
         assertNotNull(exception);
         assertEquals(Message.khongTimThayTaiKhoan, exception.getMessage());
     }
-    
+
     @Test
     void testGenerateAccessTokenSuccess() {
         Account fakeAccount = new Account();
@@ -232,13 +234,13 @@ public class AuthServiceTest {
         when(accountRepo.findByUsername(any(String.class))).thenReturn(fakeAccount);
         when(jwtService.validateRefreshToken(any(), any())).thenReturn(false);
 
-        UnauthorizedException exception = assertThrows(UnauthorizedException.class, ()->{
+        UnauthorizedException exception = assertThrows(UnauthorizedException.class, () -> {
             authService.generateAcessToken("", "");
         });
 
         assertNotNull(exception);
         assertEquals(Message.refreshTokenHetHan, exception.getMessage());
-        verify(jwtService,never()).generateToken(any());
+        verify(jwtService, never()).generateToken(any());
     }
 
     @Test
@@ -258,7 +260,8 @@ public class AuthServiceTest {
         when(accountRepo.save(any())).thenReturn(new Account());
         when(patientRepo.save(any())).thenReturn(new Patient());
 
-        AccountResponse response = authService.registerPatientAccount(new RegisterRequest("", Date.valueOf(LocalDate.now()), EGender.MALE, "", "", "", "", ""));
+        AccountResponse response = authService.registerPatientAccount(
+                new RegisterRequest("", Date.valueOf(LocalDate.now()), EGender.MALE, "", "", "", "", ""));
 
         assertNotNull(response);
 
@@ -266,12 +269,14 @@ public class AuthServiceTest {
         verify(patientRepo, times(1)).save(any());
 
     }
+
     @Test
     void registerPatientAccountFail_PatientExist() {
         when(patientRepo.findPatientByIdCardOrEmail(any(), any())).thenReturn(new Patient());
 
-        ConflictException exception = assertThrows(ConflictException.class, ()->{
-            authService.registerPatientAccount(new RegisterRequest("", Date.valueOf(LocalDate.now()), EGender.MALE, "", "", "", "", ""));
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
+            authService.registerPatientAccount(
+                    new RegisterRequest("", Date.valueOf(LocalDate.now()), EGender.MALE, "", "", "", "", ""));
         });
 
         assertNotNull(exception);
@@ -285,8 +290,9 @@ public class AuthServiceTest {
     void registerPatientFail_InvalidPassword() {
         when(patientRepo.findPatientByIdCardOrEmail(any(), any())).thenReturn(null);
         when(taiKhoanValidator.validPassword(any())).thenReturn(false);
-        BadRequestException exception = assertThrows(BadRequestException.class,()->{
-             authService.registerPatientAccount(new RegisterRequest("", Date.valueOf(LocalDate.now()), EGender.MALE, "", "", "", "", ""));
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            authService.registerPatientAccount(
+                    new RegisterRequest("", Date.valueOf(LocalDate.now()), EGender.MALE, "", "", "", "", ""));
         });
 
         assertNotNull(exception);
@@ -306,11 +312,10 @@ public class AuthServiceTest {
         when(passwordEncoder.matches(any(String.class), any())).thenReturn(true);
         when(accountRepo.save(any())).thenReturn(fakeAccount);
 
-        AccountResponse response = authService.changePassword(new ChangePasswordRequest("",""), auth);
+        AccountResponse response = authService.changePassword(new ChangePasswordRequest("", ""), auth);
 
         verify(accountRepo, times(1)).save(any());
         assertNotNull(response);
-
 
     }
 
@@ -319,8 +324,8 @@ public class AuthServiceTest {
         when(auth.getName()).thenReturn("");
         when(accountRepo.findByUsername(any(String.class))).thenReturn(null);
 
-        BadRequestException exception = assertThrows(BadRequestException.class,()->{
-            authService.changePassword(new ChangePasswordRequest("",""), auth);
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            authService.changePassword(new ChangePasswordRequest("", ""), auth);
         });
 
         assertNotNull(exception);
@@ -338,8 +343,8 @@ public class AuthServiceTest {
 
         when(passwordEncoder.matches(any(String.class), any())).thenReturn(false);
 
-         BadRequestException exception = assertThrows(BadRequestException.class,()->{
-            authService.changePassword(new ChangePasswordRequest("",""), auth);
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            authService.changePassword(new ChangePasswordRequest("", ""), auth);
         });
 
         assertNotNull(exception);
@@ -360,30 +365,27 @@ public class AuthServiceTest {
         when(patientRepo.findById(anyInt())).thenReturn(Optional.of(fakePatient));
         when(patientRepo.save(any())).thenReturn(fakePatient);
         when(accountRepo.save(any())).thenReturn(newAccount);
-        AccountResponse response = authService.linkAccount(new CreateActorAccountDto(1,"",ERole.PATIENT,""));
+        AccountResponse response = authService.linkAccount(new CreateActorAccountDto(1, "", ""));
         assertNotNull(response);
         verify(patientRepo, times(1)).save(any());
         verify(accountRepo, times(1)).save(any());
         verify(staffRepo, never()).save(any());
     }
+
     @Test
     void linkAccountPatientFailPatientNotFound() {
-        Account newAccount = new Account();
-        newAccount.setUsername("");
-        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
-        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
-        when(passwordEncoder.encode(any())).thenReturn("");
+        when(staffRepo.findById(anyInt())).thenReturn(Optional.empty());
         when(patientRepo.findById(anyInt())).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(NotFoundException.class,()->{
-            authService.linkAccount(new CreateActorAccountDto(1,"",ERole.PATIENT,""));
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
+            authService.linkAccount(new CreateActorAccountDto(1, "", ""));
         });
 
         assertNotNull(exception);
-        assertEquals("Patient not found",exception.getMessage());
+        assertEquals("Staff or Patient with ID 1 not found", exception.getMessage());
 
         verify(patientRepo, never()).save(any());
-        
+
         verify(staffRepo, never()).save(any());
     }
 
@@ -392,22 +394,18 @@ public class AuthServiceTest {
         Patient fakePatient = new Patient();
         Account newAccount = new Account();
         fakePatient.setAccount(newAccount);
-        newAccount.setUsername("");
-        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
-        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
-        when(passwordEncoder.encode(any())).thenReturn("");
+        when(staffRepo.findById(anyInt())).thenReturn(Optional.empty());
         when(patientRepo.findById(anyInt())).thenReturn(Optional.of(fakePatient));
-        when(accountRepo.save(any())).thenReturn(newAccount);
 
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
-            authService.linkAccount(new CreateActorAccountDto(1,"",ERole.PATIENT,""));
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            authService.linkAccount(new CreateActorAccountDto(1, "", ""));
         });
 
-         assertNotNull(exception);
-        assertEquals("Can not link account",exception.getMessage());
+        assertNotNull(exception);
+        assertEquals("This patient already has an account", exception.getMessage());
 
         verify(patientRepo, never()).save(any());
-        
+
         verify(staffRepo, never()).save(any());
 
     }
@@ -424,7 +422,7 @@ public class AuthServiceTest {
         when(staffRepo.save(any())).thenReturn(fakeStaff);
         when(accountRepo.save(any())).thenReturn(newAccount);
 
-        AccountResponse response = authService.linkAccount(new CreateActorAccountDto(1,"",ERole.RECEPTIONIST,""));
+        AccountResponse response = authService.linkAccount(new CreateActorAccountDto(1, "", ""));
         assertNotNull(response);
         verify(staffRepo, times(1)).save(any());
         verify(accountRepo, times(1)).save(any());
@@ -433,21 +431,16 @@ public class AuthServiceTest {
 
     @Test
     void linkAccountStaffStaffNotFound() {
-        Account newAccount = new Account();
-        newAccount.setUsername("");
-        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
-        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
-        when(passwordEncoder.encode(any())).thenReturn("");
         when(staffRepo.findById(anyInt())).thenReturn(Optional.empty());
+        when(patientRepo.findById(anyInt())).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(NotFoundException.class, ()->{
-            authService.linkAccount(new CreateActorAccountDto(1,"",ERole.RECEPTIONIST,""));
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
+            authService.linkAccount(new CreateActorAccountDto(1, "", ""));
         });
 
         assertNotNull(exception);
-        assertEquals("Staff not found", exception.getMessage());
+        assertEquals("Staff or Patient with ID 1 not found", exception.getMessage());
 
-        
         verify(staffRepo, never()).save(any());
         verify(patientRepo, never()).save(any());
 
@@ -456,21 +449,15 @@ public class AuthServiceTest {
     @Test
     void linkAccountStaffHadAccount() {
         Staff fakeStaff = new Staff();
-        Account newAccount = new Account();
         fakeStaff.setPosition("Receptionist");
         fakeStaff.setAccount(new Account());
-        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
-        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
-        when(passwordEncoder.encode(any())).thenReturn("");
         when(staffRepo.findById(anyInt())).thenReturn(Optional.of(fakeStaff));
-        
-        when(accountRepo.save(any())).thenReturn(newAccount);
 
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
-            authService.linkAccount(new CreateActorAccountDto(1,"",ERole.RECEPTIONIST,""));
-    });
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            authService.linkAccount(new CreateActorAccountDto(1, "", ""));
+        });
         assertNotNull(exception);
-        assertEquals("Can not link account", exception.getMessage());
+        assertEquals("This staff already has an account", exception.getMessage());
 
         verify(staffRepo, never()).save(any());
         verify(patientRepo, never()).save(any());
@@ -479,25 +466,19 @@ public class AuthServiceTest {
     @Test
     void linkAccountStaffWrongRole() {
         Staff fakeStaff = new Staff();
-        Account newAccount = new Account();
-        fakeStaff.setPosition("Doctor");
-        
-        when(taiKhoanValidator.isNameUsed(any(String.class))).thenReturn(false);
-        when(taiKhoanValidator.validPassword(any(String.class))).thenReturn(true);
-        when(passwordEncoder.encode(any())).thenReturn("");
+        fakeStaff.setPosition("InvalidPosition");
         when(staffRepo.findById(anyInt())).thenReturn(Optional.of(fakeStaff));
-        
-        when(accountRepo.save(any())).thenReturn(newAccount);
 
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
-            authService.linkAccount(new CreateActorAccountDto(1,"",ERole.RECEPTIONIST,""));
-    });
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            authService.linkAccount(new CreateActorAccountDto(1, "", ""));
+        });
         assertNotNull(exception);
-        assertEquals("Role is not correct", exception.getMessage());
+        assertEquals("Invalid staff position: InvalidPosition", exception.getMessage());
 
         verify(staffRepo, never()).save(any());
         verify(patientRepo, never()).save(any());
     }
+
     @Test
     void verifyCodeSuccess() {
         VerificationCode code = new VerificationCode();
@@ -515,8 +496,8 @@ public class AuthServiceTest {
     void verifyCodeFailWrongCode() {
         when(verificationCodeRepo.findByCode(any())).thenReturn(null);
 
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
-            authService.verifyCode(new VerifyCodeRequest("",""));
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            authService.verifyCode(new VerifyCodeRequest("", ""));
         });
         assertNotNull(exception);
         assertEquals("Wrong code", exception.getMessage());
@@ -525,25 +506,26 @@ public class AuthServiceTest {
 
     @Test
     void verifyCodeFailCodeExpire() {
-         VerificationCode code = new VerificationCode();
+        VerificationCode code = new VerificationCode();
         code.setEmail("email");
         code.setCreateAt(new Date(0));
         when(verificationCodeRepo.findByCode(any())).thenReturn(code);
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
-            authService.verifyCode(new VerifyCodeRequest("",""));
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            authService.verifyCode(new VerifyCodeRequest("", ""));
         });
         assertNotNull(exception);
         assertEquals("Code expired", exception.getMessage());
 
     }
+
     @Test
     void verifyCodeFailWrongEmail() {
         VerificationCode code = new VerificationCode();
         code.setEmail("emails");
         code.setCreateAt(new java.util.Date());
         when(verificationCodeRepo.findByCode(any())).thenReturn(code);
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
-            authService.verifyCode(new VerifyCodeRequest("",""));
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            authService.verifyCode(new VerifyCodeRequest("", ""));
         });
         assertNotNull(exception);
         assertEquals("Wrong code", exception.getMessage());
