@@ -1,21 +1,24 @@
 package com.example.ooad.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import io.github.cdimascio.dotenv.Dotenv;
-
 @Configuration
-public class CorsConfiguration implements WebMvcConfigurer  {
-    private Dotenv dotenv = Dotenv.load();
+public class CorsConfiguration implements WebMvcConfigurer {
+
+    @Value("${FE_ORIGIN:http://localhost:5173}")
+    private String feOrigin;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // Apply to all paths
-                .allowedOrigins(dotenv.get("FE_ORIGIN"))
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allowed HTTP methods
-                .allowedHeaders("*") // Allowed headers
-                .allowCredentials(true) // Allow credentials (e.g., cookies, authorization headers)
-                .maxAge(3600); 
+
+        registry.addMapping("/**")
+                .allowedOrigins(feOrigin.split(",")) // Tự động lấy từ biến feOrigin ở trên
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 }
