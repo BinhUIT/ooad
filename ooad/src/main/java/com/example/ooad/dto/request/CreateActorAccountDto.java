@@ -13,9 +13,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CreateActorAccountDto extends CreateAccountDto {
     private int actorId;
-    public CreateActorAccountDto(int actorId, String username, ERole role, String password) {
-        this.actorId=actorId;
-        this.role=role;
+
+    public CreateActorAccountDto(int actorId, String username, String password) {
+        this.actorId = actorId;
         this.username = username;
         this.password = password;
     }
