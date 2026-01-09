@@ -18,16 +18,21 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Inte
 
     public Page<Prescription> findByPrescriptionDate(Pageable pageable, Date prescriptionDate);
 
-    public Optional<Prescription> findByRecord_RecordId(int recordId);
+    // Get the most recent prescription for a medical record (handles multiple
+    // prescriptions)
+    @Query("SELECT p FROM Prescription p WHERE p.record.recordId = :recordId ORDER BY p.prescriptionDate DESC, p.prescriptionId DESC")
+    public Optional<Prescription> findLatestByRecordId(@Param("recordId") int recordId);
 
     @Query("SELECT p FROM Prescription p where "
             + "(:prescriptionDate is null or p.prescriptionDate =:prescriptionDate) and "
             + "(:patientName is null or upper(p.record.reception.patient.fullName) like UPPER (CONCAT('%', :patientName, '%')))")
     public Page<Prescription> findPrescriptions(Pageable pageable, @Param("prescriptionDate") Date prescriptionDate,
             @Param("patientName") String patientName);
-@Query("SELECT p FROM Prescription p where "
+
+    @Query("SELECT p FROM Prescription p where "
             + "(:prescriptionDate is null or p.prescriptionDate =:prescriptionDate) and "
             + "p.record.reception.patient.patientId=:patientId")
-    public Page<Prescription> findPrescriptionsOfPatient(Pageable pageable, @Param("prescriptionDate") Date prescriptionDate,
+    public Page<Prescription> findPrescriptionsOfPatient(Pageable pageable,
+            @Param("prescriptionDate") Date prescriptionDate,
             @Param("patientId") int patientId);
 }

@@ -73,7 +73,8 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
 
     @Override
     public Prescription getPrescriptionByRecordId(int recordId) {
-        return prescriptionRepo.findByRecord_RecordId(recordId)
+        // Get latest prescription when multiple exist for same record
+        return prescriptionRepo.findLatestByRecordId(recordId)
                 .orElse(null); // Return null if no prescription found for this record
     }
 
@@ -169,10 +170,11 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
     }
 
     @Override
-    public Page<Prescription> getPrescriptionsOfPatient(Authentication auth, int pageNumber, int pageSize, Optional<Date> prescriptionDate) {
+    public Page<Prescription> getPrescriptionsOfPatient(Authentication auth, int pageNumber, int pageSize,
+            Optional<Date> prescriptionDate) {
         Patient p = patientService.getPatientFromAuth(auth);
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        Date filterDate=  prescriptionDate.orElse(null);
-        return prescriptionRepo.findPrescriptionsOfPatient(pageable,filterDate,p.getPatientId());
+        Date filterDate = prescriptionDate.orElse(null);
+        return prescriptionRepo.findPrescriptionsOfPatient(pageable, filterDate, p.getPatientId());
     }
 }
