@@ -105,7 +105,7 @@ public class AppointmentController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping({"/patient/change_appointment_status/{appointmentId}","/receptionist/change_appointment_status/{appointmentId}"})
+    @GetMapping({"/patient/change_appointment_status/{appointmentId}","/receptionist/change_appointment_status/{appointmentId}","/doctor/change_appointment_status/{appointmentId}"})
     public ResponseEntity<GlobalResponse<Appointment>> changeAppointmentStatus(@PathVariable int appointmentId, Authentication auth, @RequestParam(defaultValue="CANCELLED") EAppointmentStatus status) {
         Appointment result = appointmentService.changeAppointmentStatus(auth, appointmentId, status);
         GlobalResponse<Appointment> response = new GlobalResponse<>(result, Message.success, 200);

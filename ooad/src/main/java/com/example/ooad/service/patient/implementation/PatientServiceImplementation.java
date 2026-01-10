@@ -16,6 +16,7 @@ import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Reception;
+import com.example.ooad.domain.enums.EAppointmentStatus;
 import com.example.ooad.domain.enums.EGender;
 import com.example.ooad.domain.enums.EReceptionStatus;
 import com.example.ooad.dto.request.PatientRequest;
@@ -23,6 +24,7 @@ import com.example.ooad.dto.response.PatientResponse;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.mapper.PatientMapper;
+import com.example.ooad.repository.AccountRepository;
 import com.example.ooad.repository.AppointmentRepository;
 import com.example.ooad.repository.InvoiceRepository;
 import com.example.ooad.repository.MedicalRecordRepository;
@@ -46,10 +48,11 @@ public class PatientServiceImplementation implements PatientService {
     private final InvoiceRepository invoiceRepo;
     private final MedicalRecordRepository medicalRecordRepo;
     private final AuthService authService;
+    private final AccountRepository accountRepo;
 
     public PatientServiceImplementation(PatientRepository patientRepo, ActorValidator actorValidator,MedicalRecordRepository medicalRecordRepo,
          AppointmentRepository appointmentRepo, ReceptionRepository receptionRepo,
-         InvoiceRepository invoiceRepo, AuthService authService ) {
+         InvoiceRepository invoiceRepo, AuthService authService , AccountRepository accountRepo) {
         this.patientRepo = patientRepo;
         this.actorValidator = actorValidator;
         this.appointmentRepo= appointmentRepo;
@@ -57,6 +60,7 @@ public class PatientServiceImplementation implements PatientService {
         this.invoiceRepo = invoiceRepo;
         this.medicalRecordRepo= medicalRecordRepo;
         this.authService= authService;
+        this.accountRepo = accountRepo;
     }
     private void validateRequest(PatientRequest request, BindingResult bindingResult) {
         if(bindingResult.hasErrors()) {
@@ -113,6 +117,9 @@ public class PatientServiceImplementation implements PatientService {
         Patient p = findPatientById(patientId);
         List<Appointment> appointments = appointmentRepo.findByPatient_PatientId(p.getPatientId());
         for(Appointment a: appointments) {
+            if(a.getStatus()==EAppointmentStatus.SCHEDULED||a.getStatus()==EAppointmentStatus.CONFIRMED) {
+                throw new BadRequestException(Message.cannotDeletePatient);
+            }
             a.setPatient(null);
         }
         List<Reception> receptions = receptionRepo.findByPatient_PatientId(p.getPatientId());
@@ -129,6 +136,9 @@ public class PatientServiceImplementation implements PatientService {
         appointmentRepo.saveAll(appointments);
         receptionRepo.saveAll(receptions);
         invoiceRepo.saveAll(invoices);
+        if(p.getAccount()!=null) {
+            accountRepo.delete(p.getAccount());
+        }
         patientRepo.delete(p);
     }
 

@@ -148,7 +148,7 @@ public class AppointmentServiceImplementation implements AppointmentService {
     public Appointment changeAppointmentStatus(Authentication auth, int appointmentId,EAppointmentStatus status) {
         Appointment appointment = this.findAppointmentById(appointmentId);
         checkAuthority(auth, appointment);
-        if(status==EAppointmentStatus.CANCELLED){
+        if(status==EAppointmentStatus.CANCELLED||status==EAppointmentStatus.COMPLETED||status==EAppointmentStatus.NOSHOW){
             freeSchedule(appointment);
         }
         appointment.setStatus(status);
