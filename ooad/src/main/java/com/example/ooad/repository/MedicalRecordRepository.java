@@ -27,4 +27,6 @@ public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, In
     
     @Query("SELECT m FROM MedicalRecord m WHERE m.reception.patient is not null and m.reception.patient.patientId=:patientId")
     public List<MedicalRecord> findByPatient_PatientId(@Param("patientId") int patientId);
+
+    public List<MedicalRecord> findByDoctor_StaffId(int staffId);
 }
