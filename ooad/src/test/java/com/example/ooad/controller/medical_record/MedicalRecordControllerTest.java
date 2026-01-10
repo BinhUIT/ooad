@@ -38,6 +38,7 @@ import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.dto.request.CreateMedicalRecordRequest;
 import com.example.ooad.dto.request.UpdateMedicalRecordRequest;
 import com.example.ooad.dto.response.GlobalResponse;
+import com.example.ooad.dto.response.MedicalRecordDetailResponse;
 import com.example.ooad.service.medical_record.interfaces.MedicalRecordService;
 import com.example.ooad.service.patient.interfaces.PatientService;
 
@@ -157,8 +158,9 @@ public class MedicalRecordControllerTest {
                 .thenReturn(medicalRecord);
 
         // Act
-        ResponseEntity<GlobalResponse<MedicalRecord>> response = medicalRecordController.createMedicalRecord(
-                createRequest, bindingResult, authentication);
+        ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> response = medicalRecordController
+                .createMedicalRecord(
+                        createRequest, bindingResult, authentication);
 
         // Assert
         assertNotNull(response);

@@ -200,7 +200,7 @@ public class PrescriptionServiceImplementationTest {
     @DisplayName("Should get prescription by record ID")
     void testGetPrescriptionByRecordId_Success() {
         // Arrange
-        when(prescriptionRepo.findByRecord_RecordId(1)).thenReturn(Optional.of(prescription));
+        when(prescriptionRepo.findLatestByRecordId(1)).thenReturn(Optional.of(prescription));
 
         // Act
         Prescription result = prescriptionService.getPrescriptionByRecordId(1);
@@ -208,21 +208,21 @@ public class PrescriptionServiceImplementationTest {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.getPrescriptionId());
-        verify(prescriptionRepo, times(1)).findByRecord_RecordId(1);
+        verify(prescriptionRepo, times(1)).findLatestByRecordId(1);
     }
 
     @Test
     @DisplayName("Should return null when no prescription found for record")
     void testGetPrescriptionByRecordId_NotFound() {
         // Arrange
-        when(prescriptionRepo.findByRecord_RecordId(999)).thenReturn(Optional.empty());
+        when(prescriptionRepo.findLatestByRecordId(999)).thenReturn(Optional.empty());
 
         // Act
         Prescription result = prescriptionService.getPrescriptionByRecordId(999);
 
         // Assert
         assertEquals(null, result);
-        verify(prescriptionRepo, times(1)).findByRecord_RecordId(999);
+        verify(prescriptionRepo, times(1)).findLatestByRecordId(999);
     }
 
     @Test
