@@ -49,6 +49,9 @@ public class Reception {
     }
 
     public Patient getPatient() {
+        if(patient==null) {
+            return new Patient(0, "", null, null, "", "", "", "", null, null, null);
+        }
         return patient;
     }
 
@@ -73,6 +76,9 @@ public class Reception {
     }
 
     public Staff getReceptionist() {
+        if(receptionist==null) {
+            return new Staff("", 0, "", null, null, "", "", "", null);
+        }
         return receptionist;
     }
 

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.domain.entity.Staff;
+import com.example.ooad.domain.entity.SysParam;
 import com.example.ooad.domain.enums.EReceptionStatus;
 import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.dto.request.CreateReceptionRequest;
@@ -21,6 +22,7 @@ import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.repository.PatientRepository;
 import com.example.ooad.repository.ReceptionRepository;
+import com.example.ooad.repository.SysParamRepository;
 import com.example.ooad.service.reception.interfaces.ReceptionService;
 import com.example.ooad.utils.Message;
 
@@ -31,12 +33,28 @@ public class ReceptionServiceImplementation implements ReceptionService {
     private final ReceptionRepository receptionRepo;
 
     private final PatientRepository patientRepo;
+
+    private final SysParamRepository sysParamRepo;
     
 
-    public ReceptionServiceImplementation(ReceptionRepository receptionRepo, PatientRepository patientRepo) {
+    public ReceptionServiceImplementation(ReceptionRepository receptionRepo, PatientRepository patientRepo, SysParamRepository sysParamRepo) {
         this.receptionRepo = receptionRepo;
 
         this.patientRepo = patientRepo;
+
+        this.sysParamRepo = sysParamRepo;
+    }
+
+    public boolean isMaxPatientToday() {
+        Date currentDate=Date.valueOf(LocalDate.now());
+        SysParam sysParam = sysParamRepo.findByParamCode("MAX_PATIENTS_PER_DAY").orElse(null);
+        if(sysParam==null||!sysParam.isActive()) {
+            return true;
+        }
+        List<Reception> receptions = receptionRepo.findByReceptionDate(currentDate);
+        return receptions.size()<Integer.parseInt(sysParam.getParamValue());
+
+
     }
 
     @Override
@@ -72,6 +90,9 @@ public class ReceptionServiceImplementation implements ReceptionService {
     @Override
     @Transactional
     public Reception createReception(CreateReceptionRequest request, Staff receptionist) {
+        if(!isMaxPatientToday()) {
+            throw new BadRequestException("Max receptions today");
+        }
         Patient patient = patientRepo.findById(request.getPatientId())
                 .orElseThrow(() -> new NotFoundException(Message.patientNotFound));
         if (receptionist.getAccount() == null || receptionist.getAccount().getRole() != ERole.RECEPTIONIST) {
