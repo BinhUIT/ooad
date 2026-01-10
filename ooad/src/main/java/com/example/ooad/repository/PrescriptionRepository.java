@@ -1,6 +1,7 @@
 package com.example.ooad.repository;
 
 import java.sql.Date;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -35,4 +36,5 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Inte
     public Page<Prescription> findPrescriptionsOfPatient(Pageable pageable,
             @Param("prescriptionDate") Date prescriptionDate,
             @Param("patientId") int patientId);
+       
 }

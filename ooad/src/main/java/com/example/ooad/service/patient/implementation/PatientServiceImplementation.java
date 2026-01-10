@@ -1,5 +1,9 @@
 package com.example.ooad.service.patient.implementation;
 
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,11 +19,14 @@ import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
+import com.example.ooad.domain.entity.Prescription;
 import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.domain.enums.EAppointmentStatus;
 import com.example.ooad.domain.enums.EGender;
+import com.example.ooad.domain.enums.EPaymentStatus;
 import com.example.ooad.domain.enums.EReceptionStatus;
 import com.example.ooad.dto.request.PatientRequest;
+import com.example.ooad.dto.response.PatientDashboardResponse;
 import com.example.ooad.dto.response.PatientResponse;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
@@ -29,6 +36,7 @@ import com.example.ooad.repository.AppointmentRepository;
 import com.example.ooad.repository.InvoiceRepository;
 import com.example.ooad.repository.MedicalRecordRepository;
 import com.example.ooad.repository.PatientRepository;
+import com.example.ooad.repository.PrescriptionRepository;
 import com.example.ooad.repository.ReceptionRepository;
 import com.example.ooad.service.auth.interfaces.AuthService;
 import com.example.ooad.service.patient.interfaces.PatientService;
@@ -49,6 +57,7 @@ public class PatientServiceImplementation implements PatientService {
     private final MedicalRecordRepository medicalRecordRepo;
     private final AuthService authService;
     private final AccountRepository accountRepo;
+    
 
     public PatientServiceImplementation(PatientRepository patientRepo, ActorValidator actorValidator,MedicalRecordRepository medicalRecordRepo,
          AppointmentRepository appointmentRepo, ReceptionRepository receptionRepo,
@@ -190,6 +199,45 @@ public class PatientServiceImplementation implements PatientService {
         EGender genderParam = gender.orElse(null);
         return patientRepo.searchPatient(pageable, keyWordString, genderParam);
     }
+    @Override
+    public PatientDashboardResponse getPatientDashboard(Patient patient) {
+        PatientDashboardResponse response = new PatientDashboardResponse();
+        List<Appointment> appointments = getCurrentAppointments(patient, 2);
+        if(appointments!=null&&!appointments.isEmpty()) {
+            response.setNextAppointment(appointments.get(0));
+        }
+        else {
+            response.setNextAppointment(null);
+        }
+        response.setRecentAppointments(appointments);
+        response.setMedicalRecordsAmount(medicalRecordRepo.findByPatient_PatientId(patient.getPatientId()).size());
+        response.setPendingInvoicesAmount(invoiceRepo.findByPatient_PatientIdAndPaymentStatus(patient.getPatientId(), EPaymentStatus.UNPAID).size());
+        return response;
+    }
+
+    public List<Appointment> getCurrentAppointments(Patient patient, int size) {
+        Date currentDate = Date.valueOf(LocalDate.now());
+        LocalTime currentTime = LocalTime.now();
+        List<Appointment> appointments = appointmentRepo.findByPatient_PatientId(patient.getPatientId());
+        List<Appointment> appointmentAfterCurrent = appointments.stream().filter(item->{
+            if(item.getAppointmentDate().after(currentDate)) return true;
+            if(item.getAppointmentDate().before(currentDate)) return false;
+            return item.getAppointmentTime().isAfter(currentTime);
+        }).toList();
+
+        List<Appointment> sortedAppointmentAfterCurrent = appointmentAfterCurrent.stream().sorted(Comparator
+        .comparing(Appointment::getAppointmentDate).reversed()
+        .thenComparing(Appointment::getAppointmentTime).reversed()).toList();
+        
+        if(size>=sortedAppointmentAfterCurrent.size()) return sortedAppointmentAfterCurrent;
+        List<Appointment> result = sortedAppointmentAfterCurrent;
+        for(int i=0;i<size;i++) {
+            result.add(sortedAppointmentAfterCurrent.get(i));
+        }
+        return result;
+    }
+
+    
 
     
     

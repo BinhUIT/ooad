@@ -41,4 +41,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
      public List<Appointment> getAppointmentsByYear(@Param("year") int year);
 
      public List<Appointment> findByAppointmentDate(Date appointmentDate);
+
+    
 }
