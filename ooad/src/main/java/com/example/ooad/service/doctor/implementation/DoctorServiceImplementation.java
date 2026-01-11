@@ -10,11 +10,10 @@ import org.springframework.stereotype.Service;
 
 import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.Staff;
+import com.example.ooad.domain.enums.EAppointmentStatus;
 import com.example.ooad.dto.response.DoctorDashboardResponse;
 import com.example.ooad.repository.AppointmentRepository;
 import com.example.ooad.repository.MedicalRecordRepository;
-import com.example.ooad.repository.StaffRepository;
-import com.example.ooad.repository.StaffScheduleRepository;
 import com.example.ooad.service.doctor.interfaces.DoctorService;
 import com.example.ooad.utils.DateTimeUtil;
 @Service
@@ -40,15 +39,17 @@ public class DoctorServiceImplementation implements DoctorService {
         .comparing(Appointment::getAppointmentDate).reversed()
         .thenComparing(Appointment::getAppointmentTime).reversed()).toList();
         
-        for(int i=0;i<sortedListAppointment.size()-1;i++) {
+        for(int i=0;i<sortedListAppointment.size();i++) {
             Date firstAppointmentDate = sortedListAppointment.get(i).getAppointmentDate();
             LocalTime firstAppointmentTime = sortedListAppointment.get(i).getAppointmentTime();
-            Date secondAppointmentDate = sortedListAppointment.get(i+1).getAppointmentDate();
-            LocalTime secondAppointmentTime = sortedListAppointment.get(i+1).getAppointmentTime();
-            if(DateTimeUtil.isFirstTimeAfterSecondTime(currentDate, currentTime, firstAppointmentDate, firstAppointmentTime)&&DateTimeUtil.isFirstTimeAfterSecondTime(secondAppointmentDate, secondAppointmentTime, currentDate, currentTime)) {
+            
+            if(DateTimeUtil.isFirstTimeAfterSecondTime(currentDate, currentTime, firstAppointmentDate, firstAppointmentTime)) {
                 result.setLatestAppointment(sortedListAppointment.get(i));
-                result.setUpcomingAppointment(sortedListAppointment.get(+1));
-                break;
+               
+            
+            }
+            if(DateTimeUtil.isFirstTimeAfterSecondTime(firstAppointmentDate,firstAppointmentTime, currentDate, currentTime)&&sortedListAppointment.get(i).getStatus()==EAppointmentStatus.SCHEDULED) {
+                result.setUpcomingAppointment(sortedListAppointment.get(i));
             }
         }
         return result;
