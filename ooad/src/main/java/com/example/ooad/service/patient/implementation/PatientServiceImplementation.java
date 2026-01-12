@@ -19,7 +19,6 @@ import com.example.ooad.domain.entity.Appointment;
 import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
-import com.example.ooad.domain.entity.Prescription;
 import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.domain.enums.EAppointmentStatus;
 import com.example.ooad.domain.enums.EGender;
@@ -36,7 +35,6 @@ import com.example.ooad.repository.AppointmentRepository;
 import com.example.ooad.repository.InvoiceRepository;
 import com.example.ooad.repository.MedicalRecordRepository;
 import com.example.ooad.repository.PatientRepository;
-import com.example.ooad.repository.PrescriptionRepository;
 import com.example.ooad.repository.ReceptionRepository;
 import com.example.ooad.service.auth.interfaces.AuthService;
 import com.example.ooad.service.patient.interfaces.PatientService;
@@ -142,7 +140,7 @@ public class PatientServiceImplementation implements PatientService {
         for(Invoice i: invoices) {
             i.setPatient(null);
         }
-        appointmentRepo.saveAll(appointments);
+        appointmentRepo.deleteAll(appointments);
         receptionRepo.saveAll(receptions);
         invoiceRepo.saveAll(invoices);
         if(p.getAccount()!=null) {

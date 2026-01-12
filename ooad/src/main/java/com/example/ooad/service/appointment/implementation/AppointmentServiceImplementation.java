@@ -70,6 +70,7 @@ public class AppointmentServiceImplementation implements AppointmentService {
         appointment.setPatient(patient);
         appointment.setStaff(schedule.getStaff());
         appointment.setStatus(EAppointmentStatus.SCHEDULED);
+        appointment.setCreateDate(Date.valueOf(LocalDate.now()));
         schedule.setStatus(EScheduleStatus.BOOKED);
         return appointmentRepo.save(appointment);
 
