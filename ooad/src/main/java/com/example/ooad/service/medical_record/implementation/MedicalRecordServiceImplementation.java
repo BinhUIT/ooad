@@ -17,11 +17,13 @@ import org.springframework.validation.BindingResult;
 
 import com.example.ooad.domain.entity.Account;
 import com.example.ooad.domain.entity.Invoice;
+import com.example.ooad.domain.entity.InvoiceServiceDetail;
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.domain.entity.RefDiseaseType;
 import com.example.ooad.domain.entity.Staff;
+import com.example.ooad.domain.entity.SysParam;
 import com.example.ooad.domain.enums.EPaymentStatus;
 import com.example.ooad.domain.enums.EReceptionStatus;
 import com.example.ooad.domain.enums.ERole;
@@ -30,11 +32,14 @@ import com.example.ooad.dto.request.UpdateMedicalRecordRequest;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.repository.InvoiceRepository;
+import com.example.ooad.repository.InvoiceServiceDetailRepository;
 import com.example.ooad.repository.MedicalRecordRepository;
 import com.example.ooad.repository.PatientRepository;
 import com.example.ooad.repository.RefDiseaseTypeRepository;
 import com.example.ooad.repository.ReceptionRepository;
+import com.example.ooad.repository.ServiceRepository;
 import com.example.ooad.repository.StaffRepository;
+import com.example.ooad.repository.SysParamRepository;
 import com.example.ooad.service.auth.interfaces.AuthService;
 import com.example.ooad.service.medical_record.interfaces.MedicalRecordService;
 import com.example.ooad.service.reception.interfaces.ReceptionService;
@@ -52,6 +57,9 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
     private final InvoiceRepository invoiceRepo;
     private final PatientRepository patientRepo;
     private final ReceptionRepository receptionRepo;
+    private final InvoiceServiceDetailRepository invoiceServiceDetailRepo;
+    private final ServiceRepository serviceRepo;
+    private final SysParamRepository sysParamRepo;
 
     public MedicalRecordServiceImplementation(
             MedicalRecordRepository medicalRecordRepo,
@@ -61,7 +69,10 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
             RefDiseaseTypeRepository refDiseaseTypeRepo,
             InvoiceRepository invoiceRepo,
             PatientRepository patientRepo,
-            ReceptionRepository receptionRepo) {
+            ReceptionRepository receptionRepo,
+            InvoiceServiceDetailRepository invoiceServiceDetailRepo,
+            ServiceRepository serviceRepo,
+            SysParamRepository sysParamRepo) {
         this.medicalRecordRepo = medicalRecordRepo;
         this.receptionService = receptionService;
         this.authService = authService;
@@ -70,6 +81,9 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
         this.invoiceRepo = invoiceRepo;
         this.patientRepo = patientRepo;
         this.receptionRepo = receptionRepo;
+        this.invoiceServiceDetailRepo = invoiceServiceDetailRepo;
+        this.serviceRepo = serviceRepo;
+        this.sysParamRepo = sysParamRepo;
     }
 
     @Override
@@ -130,10 +144,13 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
             invoice.setPatient(reception.getPatient());
             invoice.setRecord(record);
             invoice.setInvoiceDate(Date.valueOf(LocalDate.now()));
-            invoice.setExaminationFee(new BigDecimal(0));
+
+            // Get examination fee from system parameter
+            BigDecimal examFee = getExaminationFee();
+            invoice.setExaminationFee(examFee);
             invoice.setMedicineFee(new BigDecimal(0));
             invoice.setServiceFee(new BigDecimal(0));
-            invoice.setTotalAmount(new BigDecimal(0));
+            invoice.setTotalAmount(examFee);
             invoice.setPaymentStatus(EPaymentStatus.UNPAID);
             invoice.setIssueBy(doctor);
             invoiceRepo.save(invoice);
@@ -158,6 +175,12 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
 
         MedicalRecord record = findMedicalRecordById(recordId);
 
+        // Check if invoice is paid - cannot update paid medical records
+        Optional<Invoice> invoiceOpt = invoiceRepo.findByRecord_RecordId(recordId);
+        if (invoiceOpt.isPresent() && invoiceOpt.get().getPaymentStatus() == EPaymentStatus.PAID) {
+            throw new BadRequestException("Cannot update medical record - invoice has been paid");
+        }
+
         // Update fields if provided
         if (request.getExaminateDate() != null) {
             record.setExaminateDate(request.getExaminateDate());
@@ -180,7 +203,14 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
             record.setDiseaseType(diseaseType);
         }
 
-        return medicalRecordRepo.save(record);
+        MedicalRecord savedRecord = medicalRecordRepo.save(record);
+
+        // Sync invoice service details if ordered services changed
+        if (request.getOrderedServices() != null) {
+            syncInvoiceServiceDetails(savedRecord);
+        }
+
+        return savedRecord;
     }
 
     @Override
@@ -220,6 +250,89 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
     @Override
     public List<MedicalRecord> findAllRecords() {
         return medicalRecordRepo.findAllByOrderByRecordIdDesc();
+    }
+
+    private BigDecimal getExaminationFee() {
+        try {
+            Optional<SysParam> examFeeParam = sysParamRepo.findByParamCode("EXAM_FEE");
+            if (examFeeParam.isPresent() && examFeeParam.get().isActive()) {
+                String value = examFeeParam.get().getParamValue();
+                return new BigDecimal(value);
+            }
+        } catch (Exception e) {
+        }
+        return new BigDecimal("100000");
+    }
+
+    private void syncInvoiceServiceDetails(MedicalRecord record) {
+        Optional<Invoice> invoiceOpt = invoiceRepo.findByRecord_RecordId(record.getRecordId());
+        if (!invoiceOpt.isPresent()) {
+            return;
+        }
+
+        Invoice invoice = invoiceOpt.get();
+
+        invoiceServiceDetailRepo.deleteByInvoiceId(invoice.getInvoiceId());
+
+        String orderedServices = record.getOrderedServices();
+        if (orderedServices != null && !orderedServices.isBlank()) {
+            String[] tokens = orderedServices.split(",");
+            for (String token : tokens) {
+                token = token.trim();
+                if (token.isEmpty())
+                    continue;
+
+                Integer serviceId = null;
+                Integer quantity = 1;
+
+                if (token.contains(":")) {
+                    String[] parts = token.split(":");
+                    try {
+                        serviceId = Integer.valueOf(parts[0].trim());
+                        quantity = Integer.valueOf(parts[1].trim());
+                    } catch (Exception e) {
+                        continue;
+                    }
+                } else {
+                    try {
+                        serviceId = Integer.valueOf(token);
+                    } catch (Exception e) {
+                        continue;
+                    }
+                }
+
+                if (serviceId != null) {
+                    Optional<com.example.ooad.domain.entity.Service> serviceOpt = serviceRepo.findById(serviceId);
+                    if (serviceOpt.isPresent()) {
+                        com.example.ooad.domain.entity.Service service = serviceOpt.get();
+                        BigDecimal salePrice = service.getUnitPrice();
+                        BigDecimal amount = salePrice.multiply(BigDecimal.valueOf(quantity));
+
+                        InvoiceServiceDetail detail = new InvoiceServiceDetail();
+                        detail.setInvoice(invoice);
+                        detail.setService(service);
+                        detail.setQuantity(quantity);
+                        detail.setSalePrice(salePrice);
+                        detail.setAmount(amount);
+                        invoiceServiceDetailRepo.save(detail);
+                    }
+                }
+            }
+        }
+
+        recalculateInvoice(invoice);
+    }
+
+    private void recalculateInvoice(Invoice invoice) {
+        List<InvoiceServiceDetail> serviceDetails = invoiceServiceDetailRepo
+                .findByInvoice_InvoiceId(invoice.getInvoiceId());
+        BigDecimal serviceFee = serviceDetails.stream()
+                .map(InvoiceServiceDetail::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        invoice.setServiceFee(serviceFee);
+        invoice.setTotalAmount(invoice.getExaminationFee().add(invoice.getMedicineFee()).add(serviceFee));
+        invoiceRepo.save(invoice);
     }
 
 }
