@@ -69,7 +69,7 @@ public class AppointmentServiceTest {
     private PatientRepository patientRepo;
 
     @Mock
-    private  PatientService patientService;
+    private PatientService patientService;
 
     @Mock
     private StaffService staffService;
@@ -86,7 +86,7 @@ public class AppointmentServiceTest {
         Appointment appointment = new Appointment();
 
         when(appointmentRepo.findById(anyInt())).thenReturn(Optional.of(appointment));
-        
+
         Appointment result = appointmentService.findAppointmentById(1);
 
         assertNotNull(result);
@@ -96,7 +96,7 @@ public class AppointmentServiceTest {
     void findAppointmentByIdFail() {
         when(appointmentRepo.findById(anyInt())).thenReturn(Optional.empty());
 
-         NotFoundException exception = assertThrows(NotFoundException.class, ()->{
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             appointmentService.findAppointmentById(1);
         });
 
@@ -109,8 +109,6 @@ public class AppointmentServiceTest {
         StaffSchedule fakeSchedule = new StaffSchedule();
         fakeSchedule.setStatus(EScheduleStatus.AVAILABLE);
 
-        
-
         when(staffScheduleRepo.findById(anyInt())).thenReturn(Optional.of(fakeSchedule));
         doReturn(true).when(appointmentService).checkSchedule(any(StaffSchedule.class));
         when(appointmentRepo.save(any(Appointment.class))).thenReturn(new Appointment());
@@ -118,7 +116,7 @@ public class AppointmentServiceTest {
         Appointment result = appointmentService.bookAppointment(new BookAppointmentRequest(1), new Patient());
 
         assertNotNull(result);
-        verify(appointmentRepo,times(1)).save(any(Appointment.class));
+        verify(appointmentRepo, times(1)).save(any(Appointment.class));
 
     }
 
@@ -130,13 +128,13 @@ public class AppointmentServiceTest {
         when(staffScheduleRepo.findById(anyInt())).thenReturn(Optional.of(fakeSchedule));
         doReturn(true).when(appointmentService).checkSchedule(any(StaffSchedule.class));
 
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             appointmentService.bookAppointment(new BookAppointmentRequest(1), new Patient());
         });
 
         assertNotNull(exception);
         assertEquals(Message.cannotBookAppointment, exception.getMessage());
-        verify(appointmentRepo,never()).save(any(Appointment.class));
+        verify(appointmentRepo, never()).save(any(Appointment.class));
     }
 
     @Test
@@ -147,169 +145,169 @@ public class AppointmentServiceTest {
         when(staffScheduleRepo.findById(anyInt())).thenReturn(Optional.of(fakeSchedule));
         doReturn(false).when(appointmentService).checkSchedule(any(StaffSchedule.class));
 
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             appointmentService.bookAppointment(new BookAppointmentRequest(1), new Patient());
         });
 
         assertNotNull(exception);
         assertEquals(Message.cannotBookAppointment, exception.getMessage());
-        verify(appointmentRepo,never()).save(any(Appointment.class));
+        verify(appointmentRepo, never()).save(any(Appointment.class));
     }
 
     @Test
-void getAppointmentHistory_BothStatusAndDatePresent_ShouldCallCorrectRepoMethod() {
-    Optional<EAppointmentStatus> status = Optional.of(EAppointmentStatus.COMPLETED);
-    Optional<Date> date = Optional.of(new Date(System.currentTimeMillis()));
-    Patient patient = new Patient();
-    patient.setPatientId(1);
-    PageRequest   pageable = PageRequest.of(0, 10);
-    Page<Appointment>  mockPage = new PageImpl<>(Collections.emptyList());
+    void getAppointmentHistory_BothStatusAndDatePresent_ShouldCallCorrectRepoMethod() {
+        Optional<EAppointmentStatus> status = Optional.of(EAppointmentStatus.COMPLETED);
+        Optional<Date> date = Optional.of(new Date(System.currentTimeMillis()));
+        Patient patient = new Patient();
+        patient.setPatientId(1);
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<Appointment> mockPage = new PageImpl<>(Collections.emptyList());
 
-    when(appointmentRepo.findByPatient_PatientIdAndAppointmentDateAndStatus(pageable, patient.getPatientId(), status.get(), date.get()))
-            .thenReturn(mockPage);
+        when(appointmentRepo.findByPatient_PatientIdAndAppointmentDateAndStatus(pageable, patient.getPatientId(),
+                status.get(), date.get()))
+                .thenReturn(mockPage);
 
-    Page<Appointment> result = appointmentService.getAppointmentHistory(0, 10, patient, status, date);
+        Page<Appointment> result = appointmentService.getAppointmentHistory(0, 10, patient, status, date);
 
-    assertNotNull(result);
-    verify(appointmentRepo, times(1)).findByPatient_PatientIdAndAppointmentDateAndStatus(any(), anyInt(), any(), any());
-}
+        assertNotNull(result);
+        verify(appointmentRepo, times(1)).findByPatient_PatientIdAndAppointmentDateAndStatus(any(), anyInt(), any(),
+                any());
+    }
 
-@Test
-void getAppointmentHistory_OnlyStatus_ShouldCallCorrectRepoMethod() {
-    Optional<EAppointmentStatus> status = Optional.of(EAppointmentStatus.COMPLETED);
-    Optional<Date> date = Optional.empty();
-    Patient patient = new Patient();
-    patient.setPatientId(1);
-    PageRequest   pageable = PageRequest.of(0, 10);
-    Page<Appointment>  mockPage = new PageImpl<>(Collections.emptyList());
+    @Test
+    void getAppointmentHistory_OnlyStatus_ShouldCallCorrectRepoMethod() {
+        Optional<EAppointmentStatus> status = Optional.of(EAppointmentStatus.COMPLETED);
+        Optional<Date> date = Optional.empty();
+        Patient patient = new Patient();
+        patient.setPatientId(1);
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<Appointment> mockPage = new PageImpl<>(Collections.emptyList());
 
-    when(appointmentRepo.findByPatient_PatientIdAndStatus(pageable,patient.getPatientId(),status.get())).thenReturn(mockPage);
+        when(appointmentRepo.findByPatient_PatientIdAndStatus(pageable, patient.getPatientId(), status.get()))
+                .thenReturn(mockPage);
 
-    Page<Appointment> result = appointmentService.getAppointmentHistory(0, 10, patient, status, date);
+        Page<Appointment> result = appointmentService.getAppointmentHistory(0, 10, patient, status, date);
 
-    assertNotNull(result);
-    verify(appointmentRepo, times(1)).findByPatient_PatientIdAndStatus(any(), anyInt(), any());
+        assertNotNull(result);
+        verify(appointmentRepo, times(1)).findByPatient_PatientIdAndStatus(any(), anyInt(), any());
 
-}
+    }
 
-@Test
-void getAppointmentHistory_OnlyDate_ShouldCallCorrectRepoMethod() {
-    Optional<EAppointmentStatus> status = Optional.empty();
-    Optional<Date> date = Optional.of(new Date(System.currentTimeMillis()));
-    Patient patient = new Patient();
-    patient.setPatientId(1);
-    PageRequest   pageable = PageRequest.of(0, 10);
-    Page<Appointment>  mockPage = new PageImpl<>(Collections.emptyList());
+    @Test
+    void getAppointmentHistory_OnlyDate_ShouldCallCorrectRepoMethod() {
+        Optional<EAppointmentStatus> status = Optional.empty();
+        Optional<Date> date = Optional.of(new Date(System.currentTimeMillis()));
+        Patient patient = new Patient();
+        patient.setPatientId(1);
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<Appointment> mockPage = new PageImpl<>(Collections.emptyList());
 
-    when(appointmentRepo.findByPatient_PatientIdAndAppointmentDate(pageable, patient.getPatientId(), date.get())).thenReturn(mockPage);
-    Page<Appointment> result = appointmentService.getAppointmentHistory(0, 10, patient, status, date);
-    assertNotNull(result);
-    verify(appointmentRepo, times(1)).findByPatient_PatientIdAndAppointmentDate(any(), anyInt(), any());
-}
+        when(appointmentRepo.findByPatient_PatientIdAndAppointmentDate(pageable, patient.getPatientId(), date.get()))
+                .thenReturn(mockPage);
+        Page<Appointment> result = appointmentService.getAppointmentHistory(0, 10, patient, status, date);
+        assertNotNull(result);
+        verify(appointmentRepo, times(1)).findByPatient_PatientIdAndAppointmentDate(any(), anyInt(), any());
+    }
 
-@Test
-void getAppointmentHistoryNoneDateStatus_ShouldCallCorrectRepoMethod() {
-    Optional<EAppointmentStatus> status = Optional.empty();
-    Optional<Date> date = Optional.empty();
-    Patient patient = new Patient();
-    patient.setPatientId(1);
-    PageRequest   pageable = PageRequest.of(0, 10);
-    Page<Appointment>  mockPage = new PageImpl<>(Collections.emptyList());
+    @Test
+    void getAppointmentHistoryNoneDateStatus_ShouldCallCorrectRepoMethod() {
+        Optional<EAppointmentStatus> status = Optional.empty();
+        Optional<Date> date = Optional.empty();
+        Patient patient = new Patient();
+        patient.setPatientId(1);
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<Appointment> mockPage = new PageImpl<>(Collections.emptyList());
 
-    when(appointmentRepo.findByPatient_PatientId(pageable,patient.getPatientId())).thenReturn(mockPage);
-    Page<Appointment> result = appointmentService.getAppointmentHistory(0, 10, patient, status, date);
-    assertNotNull(result);
-    verify(appointmentRepo, times(1)).findByPatient_PatientId(any(), anyInt());
+        when(appointmentRepo.findByPatient_PatientId(pageable, patient.getPatientId())).thenReturn(mockPage);
+        Page<Appointment> result = appointmentService.getAppointmentHistory(0, 10, patient, status, date);
+        assertNotNull(result);
+        verify(appointmentRepo, times(1)).findByPatient_PatientId(any(), anyInt());
 
-}
+    }
 
-@Test
-void patientGetAppointmentByIdSuccess() {
-    Patient fakePatient = new Patient();
-    fakePatient.setPatientId(1);
-    Appointment fakeAppointment = new Appointment();
-    fakeAppointment.setPatient(fakePatient);
+    @Test
+    void patientGetAppointmentByIdSuccess() {
+        Patient fakePatient = new Patient();
+        fakePatient.setPatientId(1);
+        Appointment fakeAppointment = new Appointment();
+        fakeAppointment.setPatient(fakePatient);
 
-    when(appointmentRepo.findById(anyInt())).thenReturn(Optional.of(fakeAppointment));
+        when(appointmentRepo.findById(anyInt())).thenReturn(Optional.of(fakeAppointment));
 
-    Appointment result = appointmentService.patientGetAppointmentById(fakePatient, 1);
+        Appointment result = appointmentService.patientGetAppointmentById(fakePatient, 1);
 
-    assertNotNull(result);
-}
+        assertNotNull(result);
+    }
 
-@Test
-void patientGetAppointmentByIdNotFound() {
-    Patient fakePatient = new Patient();
-    when(appointmentRepo.findById(anyInt())).thenReturn(Optional.empty());
+    @Test
+    void patientGetAppointmentByIdNotFound() {
+        Patient fakePatient = new Patient();
+        when(appointmentRepo.findById(anyInt())).thenReturn(Optional.empty());
 
-    NotFoundException exception = assertThrows(NotFoundException.class, ()->{
-        appointmentService.patientGetAppointmentById(fakePatient, 1);
-    });
-    assertNotNull(exception);
-    assertEquals(Message.appointmentNotFound, exception.getMessage());
-}
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
+            appointmentService.patientGetAppointmentById(fakePatient, 1);
+        });
+        assertNotNull(exception);
+        assertEquals(Message.appointmentNotFound, exception.getMessage());
+    }
 
-@Test
-void patientGetAppointmentByIdNoPermission() {
-    Patient fakePatient = new Patient();
-    fakePatient.setPatientId(1);
-    Appointment fakeAppointment = new Appointment();
-    fakeAppointment.setPatient(new Patient());
-    
-    when(appointmentRepo.findById(anyInt())).thenReturn(Optional.of(fakeAppointment));
+    @Test
+    void patientGetAppointmentByIdNoPermission() {
+        Patient fakePatient = new Patient();
+        fakePatient.setPatientId(1);
+        Appointment fakeAppointment = new Appointment();
+        fakeAppointment.setPatient(new Patient());
 
-    UnauthorizedException exception = assertThrows(UnauthorizedException.class, ()->{
-        appointmentService.patientGetAppointmentById(fakePatient, 1);
-    });
-    assertNotNull(exception);
-    assertEquals(Message.noPermission, exception.getMessage());
-}
-@Test
+        when(appointmentRepo.findById(anyInt())).thenReturn(Optional.of(fakeAppointment));
+
+        UnauthorizedException exception = assertThrows(UnauthorizedException.class, () -> {
+            appointmentService.patientGetAppointmentById(fakePatient, 1);
+        });
+        assertNotNull(exception);
+        assertEquals(Message.noPermission, exception.getMessage());
+    }
+
+    @Test
     void getScheduleOfDoctor_ShouldReturnList_WhenCallRepo() {
-    
+
         int doctorId = 1;
         Date selectedDate = new Date(System.currentTimeMillis());
-        
+
         StaffSchedule schedule1 = new StaffSchedule();
         schedule1.setStartTime(LocalTime.of(8, 0));
         StaffSchedule schedule2 = new StaffSchedule();
         schedule2.setStartTime(LocalTime.of(10, 0));
-        
+
         List<StaffSchedule> mockSchedules = Arrays.asList(schedule1, schedule2);
 
         when(staffScheduleRepo.findByStaff_StaffIdAndScheduleDateOrderByStartTimeAsc(doctorId, selectedDate))
-            .thenReturn(mockSchedules);
+                .thenReturn(mockSchedules);
 
-        
         List<StaffSchedule> result = appointmentService.getScheduleOfDoctor(doctorId, selectedDate);
 
-        
         assertNotNull(result);
         assertEquals(2, result.size());
         assertEquals(LocalTime.of(8, 0), result.get(0).getStartTime());
 
-       
         verify(staffScheduleRepo, times(1))
-            .findByStaff_StaffIdAndScheduleDateOrderByStartTimeAsc(doctorId, selectedDate);
+                .findByStaff_StaffIdAndScheduleDateOrderByStartTimeAsc(doctorId, selectedDate);
     }
 
     @Test
     void getAppointments_AllParamsPresent_ShouldPassValuesToRepo() {
-        
+
         Optional<String> name = Optional.of("John Doe");
         Optional<EAppointmentStatus> status = Optional.of(EAppointmentStatus.SCHEDULED);
-        Date date =Date.valueOf(LocalDate.now());
+        Date date = Date.valueOf(LocalDate.now());
         Optional<Date> appointmentDate = Optional.of(date);
         PageRequest pageable = PageRequest.of(0, 10);
         Page<Appointment> mockPage = new PageImpl<>(Collections.emptyList());
 
         when(appointmentRepo.getAppointments(pageable, status.get(), date, name.get()))
-            .thenReturn(mockPage);
+                .thenReturn(mockPage);
 
-        
         Page<Appointment> result = appointmentService.getAppointmens(0, 10, name, status, appointmentDate);
 
-       
         assertNotNull(result);
         verify(appointmentRepo).getAppointments(pageable, status.get(), date, name.get());
     }
@@ -318,25 +316,23 @@ void patientGetAppointmentByIdNoPermission() {
     void getAppointments_AllParamsEmpty_ShouldPassValuesToRepo() {
         Optional<String> name = Optional.empty();
         Optional<EAppointmentStatus> status = Optional.empty();
-        
+
         Optional<Date> appointmentDate = Optional.empty();
         PageRequest pageable = PageRequest.of(0, 10);
         Page<Appointment> mockPage = new PageImpl<>(Collections.emptyList());
 
-        when(appointmentRepo.getAppointments(pageable,null, null, null))
-            .thenReturn(mockPage);
+        when(appointmentRepo.getAppointments(pageable, null, null, null))
+                .thenReturn(mockPage);
 
-        
         Page<Appointment> result = appointmentService.getAppointmens(0, 10, name, status, appointmentDate);
 
-       
         assertNotNull(result);
         verify(appointmentRepo).getAppointments(pageable, null, null, null);
     }
 
     @Test
     void endSession_ShouldUpdateStatusToNoShow_WhenAppointmentIsExpired() {
-        
+
         Appointment expiredApp = new Appointment();
         expiredApp.setStatus(EAppointmentStatus.SCHEDULED);
 
@@ -345,22 +341,17 @@ void patientGetAppointmentByIdNoPermission() {
 
         List<Appointment> appointments = Arrays.asList(expiredApp, validApp);
 
-        
         when(appointmentRepo.findByStatus(EAppointmentStatus.SCHEDULED)).thenReturn(appointments);
 
-        
         doReturn(true).when(appointmentService).isAppointmentExpire(expiredApp);
         doReturn(false).when(appointmentService).isAppointmentExpire(validApp);
 
-        
         appointmentService.endSession();
 
-        
         assertEquals(EAppointmentStatus.NOSHOW, expiredApp.getStatus());
-        
+
         assertEquals(EAppointmentStatus.SCHEDULED, validApp.getStatus());
 
-        
         verify(appointmentRepo, times(1)).saveAll(appointments);
     }
 
@@ -368,12 +359,10 @@ void patientGetAppointmentByIdNoPermission() {
     void testReceptionistBookAppointmentSuccess() {
         when(patientRepo.findById(anyInt())).thenReturn(Optional.of(new Patient()));
         doReturn(new Appointment()).when(appointmentService).bookAppointment(any(), any());
-        
 
-        Appointment appointment = appointmentService.receptionistBookAppointment(new AppointmentRequest(1,1));
+        Appointment appointment = appointmentService.receptionistBookAppointment(new AppointmentRequest(1, 1));
 
         assertNotNull(appointment);
-        
 
     }
 
@@ -381,43 +370,37 @@ void patientGetAppointmentByIdNoPermission() {
     void testReceptioniseBookAppointmentFail() {
         when(patientRepo.findById(anyInt())).thenReturn(Optional.empty());
 
-        NotFoundException notFoundException = assertThrows(NotFoundException.class, ()->{
-            appointmentService.receptionistBookAppointment(new AppointmentRequest(1,1));
+        NotFoundException notFoundException = assertThrows(NotFoundException.class, () -> {
+            appointmentService.receptionistBookAppointment(new AppointmentRequest(1, 1));
         });
         assertNotNull(notFoundException);
         assertEquals(Message.patientNotFound, notFoundException.getMessage());
         verify(appointmentService, never()).bookAppointment(any(), any());
     }
+
     @Test
     void changeStatusToCancelled_ShouldCallFreeScheduleAndSave() {
-        
+
         Appointment mockAppointment = new Appointment();
         mockAppointment.setAppointmentId(123);
         mockAppointment.setStatus(EAppointmentStatus.SCHEDULED);
-        
+
         int appointmentId = 123;
         EAppointmentStatus newStatus = EAppointmentStatus.CANCELLED;
 
-        
         doReturn(mockAppointment).when(appointmentService).findAppointmentById(appointmentId);
-        
-        
+
         doNothing().when(appointmentService).checkAuthority(any(), any());
-        
-        
+
         doNothing().when(appointmentService).freeSchedule(mockAppointment);
-        
-        
+
         when(appointmentRepo.save(any(Appointment.class))).thenReturn(mockAppointment);
 
-        
         Appointment result = appointmentService.changeAppointmentStatus(null, appointmentId, newStatus);
 
-        
         assertNotNull(result);
         assertEquals(EAppointmentStatus.CANCELLED, result.getStatus());
-        
-        
+
         verify(appointmentService, times(1)).freeSchedule(mockAppointment);
         verify(appointmentRepo, times(1)).save(mockAppointment);
     }
@@ -428,28 +411,36 @@ void patientGetAppointmentByIdNoPermission() {
         Appointment mockAppointment = new Appointment();
         mockAppointment.setAppointmentId(123);
         mockAppointment.setStatus(EAppointmentStatus.SCHEDULED);
-        
+        Staff mockStaff = new Staff();
+        mockStaff.setStaffId(1);
+        mockAppointment.setStaff(mockStaff);
+        mockAppointment.setAppointmentTime(LocalTime.of(10, 0));
+        mockAppointment.setAppointmentDate(Date.valueOf(LocalDate.now()));
+
         int appointmentId = 123;
         EAppointmentStatus newStatus = EAppointmentStatus.COMPLETED;
 
+        StaffSchedule mockSchedule = new StaffSchedule();
+        mockSchedule.setStatus(EScheduleStatus.BOOKED);
+
         doReturn(mockAppointment).when(appointmentService).findAppointmentById(appointmentId);
         doNothing().when(appointmentService).checkAuthority(any(), any());
+        when(staffScheduleRepo.findByStaff_StaffIdAndStartTimeAndScheduleDate(anyInt(), any(), any()))
+                .thenReturn(mockSchedule);
+        when(staffScheduleRepo.save(any(StaffSchedule.class))).thenReturn(mockSchedule);
         when(appointmentRepo.save(any(Appointment.class))).thenReturn(mockAppointment);
 
-        
         Appointment result = appointmentService.changeAppointmentStatus(null, appointmentId, newStatus);
 
-        
         assertEquals(EAppointmentStatus.COMPLETED, result.getStatus());
-        
-        
-        verify(appointmentService, never()).freeSchedule(any());
+
+        verify(staffScheduleRepo, times(1)).findByStaff_StaffIdAndStartTimeAndScheduleDate(anyInt(), any(), any());
         verify(appointmentRepo, times(1)).save(mockAppointment);
     }
 
     @Test
     void editAppointment_Success() {
-        
+
         Appointment mockAppointment = new Appointment();
         mockAppointment.setStatus(EAppointmentStatus.SCHEDULED);
 
@@ -506,9 +497,8 @@ void patientGetAppointmentByIdNoPermission() {
         doReturn(mockAppointment).when(appointmentService).findAppointmentById(anyInt());
 
         // 2. Act & Assert
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> 
-            appointmentService.editAppointment(null, 1, request)
-        );
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> appointmentService.editAppointment(null, 1, request));
         assertEquals(Message.cannotEdit, ex.getMessage());
         verify(appointmentRepo, never()).save(any());
     }
@@ -535,9 +525,8 @@ void patientGetAppointmentByIdNoPermission() {
         when(patientRepo.findById(1)).thenReturn(Optional.empty()); // Patient không tồn tại
 
         // 2. Act & Assert
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> 
-            appointmentService.editAppointment(null, 1, request)
-        );
+        NotFoundException ex = assertThrows(NotFoundException.class,
+                () -> appointmentService.editAppointment(null, 1, request));
         assertEquals(Message.patientNotFound, ex.getMessage());
     }
 
@@ -559,17 +548,16 @@ void patientGetAppointmentByIdNoPermission() {
         // 1. Arrange
         doReturn(mockAppointment).when(appointmentService).findAppointmentById(anyInt());
         doNothing().when(appointmentService).checkAuthority(any(), any());
-        
+
         when(patientRepo.findById(1)).thenReturn(Optional.of(mockPatient));
         when(staffScheduleRepo.findById(100)).thenReturn(Optional.of(mockSchedule));
-        
+
         // Giả lập checkSchedule trả về false
         doReturn(false).when(appointmentService).checkSchedule(mockSchedule);
 
         // 2. Act & Assert
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> 
-            appointmentService.editAppointment(null, 1, request)
-        );
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> appointmentService.editAppointment(null, 1, request));
         assertEquals(Message.cannotBookAppointment, ex.getMessage());
     }
 
@@ -584,7 +572,7 @@ void patientGetAppointmentByIdNoPermission() {
         Staff staff = new Staff();
         staff.setPosition("Doctor");
         staff.setStaffId(10);
-        mockAppointment.setStaff(staff); 
+        mockAppointment.setStaff(staff);
         mockAppointment.setAppointmentDate(testDate);
         mockAppointment.setAppointmentTime(testTime);
         // 1. Arrange
@@ -616,7 +604,7 @@ void patientGetAppointmentByIdNoPermission() {
         Staff staff = new Staff();
         staff.setPosition("Doctor");
         staff.setStaffId(10);
-        mockAppointment.setStaff(staff); 
+        mockAppointment.setStaff(staff);
         mockAppointment.setAppointmentDate(testDate);
         mockAppointment.setAppointmentTime(testTime);
         // 1. Arrange
@@ -638,7 +626,7 @@ void patientGetAppointmentByIdNoPermission() {
 
         Staff mockStaff = new Staff();
         mockStaff.setStaffId(10);
-        
+
         PageRequest pageable = PageRequest.of(0, 10);
         Page<Appointment> mockPage = new PageImpl<>(Collections.emptyList());
         Authentication auth = new Authentication() {
@@ -684,7 +672,7 @@ void patientGetAppointmentByIdNoPermission() {
                 // TODO Auto-generated method stub
                 throw new UnsupportedOperationException("Unimplemented method 'setAuthenticated'");
             }
-            
+
         };
         // 1. Arrange
         Optional<String> patientName = Optional.of("Alice");
@@ -694,13 +682,14 @@ void patientGetAppointmentByIdNoPermission() {
 
         // Stub StaffService để trả về bác sĩ hiện tại
         when(staffService.getStaffFromAuth(any())).thenReturn(mockStaff);
-        
+
         // Stub Repository
         when(appointmentRepo.getAppointmentsOfDoctor(pageable, 10, status.get(), date, "Alice"))
-            .thenReturn(mockPage);
+                .thenReturn(mockPage);
 
         // 2. Act
-        Page<Appointment> result = appointmentService.getAppointmentOfDoctor(auth, 0, 10, patientName, status, appointmentDate);
+        Page<Appointment> result = appointmentService.getAppointmentOfDoctor(auth, 0, 10, patientName, status,
+                appointmentDate);
 
         // 3. Assert
         assertNotNull(result);
@@ -713,7 +702,7 @@ void patientGetAppointmentByIdNoPermission() {
 
         Staff mockStaff = new Staff();
         mockStaff.setStaffId(10);
-        
+
         PageRequest pageable = PageRequest.of(0, 10);
         Page<Appointment> mockPage = new PageImpl<>(Collections.emptyList());
         Authentication auth = new Authentication() {
@@ -759,7 +748,7 @@ void patientGetAppointmentByIdNoPermission() {
                 // TODO Auto-generated method stub
                 throw new UnsupportedOperationException("Unimplemented method 'setAuthenticated'");
             }
-            
+
         };
         // 1. Arrange
         Optional<String> patientName = Optional.empty();
@@ -767,25 +756,18 @@ void patientGetAppointmentByIdNoPermission() {
         Optional<Date> appointmentDate = Optional.empty();
 
         when(staffService.getStaffFromAuth(auth)).thenReturn(mockStaff);
-        
+
         // Kiểm tra xem orElse(null) có hoạt động đúng không
         when(appointmentRepo.getAppointmentsOfDoctor(pageable, 10, null, null, null))
-            .thenReturn(mockPage);
+                .thenReturn(mockPage);
 
         // 2. Act
-        Page<Appointment> result = appointmentService.getAppointmentOfDoctor(auth, 0, 10, patientName, status, appointmentDate);
+        Page<Appointment> result = appointmentService.getAppointmentOfDoctor(auth, 0, 10, patientName, status,
+                appointmentDate);
 
         // 3. Assert
         assertNotNull(result);
         verify(appointmentRepo).getAppointmentsOfDoctor(pageable, 10, null, null, null);
     }
-
-
-   
-
-    
-
-
-
 
 }

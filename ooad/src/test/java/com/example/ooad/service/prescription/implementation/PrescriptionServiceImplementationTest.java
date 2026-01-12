@@ -38,7 +38,10 @@ import com.example.ooad.domain.enums.EMedicineUnit;
 import com.example.ooad.dto.request.PrescriptionDetailRequest;
 import com.example.ooad.dto.request.PrescriptionRequest;
 import com.example.ooad.exception.NotFoundException;
+import com.example.ooad.repository.InvoiceRepository;
+import com.example.ooad.repository.InvoiceMedicineDetailRepository;
 import com.example.ooad.repository.MedicineRepository;
+import com.example.ooad.repository.MedicinePriceRepository;
 import com.example.ooad.repository.PrescriptionDetailRepository;
 import com.example.ooad.repository.PrescriptionRepository;
 import com.example.ooad.service.medical_record.interfaces.MedicalRecordService;
@@ -58,6 +61,15 @@ public class PrescriptionServiceImplementationTest {
 
     @Mock
     private MedicineRepository medicineRepo;
+
+    @Mock
+    private InvoiceRepository invoiceRepo;
+
+    @Mock
+    private InvoiceMedicineDetailRepository invoiceMedicineDetailRepo;
+
+    @Mock
+    private MedicinePriceRepository medicinePriceRepo;
 
     @InjectMocks
     private PrescriptionServiceImplementation prescriptionService;
@@ -266,6 +278,7 @@ public class PrescriptionServiceImplementationTest {
         when(prescriptionRepo.save(any(Prescription.class))).thenReturn(prescription);
         when(medicineRepo.findByMedicineId_In(anyList())).thenReturn(List.of(medicine));
         when(prescriptionDetailRepo.saveAll(anyList())).thenReturn(List.of(prescriptionDetail));
+        when(invoiceRepo.findByRecord_RecordId(anyInt())).thenReturn(Optional.empty());
 
         // Act
         Prescription result = prescriptionService.createPrescription(prescriptionRequest);
@@ -299,6 +312,7 @@ public class PrescriptionServiceImplementationTest {
         when(medicineRepo.findByMedicineId_In(anyList())).thenReturn(List.of(medicine));
         when(prescriptionDetailRepo.findByPrescription_PrescriptionId(anyInt())).thenReturn(new ArrayList<>());
         when(prescriptionDetailRepo.saveAll(anyList())).thenReturn(List.of(prescriptionDetail));
+        when(invoiceRepo.findByRecord_RecordId(anyInt())).thenReturn(Optional.empty());
 
         // Act
         Prescription result = prescriptionService.updatePrescription(updateRequest, 1);
