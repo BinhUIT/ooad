@@ -47,10 +47,10 @@ public class PayOSServiceImpl implements PayOSService {
     @Value("${payos.checksum-key}")
     private String checksumKey;
 
-    @Value("${payos.return-url:http://localhost:5173/payment/success}")
+    @Value("${payos.return-url}")
     private String returnUrl;
 
-    @Value("${payos.cancel-url:http://localhost:5173/payment/cancel}")
+    @Value("${payos.cancel-url}")
     private String cancelUrl;
 
     // Khởi tạo PayOS SDK
