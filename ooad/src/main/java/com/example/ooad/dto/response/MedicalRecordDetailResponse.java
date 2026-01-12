@@ -7,6 +7,7 @@ public class MedicalRecordDetailResponse {
     private Integer recordId;
     private Integer receptionId;
     private String receptionStatus;
+    private String invoicePaymentStatus; // PAID or UNPAID
     private PatientDto patient;
     private Integer doctorId;
     private String doctorName;
@@ -43,6 +44,14 @@ public class MedicalRecordDetailResponse {
 
     public void setReceptionStatus(String receptionStatus) {
         this.receptionStatus = receptionStatus;
+    }
+
+    public String getInvoicePaymentStatus() {
+        return invoicePaymentStatus;
+    }
+
+    public void setInvoicePaymentStatus(String invoicePaymentStatus) {
+        this.invoicePaymentStatus = invoicePaymentStatus;
     }
 
     public PatientDto getPatient() {
