@@ -56,15 +56,15 @@ public class MedicalRecordController {
     }
 
     // Common endpoints - receptionist and admin get entity
-    @GetMapping({ "/receptionist/medical_record_by_id/{medicalRecordId}",
-            "/admin/medical_record_by_id/{medicalRecordId}" })
+    @GetMapping({ "/receptionist/medical-records/{medicalRecordId}",
+            "/admin/medical-records/{medicalRecordId}" })
     public ResponseEntity<GlobalResponse<MedicalRecord>> getMedicalRecordById(@PathVariable int medicalRecordId) {
         MedicalRecord result = medicalRecordService.findMedicalRecordById(medicalRecordId);
         GlobalResponse<MedicalRecord> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/patient/medical_record_by_id/{medicalRecordId}")
+    @GetMapping("/patient/medical-records/{medicalRecordId}")
     public ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> getMedicalRecordByIdForPatient(
             @PathVariable int medicalRecordId) {
         MedicalRecord record = medicalRecordService.findMedicalRecordById(medicalRecordId);
@@ -73,7 +73,7 @@ public class MedicalRecordController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/doctor/medical_record_by_id/{medicalRecordId}")
+    @GetMapping("/doctor/medical-records/{medicalRecordId}")
     public ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> getMedicalRecordByIdForDoctor(
             @PathVariable int medicalRecordId) {
         MedicalRecord record = medicalRecordService.findMedicalRecordById(medicalRecordId);
@@ -87,19 +87,25 @@ public class MedicalRecordController {
         dto.setRecordId(record.getRecordId());
 
         Reception reception = record.getReception();
-        if (reception != null && reception.getPatient() != null) {
-            Patient p = reception.getPatient();
-            PatientDto pd = new PatientDto();
-            pd.setPatientId(p.getPatientId());
-            pd.setFullName(p.getFullName());
-            pd.setDateOfBirth(p.getDateOfBirth());
-            pd.setGender(p.getGender() != null ? p.getGender().name() : null);
-            pd.setAddress(p.getAddress());
-            pd.setPhone(p.getPhone());
-            pd.setEmail(p.getEmail());
-            pd.setIdCard(p.getIdCard());
-            pd.setFirstVisitDate(p.getFirstVisitDate());
-            dto.setPatient(pd);
+        if (reception != null) {
+            dto.setReceptionId(reception.getReceptionId());
+            dto.setReceptionStatus(reception.getStatus() != null
+                    ? reception.getStatus().name()
+                    : null);
+            if (reception.getPatient() != null) {
+                Patient p = reception.getPatient();
+                PatientDto pd = new PatientDto();
+                pd.setPatientId(p.getPatientId());
+                pd.setFullName(p.getFullName());
+                pd.setDateOfBirth(p.getDateOfBirth());
+                pd.setGender(p.getGender() != null ? p.getGender().name() : null);
+                pd.setAddress(p.getAddress());
+                pd.setPhone(p.getPhone());
+                pd.setEmail(p.getEmail());
+                pd.setIdCard(p.getIdCard());
+                pd.setFirstVisitDate(p.getFirstVisitDate());
+                dto.setPatient(pd);
+            }
         }
 
         dto.setDoctorId(record.getDoctor() != null ? record.getDoctor().getStaffId() : null);
@@ -186,7 +192,7 @@ public class MedicalRecordController {
     }
 
     // Doctor endpoints
-    @GetMapping("/doctor/medical_records")
+    @GetMapping("/doctor/medical-records")
     public ResponseEntity<GlobalResponse<Page<MedicalRecord>>> getListMedicalRecordsForDoctor(
             @RequestParam(defaultValue = "0") int pageNumber,
             @RequestParam(defaultValue = "10") int pageSize,
@@ -223,7 +229,7 @@ public class MedicalRecordController {
     }
 
     // Patient endpoints
-    @GetMapping("/patient/medical_records")
+    @GetMapping("/patient/medical-records")
     public ResponseEntity<GlobalResponse<List<MedicalRecord>>> getMedicalRecordsOfPatient(Authentication auth) {
         List<MedicalRecord> result = medicalRecordService.getMedicalRecordsOfPatient(auth);
         GlobalResponse<List<MedicalRecord>> response = new GlobalResponse<>(result, Message.success, 200);

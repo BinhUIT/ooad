@@ -120,8 +120,8 @@ public class MedicalRecordServiceImplementation implements MedicalRecordService 
 
         record = medicalRecordRepo.save(record);
 
-        // Update reception status to DONE after creating medical record
-        reception.setStatus(EReceptionStatus.DONE);
+        // Update reception status to IN_EXAMINATION after creating medical record
+        reception.setStatus(EReceptionStatus.IN_EXAMINATION);
         receptionRepo.save(reception);
 
         // Create invoice if requested

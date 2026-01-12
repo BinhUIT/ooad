@@ -5,6 +5,8 @@ import java.util.List;
 
 public class MedicalRecordDetailResponse {
     private Integer recordId;
+    private Integer receptionId;
+    private String receptionStatus;
     private PatientDto patient;
     private Integer doctorId;
     private String doctorName;
@@ -25,6 +27,22 @@ public class MedicalRecordDetailResponse {
 
     public void setRecordId(Integer recordId) {
         this.recordId = recordId;
+    }
+
+    public Integer getReceptionId() {
+        return receptionId;
+    }
+
+    public void setReceptionId(Integer receptionId) {
+        this.receptionId = receptionId;
+    }
+
+    public String getReceptionStatus() {
+        return receptionStatus;
+    }
+
+    public void setReceptionStatus(String receptionStatus) {
+        this.receptionStatus = receptionStatus;
     }
 
     public PatientDto getPatient() {

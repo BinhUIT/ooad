@@ -27,7 +27,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/admin/disease-types")
+@RequestMapping({ "/admin/disease-types", "/doctor/disease-types" })
 @Tag(name = "Disease Type Management")
 public class RefDiseaseTypeController {
 
