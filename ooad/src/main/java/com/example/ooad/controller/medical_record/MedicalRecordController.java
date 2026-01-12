@@ -55,17 +55,10 @@ public class MedicalRecordController {
         this.serviceRepo = serviceRepo;
     }
 
-    // Common endpoints - receptionist and admin get entity
+    // Common endpoints - receptionist and admin and doctor use same endpoint
     @GetMapping({ "/receptionist/medical-records/{medicalRecordId}",
-            "/admin/medical-records/{medicalRecordId}" })
-    public ResponseEntity<GlobalResponse<MedicalRecord>> getMedicalRecordById(@PathVariable int medicalRecordId) {
-        MedicalRecord result = medicalRecordService.findMedicalRecordById(medicalRecordId);
-        GlobalResponse<MedicalRecord> response = new GlobalResponse<>(result, Message.success, 200);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    @GetMapping("/patient/medical-records/{medicalRecordId}")
-    public ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> getMedicalRecordByIdForPatient(
+            "/admin/medical-records/{medicalRecordId}", "/doctor/medical-records/{medicalRecordId}" })
+    public ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> getMedicalRecordById(
             @PathVariable int medicalRecordId) {
         MedicalRecord record = medicalRecordService.findMedicalRecordById(medicalRecordId);
         MedicalRecordDetailResponse dto = buildDetailResponse(record);
@@ -73,8 +66,8 @@ public class MedicalRecordController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/doctor/medical-records/{medicalRecordId}")
-    public ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> getMedicalRecordByIdForDoctor(
+    @GetMapping("/patient/medical-records/{medicalRecordId}")
+    public ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> getMedicalRecordByIdForPatient(
             @PathVariable int medicalRecordId) {
         MedicalRecord record = medicalRecordService.findMedicalRecordById(medicalRecordId);
         MedicalRecordDetailResponse dto = buildDetailResponse(record);
