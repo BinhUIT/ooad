@@ -45,6 +45,7 @@ import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.repository.ImportDetailRepository;
 import com.example.ooad.repository.MedicineImportRepository;
+import com.example.ooad.domain.entity.MedicineInventory;
 import com.example.ooad.repository.MedicineInventoryRepository;
 import com.example.ooad.repository.MedicineRepository;
 import com.example.ooad.repository.StaffRepository;
@@ -343,18 +344,28 @@ public class MedicineImportServiceImplementationTest {
     @Test
     @DisplayName("Update Import - Success")
     void updateImport_Success() {
+        // Setup existing inventory (quantityInStock == quantity means editable)
+        MedicineInventory testInventory = new MedicineInventory();
+        testInventory.setMedicineImport(testImport);
+        testInventory.setMedicine(testMedicine);
+        testInventory.setQuantityInStock(100); // Same as detail quantity - editable
+        testInventory.setExpiryDate(testDetail.getExpiryDate());
+        
         when(bindingResult.hasErrors()).thenReturn(false);
         when(medicineImportRepository.findById(1)).thenReturn(Optional.of(testImport));
+        when(importDetailRepository.findByImportId(1)).thenReturn(Arrays.asList(testDetail));
+        when(medicineInventoryRepository.findByImportId(1)).thenReturn(Arrays.asList(testInventory));
         when(medicineRepository.findById(1)).thenReturn(Optional.of(testMedicine));
         when(medicineImportRepository.save(any(MedicineImport.class))).thenReturn(testImport);
         when(importDetailRepository.save(any(ImportDetail.class))).thenReturn(testDetail);
-        when(importDetailRepository.findByImportId(1)).thenReturn(Arrays.asList(testDetail));
+        when(medicineInventoryRepository.save(any(MedicineInventory.class))).thenReturn(testInventory);
 
         MedicineImportDetailResponse result = importService.updateImport(1, validRequest, bindingResult);
 
         assertNotNull(result);
-        verify(importDetailRepository, times(1)).deleteByImportId(1);
-        verify(medicineInventoryRepository, times(1)).deleteByImportId(1);
+        // New implementation updates existing records instead of delete+create
+        verify(importDetailRepository, times(1)).save(any(ImportDetail.class));
+        verify(medicineInventoryRepository, times(1)).save(any(MedicineInventory.class));
         verify(medicineImportRepository, times(1)).save(any(MedicineImport.class));
     }
 
@@ -393,7 +404,16 @@ public class MedicineImportServiceImplementationTest {
     @Test
     @DisplayName("Delete Import - Success")
     void deleteImport_Success() {
-        when(medicineImportRepository.existsById(1)).thenReturn(true);
+        // Setup existing inventory (quantityInStock == quantity means not sold, can delete)
+        MedicineInventory testInventory = new MedicineInventory();
+        testInventory.setMedicineImport(testImport);
+        testInventory.setMedicine(testMedicine);
+        testInventory.setQuantityInStock(100); // Same as detail quantity - not sold
+        testInventory.setExpiryDate(testDetail.getExpiryDate());
+        
+        when(medicineImportRepository.findById(1)).thenReturn(Optional.of(testImport));
+        when(importDetailRepository.findByImportId(1)).thenReturn(Arrays.asList(testDetail));
+        when(medicineInventoryRepository.findByImportId(1)).thenReturn(Arrays.asList(testInventory));
 
         importService.deleteImport(1);
 
@@ -405,7 +425,7 @@ public class MedicineImportServiceImplementationTest {
     @Test
     @DisplayName("Delete Import - Fail: Not Found")
     void deleteImport_NotFound() {
-        when(medicineImportRepository.existsById(999)).thenReturn(false);
+        when(medicineImportRepository.findById(999)).thenReturn(Optional.empty());
 
         NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             importService.deleteImport(999);
