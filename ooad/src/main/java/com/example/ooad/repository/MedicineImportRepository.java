@@ -12,8 +12,7 @@ import org.springframework.stereotype.Repository;
 import com.example.ooad.domain.entity.MedicineImport;
 
 @Repository
-public interface MedicineImportRepository
-        extends JpaRepository<MedicineImport, Integer>, JpaSpecificationExecutor<MedicineImport> {
+public interface MedicineImportRepository extends JpaRepository<MedicineImport, Integer>, JpaSpecificationExecutor<MedicineImport> {
 
     /**
      * Get distinct supplier names for dropdown
@@ -34,11 +33,13 @@ public interface MedicineImportRepository
 
     /**
      * Get top 5 recent imports
+     * (Giữ lại từ nhánh master - tính năng thống kê quan trọng)
      */
     List<MedicineImport> findTop5ByOrderByImportDateDesc();
 
     /**
      * Sum total value of imports between dates
+     * (Giữ lại từ nhánh master - tính năng báo cáo doanh số)
      */
     @Query("SELECT COALESCE(SUM(mi.totalValue), 0) FROM MedicineImport mi WHERE mi.importDate BETWEEN :startDate AND :endDate")
     java.math.BigDecimal sumTotalValueByDateRange(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
