@@ -23,7 +23,7 @@ public interface ImportDetailRepository extends JpaRepository<ImportDetail, Impo
     /**
      * Delete all import details by import ID
      */
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ImportDetail id WHERE id.medicineImport.importId = :importId")
     void deleteByImportId(@Param("importId") int importId);
     
@@ -42,7 +42,7 @@ public interface ImportDetailRepository extends JpaRepository<ImportDetail, Impo
     /**
      * Delete import detail by import ID and medicine ID
      */
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ImportDetail id WHERE id.medicineImport.importId = :importId AND id.medicine.medicineId = :medicineId")
     void deleteByImportIdAndMedicineId(@Param("importId") int importId, @Param("medicineId") int medicineId);
 }

@@ -54,7 +54,7 @@ public interface MedicineInventoryRepository extends JpaRepository<MedicineInven
      * Delete all inventory records by import ID
      * (From inventory branch)
      */
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM MedicineInventory mi WHERE mi.medicineImport.importId = :importId")
     void deleteByImportId(@Param("importId") int importId);
     
@@ -90,7 +90,7 @@ public interface MedicineInventoryRepository extends JpaRepository<MedicineInven
     /**
      * Delete inventory by import ID and medicine ID
      */
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM MedicineInventory mi WHERE mi.medicineImport.importId = :importId AND mi.medicine.medicineId = :medicineId")
     void deleteByImportIdAndMedicineId(@Param("importId") int importId, @Param("medicineId") int medicineId);
     
