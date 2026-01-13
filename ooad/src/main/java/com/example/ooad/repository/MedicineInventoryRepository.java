@@ -79,6 +79,22 @@ public interface MedicineInventoryRepository extends JpaRepository<MedicineInven
     List<MedicineInventory> findAvailableBatchesFEFO(@Param("medicineId") int medicineId, @Param("minExpiryDate") Date minExpiryDate);
     
     /**
+     * Find inventory by import ID and medicine ID (composite key lookup)
+     * Used for checking if a specific import detail item has been sold
+     */
+    @Query("SELECT mi FROM MedicineInventory mi " +
+           "WHERE mi.medicineImport.importId = :importId " +
+           "AND mi.medicine.medicineId = :medicineId")
+    java.util.Optional<MedicineInventory> findByImportIdAndMedicineId(@Param("importId") int importId, @Param("medicineId") int medicineId);
+
+    /**
+     * Delete inventory by import ID and medicine ID
+     */
+    @Modifying
+    @Query("DELETE FROM MedicineInventory mi WHERE mi.medicineImport.importId = :importId AND mi.medicine.medicineId = :medicineId")
+    void deleteByImportIdAndMedicineId(@Param("importId") int importId, @Param("medicineId") int medicineId);
+    
+    /**
      * Get the most recent batch for a medicine (for restoring inventory)
      * (From inventory branch)
      */

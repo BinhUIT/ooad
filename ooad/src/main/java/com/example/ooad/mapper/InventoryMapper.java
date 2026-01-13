@@ -107,6 +107,44 @@ public class InventoryMapper {
     
     // ==================== Medicine Import Detail ====================
     
+    /**
+     * Convert MedicineImport to MedicineImportDetailResponse with editable status
+     * @param medicineImport The medicine import entity
+     * @param details List of import details
+     * @param inventoryMap Map of (medicineId -> MedicineInventory) for this import
+     * @return MedicineImportDetailResponse with editable status
+     */
+    public static MedicineImportDetailResponse toMedicineImportDetailResponse(MedicineImport medicineImport, 
+            List<ImportDetail> details, java.util.Map<Integer, MedicineInventory> inventoryMap) {
+        MedicineImportDetailResponse response = new MedicineImportDetailResponse();
+        response.setImportId(medicineImport.getImportId());
+        response.setImportDate(medicineImport.getImportDate());
+        response.setImporterId(medicineImport.getImporter() != null ? medicineImport.getImporter().getStaffId() : 0);
+        response.setImporterName(medicineImport.getImporter() != null ? medicineImport.getImporter().getFullName() : null);
+        response.setSupplier(medicineImport.getSupplier());
+        response.setTotalQuantity(medicineImport.getTotalQuantity());
+        response.setTotalValue(medicineImport.getTotalValue());
+        
+        // Convert details with inventory info
+        List<ImportDetailResponse> detailResponses = details.stream()
+            .map(detail -> {
+                MedicineInventory inventory = inventoryMap != null ? 
+                    inventoryMap.get(detail.getMedicine().getMedicineId()) : null;
+                return toImportDetailResponse(detail, inventory);
+            })
+            .collect(Collectors.toList());
+        response.setDetails(detailResponses);
+        
+        // Import is editable only if ALL details are editable
+        boolean allEditable = detailResponses.stream().allMatch(ImportDetailResponse::isEditable);
+        response.setEditable(allEditable);
+        
+        return response;
+    }
+    
+    /**
+     * Legacy method for backward compatibility
+     */
     public static MedicineImportDetailResponse toMedicineImportDetailResponse(MedicineImport medicineImport, 
             List<ImportDetail> details) {
         MedicineImportDetailResponse response = new MedicineImportDetailResponse();
@@ -120,11 +158,52 @@ public class InventoryMapper {
         response.setDetails(details.stream()
             .map(InventoryMapper::toImportDetailResponse)
             .collect(Collectors.toList()));
+        response.setEditable(true); // Assume editable for backward compatibility
         return response;
     }
     
     // ==================== Import Detail ====================
     
+    /**
+     * Convert ImportDetail to ImportDetailResponse with editable status
+     * @param detail The import detail entity
+     * @param inventory The corresponding inventory entity (can be null)
+     * @return ImportDetailResponse with quantity in stock and editable status
+     */
+    public static ImportDetailResponse toImportDetailResponse(ImportDetail detail, MedicineInventory inventory) {
+        ImportDetailResponse response = new ImportDetailResponse();
+        response.setMedicineId(detail.getMedicine().getMedicineId());
+        response.setMedicineName(detail.getMedicine().getMedicineName());
+        response.setUnit(detail.getMedicine().getUnit() != null ? detail.getMedicine().getUnit().name() : null);
+        response.setQuantity(detail.getQuantity()); // Import quantity (static)
+        response.setImportPrice(BigDecimal.valueOf(detail.getImportPrice()));
+        response.setTotalAmount(BigDecimal.valueOf(detail.getImportPrice()).multiply(BigDecimal.valueOf(detail.getQuantity())));
+        response.setExpiryDate(detail.getExpiryDate());
+        
+        // Set quantity in stock and calculate editable status
+        if (inventory != null) {
+            response.setQuantityInStock(inventory.getQuantityInStock());
+            // Editable only if no items have been sold (quantityInStock == quantity)
+            boolean isEditable = inventory.getQuantityInStock() == detail.getQuantity();
+            response.setEditable(isEditable);
+            if (!isEditable) {
+                response.setStatusMessage("Đã bán, không được sửa/xóa");
+            } else {
+                response.setStatusMessage("Có thể sửa/xóa");
+            }
+        } else {
+            // No inventory found - data error, don't allow editing for safety
+            response.setQuantityInStock(0);
+            response.setEditable(false);
+            response.setStatusMessage("Lỗi dữ liệu kho");
+        }
+        
+        return response;
+    }
+    
+    /**
+     * Legacy method for backward compatibility (without inventory - assumes editable)
+     */
     public static ImportDetailResponse toImportDetailResponse(ImportDetail detail) {
         ImportDetailResponse response = new ImportDetailResponse();
         response.setMedicineId(detail.getMedicine().getMedicineId());
@@ -134,6 +213,9 @@ public class InventoryMapper {
         response.setImportPrice(BigDecimal.valueOf(detail.getImportPrice()));
         response.setTotalAmount(BigDecimal.valueOf(detail.getImportPrice()).multiply(BigDecimal.valueOf(detail.getQuantity())));
         response.setExpiryDate(detail.getExpiryDate());
+        response.setQuantityInStock(detail.getQuantity()); // Assume full stock
+        response.setEditable(true);
+        response.setStatusMessage("Có thể sửa/xóa");
         return response;
     }
     

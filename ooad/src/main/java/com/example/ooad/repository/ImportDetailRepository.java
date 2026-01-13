@@ -32,4 +32,17 @@ public interface ImportDetailRepository extends JpaRepository<ImportDetail, Impo
      */
     @Query("SELECT COUNT(id) > 0 FROM ImportDetail id WHERE id.medicine.medicineId = :medicineId")
     boolean existsByMedicineId(@Param("medicineId") int medicineId);
+    
+    /**
+     * Find import detail by import ID and medicine ID (composite key lookup)
+     */
+    @Query("SELECT id FROM ImportDetail id WHERE id.medicineImport.importId = :importId AND id.medicine.medicineId = :medicineId")
+    java.util.Optional<ImportDetail> findByImportIdAndMedicineId(@Param("importId") int importId, @Param("medicineId") int medicineId);
+
+    /**
+     * Delete import detail by import ID and medicine ID
+     */
+    @Modifying
+    @Query("DELETE FROM ImportDetail id WHERE id.medicineImport.importId = :importId AND id.medicine.medicineId = :medicineId")
+    void deleteByImportIdAndMedicineId(@Param("importId") int importId, @Param("medicineId") int medicineId);
 }

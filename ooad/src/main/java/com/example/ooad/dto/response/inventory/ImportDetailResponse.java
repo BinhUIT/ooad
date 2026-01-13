@@ -7,10 +7,13 @@ public class ImportDetailResponse {
     private int medicineId;
     private String medicineName;
     private String unit;
-    private int quantity;
+    private int quantity; // Import quantity (static - original import amount)
+    private int quantityInStock; // Current inventory quantity (dynamic)
     private BigDecimal importPrice;
     private BigDecimal totalAmount; // quantity * importPrice
     private Date expiryDate;
+    private boolean editable; // true if quantityInStock == quantity (no items sold)
+    private String statusMessage; // Warning message if not editable
 
     public ImportDetailResponse() {
     }
@@ -69,5 +72,29 @@ public class ImportDetailResponse {
 
     public void setExpiryDate(Date expiryDate) {
         this.expiryDate = expiryDate;
+    }
+
+    public int getQuantityInStock() {
+        return quantityInStock;
+    }
+
+    public void setQuantityInStock(int quantityInStock) {
+        this.quantityInStock = quantityInStock;
+    }
+
+    public boolean isEditable() {
+        return editable;
+    }
+
+    public void setEditable(boolean editable) {
+        this.editable = editable;
+    }
+
+    public String getStatusMessage() {
+        return statusMessage;
+    }
+
+    public void setStatusMessage(String statusMessage) {
+        this.statusMessage = statusMessage;
     }
 }

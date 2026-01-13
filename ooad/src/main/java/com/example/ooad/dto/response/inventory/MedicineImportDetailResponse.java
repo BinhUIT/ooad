@@ -13,6 +13,7 @@ public class MedicineImportDetailResponse {
     private int totalQuantity;
     private BigDecimal totalValue;
     private List<ImportDetailResponse> details;
+    private boolean editable; // true if ALL details are editable (no items sold from this import)
 
     public MedicineImportDetailResponse() {
     }
@@ -79,5 +80,13 @@ public class MedicineImportDetailResponse {
 
     public void setDetails(List<ImportDetailResponse> details) {
         this.details = details;
+    }
+
+    public boolean isEditable() {
+        return editable;
+    }
+
+    public void setEditable(boolean editable) {
+        this.editable = editable;
     }
 }
