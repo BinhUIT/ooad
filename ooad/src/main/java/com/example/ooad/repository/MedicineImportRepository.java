@@ -13,21 +13,34 @@ import com.example.ooad.domain.entity.MedicineImport;
 
 @Repository
 public interface MedicineImportRepository extends JpaRepository<MedicineImport, Integer>, JpaSpecificationExecutor<MedicineImport> {
-    
+
     /**
      * Get distinct supplier names for dropdown
      */
     @Query("SELECT DISTINCT mi.supplier FROM MedicineImport mi WHERE mi.supplier IS NOT NULL ORDER BY mi.supplier")
     List<String> findDistinctSuppliers();
-    
+
     /**
      * Find imports by date range
      */
     @Query("SELECT mi FROM MedicineImport mi WHERE mi.importDate BETWEEN :fromDate AND :toDate ORDER BY mi.importDate DESC")
     List<MedicineImport> findByDateRange(@Param("fromDate") Date fromDate, @Param("toDate") Date toDate);
-    
+
     /**
      * Find imports by supplier
      */
     List<MedicineImport> findBySupplierContainingIgnoreCase(String supplier);
+
+    /**
+     * Get top 5 recent imports
+     * (Giữ lại từ nhánh master - tính năng thống kê quan trọng)
+     */
+    List<MedicineImport> findTop5ByOrderByImportDateDesc();
+
+    /**
+     * Sum total value of imports between dates
+     * (Giữ lại từ nhánh master - tính năng báo cáo doanh số)
+     */
+    @Query("SELECT COALESCE(SUM(mi.totalValue), 0) FROM MedicineImport mi WHERE mi.importDate BETWEEN :startDate AND :endDate")
+    java.math.BigDecimal sumTotalValueByDateRange(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
 }

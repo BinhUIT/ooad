@@ -23,7 +23,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     public Page<Appointment> findByPatient_PatientIdAndAppointmentDate(Pageable pageable, int patientId, Date appointmentDate);
     public Page<Appointment> findByPatient_PatientIdAndAppointmentDateAndStatus(Pageable pageable, int patientId,EAppointmentStatus status, Date appointmentDate);
 
-    @Query("SELECT a FROM Appointment a WHERE "+ "(:status IS NULL or a.status =:status) AND "+ "(:appointmentDate IS NULL or a.appointmentDate =:appointmentDate) AND"+"(:patientName IS NULL or UPPER(a.patient.fullName) LIKE UPPER (CONCAT('%', :patientName, '%')))")
+    @Query("SELECT a FROM Appointment a WHERE "+"(a.patient is not null) and "+ "(:status IS NULL or a.status =:status) AND "+ "(:appointmentDate IS NULL or a.appointmentDate =:appointmentDate) AND"+"(:patientName IS NULL or UPPER(a.patient.fullName) LIKE UPPER (CONCAT('%', :patientName, '%')))")
     public Page<Appointment> getAppointments(Pageable pageable, @Param("status") EAppointmentStatus status, @Param("appointmentDate") Date appointmentDate, @Param("patientName") String patientName);
 
     public List<Appointment> findByStatus(EAppointmentStatus status);
@@ -34,4 +34,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
      @Query("SELECT a FROM Appointment a WHERE "+ "(a.staff.staffId=:staffId) and "+"(:status IS NULL or a.status =:status) AND "+ "(:appointmentDate IS NULL or a.appointmentDate =:appointmentDate) AND"+"(:patientName IS NULL or UPPER(a.patient.fullName) LIKE UPPER (CONCAT('%', :patientName, '%')))")
      public Page<Appointment> getAppointmentsOfDoctor(Pageable pageable, @Param("staffId") int staffId,@Param("status") EAppointmentStatus status, @Param("appointmentDate") Date appointmentDate, @Param("patientName") String patientName);
 
+     @Query("SELECT a FROM Appointment a WHERE YEAR(a.appointmentDate)=:year and MONTH(a.appointmentDate)=:month")
+     public List<Appointment> getAppointmentsByMonthAndYear(@Param("year") int year, @Param("month") int month);
+     
+     @Query("SELECT a FROM Appointment a WHERE YEAR(a.appointmentDate)=:year") 
+     public List<Appointment> getAppointmentsByYear(@Param("year") int year);
+
+     public List<Appointment> findByAppointmentDate(Date appointmentDate);
+     public List<Appointment> findByStaff_StaffId(int staffId);
+
+    
 }

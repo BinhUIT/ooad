@@ -1,17 +1,21 @@
 package com.example.ooad.controller.admin;
 
-import org.springframework.aop.framework.adapter.GlobalAdvisorAdapterRegistry;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.ErrorResponse;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ooad.dto.request.CreateScheduleRequest;
+import com.example.ooad.dto.response.AdminStatistic;
+import com.example.ooad.dto.response.AppointmentChartData;
+import com.example.ooad.dto.response.AppointmentStatistic;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.dto.response.StaffScheduleResponse;
-
 import com.example.ooad.service.admin.interfaces.AdminService;
 import com.example.ooad.utils.Message;
 
@@ -55,6 +59,26 @@ public class AdminController {
     public ResponseEntity<GlobalResponse<StaffScheduleResponse>> createSchedule(@RequestBody CreateScheduleRequest request) {
         StaffScheduleResponse result = adminService.createSchedule(request);
         GlobalResponse<StaffScheduleResponse> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/admin/appointment_chart") 
+    public ResponseEntity<GlobalResponse<List<AppointmentChartData>>> getAppointmentChartData(@RequestParam(defaultValue="2025") int year) {
+        List<AppointmentChartData> result = adminService.getAppointmentChart(year);
+        GlobalResponse<List<AppointmentChartData>> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/admin/appointment_statistic")
+    public ResponseEntity<GlobalResponse<AppointmentStatistic>> getAppointmentStatistic(@RequestParam(defaultValue="2025") int year) {
+        AppointmentStatistic result = adminService.getAppointmentStatistic(year);
+        GlobalResponse<AppointmentStatistic> response = new GlobalResponse<>(result, Message.success, 200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @GetMapping("/admin/statistic") 
+    public ResponseEntity<GlobalResponse<AdminStatistic>> getAdminStatistic() {
+        AdminStatistic result = adminService.getAdminStatistic();
+        GlobalResponse<AdminStatistic> response = new GlobalResponse<>(result, Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

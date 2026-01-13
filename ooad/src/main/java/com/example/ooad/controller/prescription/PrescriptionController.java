@@ -50,13 +50,15 @@ public class PrescriptionController {
             @RequestParam(defaultValue = "0") int pageNumber,
             @RequestParam(defaultValue = "7") int pageSize,
             @RequestParam Optional<Date> prescriptionDate,
-           Authentication auth) {
-        Page<Prescription> result = prescriptionService.getPrescriptionsOfPatient(auth, pageNumber, pageSize, prescriptionDate);
+            Authentication auth) {
+        Page<Prescription> result = prescriptionService.getPrescriptionsOfPatient(auth, pageNumber, pageSize,
+                prescriptionDate);
         GlobalResponse<Page<Prescription>> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping({ "/unsecure/prescription/{prescriptionId}", "/doctor/prescription/{prescriptionId}","/patient/prescription/{prescriptionId}" })
+    @GetMapping({ "/unsecure/prescription/{prescriptionId}", "/doctor/prescription/{prescriptionId}",
+            "/patient/prescription/{prescriptionId}" })
     public ResponseEntity<GlobalResponse<Prescription>> getPrescriptionById(@PathVariable int prescriptionId) {
         Prescription result = prescriptionService.getPrescriptionById(prescriptionId);
         GlobalResponse<Prescription> response = new GlobalResponse<>(result, Message.success, 200);
@@ -77,14 +79,14 @@ public class PrescriptionController {
 
     // Get prescription details as List (for simple usage without pagination)
     @GetMapping({ "/unsecure/prescription_details_list/{prescriptionId}",
-            "/doctor/prescription_details_list/{prescriptionId}","/patient/prescription_details_list/{prescriptionId}" })
+            "/doctor/prescription_details_list/{prescriptionId}",
+            "/patient/prescription_details_list/{prescriptionId}" })
     public ResponseEntity<GlobalResponse<List<PrescriptionDetail>>> getPrescriptionDetailsList(
             @PathVariable int prescriptionId) {
         List<PrescriptionDetail> result = prescriptionService.getPrescriptionDetailOfPrescription(prescriptionId);
         GlobalResponse<List<PrescriptionDetail>> response = new GlobalResponse<>(result, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-    
 
     @GetMapping("/patient/prescription_by_record/{recordId}")
     public ResponseEntity<GlobalResponse<Prescription>> getPrescriptionByRecordId(@PathVariable int recordId) {
@@ -115,7 +117,7 @@ public class PrescriptionController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/doctor/medicines")
+    @GetMapping({ "/doctor/medicines", "/admin/medicines" })
     public ResponseEntity<GlobalResponse<List<Medicine>>> getMedicines() {
         List<Medicine> result = prescriptionService.getMedicines();
         GlobalResponse<List<Medicine>> response = new GlobalResponse<>(result, Message.success, 200);

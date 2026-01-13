@@ -38,7 +38,10 @@ import com.example.ooad.domain.enums.EMedicineUnit;
 import com.example.ooad.dto.request.PrescriptionDetailRequest;
 import com.example.ooad.dto.request.PrescriptionRequest;
 import com.example.ooad.exception.NotFoundException;
+import com.example.ooad.repository.InvoiceRepository;
+import com.example.ooad.repository.InvoiceMedicineDetailRepository;
 import com.example.ooad.repository.MedicineRepository;
+import com.example.ooad.repository.MedicinePriceRepository;
 import com.example.ooad.repository.PrescriptionDetailRepository;
 import com.example.ooad.repository.PrescriptionRepository;
 import com.example.ooad.service.medical_record.interfaces.MedicalRecordService;
@@ -58,6 +61,15 @@ public class PrescriptionServiceImplementationTest {
 
     @Mock
     private MedicineRepository medicineRepo;
+
+    @Mock
+    private InvoiceRepository invoiceRepo;
+
+    @Mock
+    private InvoiceMedicineDetailRepository invoiceMedicineDetailRepo;
+
+    @Mock
+    private MedicinePriceRepository medicinePriceRepo;
 
     @InjectMocks
     private PrescriptionServiceImplementation prescriptionService;
@@ -200,7 +212,7 @@ public class PrescriptionServiceImplementationTest {
     @DisplayName("Should get prescription by record ID")
     void testGetPrescriptionByRecordId_Success() {
         // Arrange
-        when(prescriptionRepo.findByRecord_RecordId(1)).thenReturn(Optional.of(prescription));
+        when(prescriptionRepo.findLatestByRecordId(1)).thenReturn(Optional.of(prescription));
 
         // Act
         Prescription result = prescriptionService.getPrescriptionByRecordId(1);
@@ -208,21 +220,21 @@ public class PrescriptionServiceImplementationTest {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.getPrescriptionId());
-        verify(prescriptionRepo, times(1)).findByRecord_RecordId(1);
+        verify(prescriptionRepo, times(1)).findLatestByRecordId(1);
     }
 
     @Test
     @DisplayName("Should return null when no prescription found for record")
     void testGetPrescriptionByRecordId_NotFound() {
         // Arrange
-        when(prescriptionRepo.findByRecord_RecordId(999)).thenReturn(Optional.empty());
+        when(prescriptionRepo.findLatestByRecordId(999)).thenReturn(Optional.empty());
 
         // Act
         Prescription result = prescriptionService.getPrescriptionByRecordId(999);
 
         // Assert
         assertEquals(null, result);
-        verify(prescriptionRepo, times(1)).findByRecord_RecordId(999);
+        verify(prescriptionRepo, times(1)).findLatestByRecordId(999);
     }
 
     @Test
@@ -266,6 +278,7 @@ public class PrescriptionServiceImplementationTest {
         when(prescriptionRepo.save(any(Prescription.class))).thenReturn(prescription);
         when(medicineRepo.findByMedicineId_In(anyList())).thenReturn(List.of(medicine));
         when(prescriptionDetailRepo.saveAll(anyList())).thenReturn(List.of(prescriptionDetail));
+        when(invoiceRepo.findByRecord_RecordId(anyInt())).thenReturn(Optional.empty());
 
         // Act
         Prescription result = prescriptionService.createPrescription(prescriptionRequest);
@@ -299,6 +312,7 @@ public class PrescriptionServiceImplementationTest {
         when(medicineRepo.findByMedicineId_In(anyList())).thenReturn(List.of(medicine));
         when(prescriptionDetailRepo.findByPrescription_PrescriptionId(anyInt())).thenReturn(new ArrayList<>());
         when(prescriptionDetailRepo.saveAll(anyList())).thenReturn(List.of(prescriptionDetail));
+        when(invoiceRepo.findByRecord_RecordId(anyInt())).thenReturn(Optional.empty());
 
         // Act
         Prescription result = prescriptionService.updatePrescription(updateRequest, 1);

@@ -59,6 +59,9 @@ public class Appointment {
     }
    
     public Patient getPatient() {
+        if(this.patient==null) {
+            return new Patient();
+        }
         return patient;
     }
 

@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "staff")
-public class Staff extends Actor {
+public class Staff extends Actor implements Comparable<Staff>{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int staffId;
@@ -53,6 +53,11 @@ public class Staff extends Actor {
 
     public void setPosition(String position) {
         this.position = position;
+    }
+
+    @Override
+    public int compareTo(Staff o) {
+        return Integer.compare(staffId, o.staffId);
     }
 
 }

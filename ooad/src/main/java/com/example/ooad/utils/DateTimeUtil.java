@@ -34,4 +34,10 @@ public class DateTimeUtil {
         Date currentDate=DateTimeUtil.getCurrentDate();
         return date.after(currentDate);
     }
+
+    public static boolean isFirstTimeAfterSecondTime(Date firstDate, LocalTime firstTime, Date secondDate, LocalTime secondTime) {
+        if(firstDate.after(secondDate)) return true;
+        if(firstDate.before(secondDate)) return false;
+        return firstTime.isAfter(secondTime);
+    }
 }

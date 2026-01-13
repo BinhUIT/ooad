@@ -2,6 +2,7 @@ package com.example.ooad.service.appointment.implementation;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -69,6 +70,7 @@ public class AppointmentServiceImplementation implements AppointmentService {
         appointment.setPatient(patient);
         appointment.setStaff(schedule.getStaff());
         appointment.setStatus(EAppointmentStatus.SCHEDULED);
+        appointment.setCreateDate(Date.valueOf(LocalDate.now()));
         schedule.setStatus(EScheduleStatus.BOOKED);
         return appointmentRepo.save(appointment);
 
@@ -122,14 +124,17 @@ public class AppointmentServiceImplementation implements AppointmentService {
         }
         appointmentRepo.saveAll(appointments);
     }
-    private boolean isAppointmentExpire(Appointment appointment) {
-        Date currentDate = Date.valueOf(LocalDate.now());
-        if(!appointment.getAppointmentDate().before(currentDate)) {
-            return false;
-        }
-        LocalTime current = LocalTime.now();
-        LocalTime appointmentMaxTime = appointment.getAppointmentTime().plusHours(1);
-        return appointmentMaxTime.isBefore(current);
+    public boolean isAppointmentExpire(Appointment appointment) {
+       LocalDateTime appointmentDateTime = LocalDateTime.of(
+        appointment.getAppointmentDate().toLocalDate(), 
+        appointment.getAppointmentTime()
+    );
+
+   
+    LocalDateTime expiryThreshold = appointmentDateTime.plusHours(1);
+
+
+    return expiryThreshold.isBefore(LocalDateTime.now());
     }
 
     @Override
@@ -144,22 +149,22 @@ public class AppointmentServiceImplementation implements AppointmentService {
     public Appointment changeAppointmentStatus(Authentication auth, int appointmentId,EAppointmentStatus status) {
         Appointment appointment = this.findAppointmentById(appointmentId);
         checkAuthority(auth, appointment);
-        if(status==EAppointmentStatus.CANCELLED){
+        if(status==EAppointmentStatus.CANCELLED||status==EAppointmentStatus.COMPLETED||status==EAppointmentStatus.NOSHOW){
             freeSchedule(appointment);
         }
         appointment.setStatus(status);
         return appointmentRepo.save(appointment);
     
 }
-    private void freeSchedule(Appointment appointment) {
+    public void freeSchedule(Appointment appointment) {
         StaffSchedule schedule = staffScheduleRepo.findByStaff_StaffIdAndStartTimeAndScheduleDate(appointment.getDoctorId(), appointment.getAppointmentTime(), appointment.getAppointmentDate());
         schedule.setStatus(EScheduleStatus.AVAILABLE);
         staffScheduleRepo.save(schedule);
     }
-    private void checkAuthority(Authentication auth, Appointment appointment) {
+    public void checkAuthority(Authentication auth, Appointment appointment) {
         boolean isReceptionist = auth.getAuthorities().stream().anyMatch(grantedAuthority->{
             
-            return grantedAuthority.getAuthority().equals(ERole.RECEPTIONIST.name());
+            return grantedAuthority.getAuthority().equals(ERole.RECEPTIONIST.name())||grantedAuthority.getAuthority().equals(ERole.DOCTOR.name());
         });
          if(!isReceptionist) {
             Patient p = patientService.getPatientFromAuth(auth);
@@ -168,7 +173,7 @@ public class AppointmentServiceImplementation implements AppointmentService {
             }
         }
     }
-    private boolean checkSchedule(StaffSchedule schedule) {
+    public boolean checkSchedule(StaffSchedule schedule) {
         if(!schedule.getStaff().getPosition().equalsIgnoreCase("Doctor")) {
             return false;
         }
@@ -225,4 +230,6 @@ public class AppointmentServiceImplementation implements AppointmentService {
        String searchKey = patientName.orElse(null);
        return appointmentRepo.getAppointmentsOfDoctor(pageable, staff.getStaffId(),filterStatus,filterDate,searchKey);
     }
+
+    
 }

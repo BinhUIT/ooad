@@ -1,5 +1,9 @@
 package com.example.ooad.service.patient.implementation;
 
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,13 +20,17 @@ import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Reception;
+import com.example.ooad.domain.enums.EAppointmentStatus;
 import com.example.ooad.domain.enums.EGender;
+import com.example.ooad.domain.enums.EPaymentStatus;
 import com.example.ooad.domain.enums.EReceptionStatus;
 import com.example.ooad.dto.request.PatientRequest;
+import com.example.ooad.dto.response.PatientDashboardResponse;
 import com.example.ooad.dto.response.PatientResponse;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.mapper.PatientMapper;
+import com.example.ooad.repository.AccountRepository;
 import com.example.ooad.repository.AppointmentRepository;
 import com.example.ooad.repository.InvoiceRepository;
 import com.example.ooad.repository.MedicalRecordRepository;
@@ -46,10 +54,12 @@ public class PatientServiceImplementation implements PatientService {
     private final InvoiceRepository invoiceRepo;
     private final MedicalRecordRepository medicalRecordRepo;
     private final AuthService authService;
+    private final AccountRepository accountRepo;
+    
 
     public PatientServiceImplementation(PatientRepository patientRepo, ActorValidator actorValidator,MedicalRecordRepository medicalRecordRepo,
          AppointmentRepository appointmentRepo, ReceptionRepository receptionRepo,
-         InvoiceRepository invoiceRepo, AuthService authService ) {
+         InvoiceRepository invoiceRepo, AuthService authService , AccountRepository accountRepo) {
         this.patientRepo = patientRepo;
         this.actorValidator = actorValidator;
         this.appointmentRepo= appointmentRepo;
@@ -57,6 +67,7 @@ public class PatientServiceImplementation implements PatientService {
         this.invoiceRepo = invoiceRepo;
         this.medicalRecordRepo= medicalRecordRepo;
         this.authService= authService;
+        this.accountRepo = accountRepo;
     }
     private void validateRequest(PatientRequest request, BindingResult bindingResult) {
         if(bindingResult.hasErrors()) {
@@ -113,6 +124,9 @@ public class PatientServiceImplementation implements PatientService {
         Patient p = findPatientById(patientId);
         List<Appointment> appointments = appointmentRepo.findByPatient_PatientId(p.getPatientId());
         for(Appointment a: appointments) {
+            if(a.getStatus()==EAppointmentStatus.SCHEDULED||a.getStatus()==EAppointmentStatus.CONFIRMED) {
+                throw new BadRequestException(Message.cannotDeletePatient);
+            }
             a.setPatient(null);
         }
         List<Reception> receptions = receptionRepo.findByPatient_PatientId(p.getPatientId());
@@ -126,9 +140,12 @@ public class PatientServiceImplementation implements PatientService {
         for(Invoice i: invoices) {
             i.setPatient(null);
         }
-        appointmentRepo.saveAll(appointments);
+        appointmentRepo.deleteAll(appointments);
         receptionRepo.saveAll(receptions);
         invoiceRepo.saveAll(invoices);
+        if(p.getAccount()!=null) {
+            accountRepo.delete(p.getAccount());
+        }
         patientRepo.delete(p);
     }
 
@@ -180,6 +197,45 @@ public class PatientServiceImplementation implements PatientService {
         EGender genderParam = gender.orElse(null);
         return patientRepo.searchPatient(pageable, keyWordString, genderParam);
     }
+    @Override
+    public PatientDashboardResponse getPatientDashboard(Patient patient) {
+        PatientDashboardResponse response = new PatientDashboardResponse();
+        List<Appointment> appointments = getCurrentAppointments(patient, 2);
+        if(appointments!=null&&!appointments.isEmpty()) {
+            response.setNextAppointment(appointments.get(0));
+        }
+        else {
+            response.setNextAppointment(null);
+        }
+        response.setRecentAppointments(appointments);
+        response.setMedicalRecordsAmount(medicalRecordRepo.findByPatient_PatientId(patient.getPatientId()).size());
+        response.setPendingInvoicesAmount(invoiceRepo.findByPatient_PatientIdAndPaymentStatus(patient.getPatientId(), EPaymentStatus.UNPAID).size());
+        return response;
+    }
+
+    public List<Appointment> getCurrentAppointments(Patient patient, int size) {
+        Date currentDate = Date.valueOf(LocalDate.now());
+        LocalTime currentTime = LocalTime.now();
+        List<Appointment> appointments = appointmentRepo.findByPatient_PatientId(patient.getPatientId());
+        List<Appointment> appointmentAfterCurrent = appointments.stream().filter(item->{
+            if(item.getAppointmentDate().after(currentDate)) return true;
+            if(item.getAppointmentDate().before(currentDate)) return false;
+            return item.getAppointmentTime().isAfter(currentTime);
+        }).toList();
+
+        List<Appointment> sortedAppointmentAfterCurrent = appointmentAfterCurrent.stream().sorted(Comparator
+        .comparing(Appointment::getAppointmentDate).reversed()
+        .thenComparing(Appointment::getAppointmentTime).reversed()).toList();
+        
+        if(size>=sortedAppointmentAfterCurrent.size()) return sortedAppointmentAfterCurrent;
+        List<Appointment> result = sortedAppointmentAfterCurrent;
+        for(int i=0;i<size;i++) {
+            result.add(sortedAppointmentAfterCurrent.get(i));
+        }
+        return result;
+    }
+
+    
 
     
     

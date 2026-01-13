@@ -25,9 +25,10 @@ import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.enums.EGender;
 import com.example.ooad.dto.request.PatientRequest;
 import com.example.ooad.dto.response.GlobalResponse;
+import com.example.ooad.dto.response.PatientDashboardResponse;
 import com.example.ooad.dto.response.PatientResponse;
 import com.example.ooad.dto.response.PatientTabsResponse;
-
+import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.service.patient.interfaces.PatientService;
 import com.example.ooad.utils.Message;
 
@@ -202,6 +203,18 @@ public class PatientController {
         Page<Patient> result = patientService.searchPatient(pageNumber, pageSize, keyword, gender);
         GlobalResponse<Page<Patient>> response = new GlobalResponse<>(result,Message.success,200);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/patient/dashboard")
+    public ResponseEntity<GlobalResponse<PatientDashboardResponse>> getPatientDashboard(Authentication auth) {
+        Patient p = patientService.getPatientFromAuth(auth);
+        if(p==null) {
+            throw new BadRequestException(Message.patientNotFound);
+        }
+        PatientDashboardResponse result = patientService.getPatientDashboard(p);
+        GlobalResponse<PatientDashboardResponse> response = new GlobalResponse<>(result,Message.success,200);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+        
     }
 
 }

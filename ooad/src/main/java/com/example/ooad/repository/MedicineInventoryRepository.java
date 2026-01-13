@@ -20,16 +20,13 @@ public interface MedicineInventoryRepository extends JpaRepository<MedicineInven
      * Get total available quantity for a medicine with expiry date after a certain date
      */
     @Query("SELECT COALESCE(SUM(mi.quantityInStock), 0) FROM MedicineInventory mi " +
-           "WHERE mi.medicine.medicineId = :medicineId AND mi.expiryDate > :minExpiryDate AND mi.quantityInStock > 0")
+            "WHERE mi.medicine.medicineId = :medicineId AND mi.expiryDate > :minExpiryDate AND mi.quantityInStock > 0")
     int getTotalAvailableQuantity(@Param("medicineId") int medicineId, @Param("minExpiryDate") Date minExpiryDate);
-    
-    /**
-     * Get the nearest expiry date for a medicine
-     */
+
     @Query("SELECT MIN(mi.expiryDate) FROM MedicineInventory mi " +
-           "WHERE mi.medicine.medicineId = :medicineId AND mi.expiryDate > :minExpiryDate AND mi.quantityInStock > 0")
+            "WHERE mi.medicine.medicineId = :medicineId AND mi.expiryDate > :minExpiryDate AND mi.quantityInStock > 0")
     Date getNearestExpiryDate(@Param("medicineId") int medicineId, @Param("minExpiryDate") Date minExpiryDate);
-    
+
     /**
      * Get total quantity for a medicine (including all batches, even expired)
      */
@@ -47,6 +44,7 @@ public interface MedicineInventoryRepository extends JpaRepository<MedicineInven
     
     /**
      * Get all inventory batches for a specific import
+     * (From inventory branch)
      */
     @Query("SELECT mi FROM MedicineInventory mi " +
            "WHERE mi.medicineImport.importId = :importId")
@@ -54,6 +52,7 @@ public interface MedicineInventoryRepository extends JpaRepository<MedicineInven
     
     /**
      * Delete all inventory records by import ID
+     * (From inventory branch)
      */
     @Modifying
     @Query("DELETE FROM MedicineInventory mi WHERE mi.medicineImport.importId = :importId")
@@ -61,6 +60,7 @@ public interface MedicineInventoryRepository extends JpaRepository<MedicineInven
     
     /**
      * Get nearest expiry date for all batches of a medicine
+     * (From inventory branch)
      */
     @Query("SELECT MIN(mi.expiryDate) FROM MedicineInventory mi " +
            "WHERE mi.medicine.medicineId = :medicineId AND mi.quantityInStock > 0")
@@ -69,6 +69,7 @@ public interface MedicineInventoryRepository extends JpaRepository<MedicineInven
     /**
      * Get available batches for dispensing (FEFO - First Expiry First Out)
      * Returns batches with stock > 0 and expiry date after minExpiryDate, ordered by expiry date ascending
+     * (From inventory branch)
      */
     @Query("SELECT mi FROM MedicineInventory mi " +
            "WHERE mi.medicine.medicineId = :medicineId " +
@@ -79,9 +80,20 @@ public interface MedicineInventoryRepository extends JpaRepository<MedicineInven
     
     /**
      * Get the most recent batch for a medicine (for restoring inventory)
+     * (From inventory branch)
      */
     @Query("SELECT mi FROM MedicineInventory mi " +
            "WHERE mi.medicine.medicineId = :medicineId " +
            "ORDER BY mi.medicineImport.importDate DESC, mi.expiryDate DESC")
     List<MedicineInventory> findMostRecentBatch(@Param("medicineId") int medicineId);
+
+    // ========================================================================
+    // Methods from master branch (Statistics & Dashboard)
+    // ========================================================================
+
+    @Query("SELECT COUNT(mi) FROM MedicineInventory mi WHERE mi.expiryDate <= :expiryDate AND mi.quantityInStock > 0")
+    long countExpiringBatches(@Param("expiryDate") Date expiryDate);
+
+    @Query("SELECT COUNT(m) FROM Medicine m WHERE (SELECT COALESCE(SUM(mi.quantityInStock), 0) FROM MedicineInventory mi WHERE mi.medicine = m) <= :threshold")
+    long countLowStockMedicines(@Param("threshold") int threshold);
 }

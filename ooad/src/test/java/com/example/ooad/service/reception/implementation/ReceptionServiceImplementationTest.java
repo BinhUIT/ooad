@@ -35,31 +35,39 @@ import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.repository.PatientRepository;
 import com.example.ooad.repository.ReceptionRepository;
+import com.example.ooad.repository.SysParamRepository;
+import com.example.ooad.domain.entity.SysParam;
 import com.example.ooad.utils.Message;
+
 @ExtendWith(MockitoExtension.class)
 public class ReceptionServiceImplementationTest {
     @Mock
     private ReceptionRepository receptionRepo;
     @Mock
     private PatientRepository patientRepo;
+    @Mock
+    private SysParamRepository sysParamRepo;
     @InjectMocks
     private ReceptionServiceImplementation receptionService;
 
     private Date getDaysFromNow(int days) {
         return Date.valueOf(LocalDate.now().plusDays(days));
     }
+
     @Test
     void getListReceptionsNoFilter_Success() {
         Page<Reception> fakeResult = new PageImpl<>(Arrays.asList(new Reception()));
-       
-        when(receptionRepo.findAllByOrderByReceptionDateDesc(any(Pageable.class))).thenReturn(fakeResult);
-        
-        Page<Reception> result = receptionService.getListReceptions(7, 10, Optional.empty(), Optional.empty(),Optional.empty());
+
+        when(receptionRepo.filterReception(any(Pageable.class), any(), any(), any())).thenReturn(fakeResult);
+
+        Page<Reception> result = receptionService.getListReceptions(0, 10, Optional.empty(), Optional.empty(),
+                Optional.empty());
 
         assertNotNull(result);
-        assertNotEquals(result.getContent().size(),0);
-        
+        assertNotEquals(result.getContent().size(), 0);
+
     }
+
     @Test
     void getReceptionById_Success() {
         Reception fakeResult = new Reception();
@@ -73,68 +81,71 @@ public class ReceptionServiceImplementationTest {
     @Test
     void getReceptionById_Fail() {
         when(receptionRepo.findById(1)).thenReturn(Optional.empty());
-        NotFoundException exception = assertThrows(NotFoundException.class, ()->{
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             receptionService.getReceptionById(1);
         });
         assertNotNull(exception);
         assertEquals(Message.receptionNotFound, exception.getMessage());
-        
+
     }
+
     @Test
     void editReception_Success() {
-        UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1,EReceptionStatus.CANCELLED);
-        Reception fakeReception= new Reception();
+        UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1, EReceptionStatus.CANCELLED);
+        Reception fakeReception = new Reception();
         fakeReception.setReceptionId(1);
         fakeReception.setReceptionDate(getDaysFromNow(0));
-        
+
         when(receptionRepo.findById(1)).thenReturn(Optional.of(fakeReception));
         when(receptionRepo.save(any(Reception.class))).thenReturn(fakeReception);
 
         Reception result = receptionService.editReception(fakeRequest);
         assertNotNull(result);
         assertEquals(fakeReception.getReceptionId(), result.getReceptionId());
-        assertEquals(fakeReception.getStatus(),result.getStatus());
+        assertEquals(fakeReception.getStatus(), result.getStatus());
         verify(receptionRepo, times(1)).save(any(Reception.class));
     }
 
     @Test
     void editReception_Fail_InvalidStatus() {
-        UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1,EReceptionStatus.CANCELLED);
-        Reception fakeReception= new Reception();
+        UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1, EReceptionStatus.CANCELLED);
+        Reception fakeReception = new Reception();
         fakeReception.setReceptionId(1);
         fakeReception.setReceptionDate(getDaysFromNow(0));
         fakeReception.setStatus(EReceptionStatus.CANCELLED);
         when(receptionRepo.findById(1)).thenReturn(Optional.of(fakeReception));
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             receptionService.editReception(fakeRequest);
         });
         assertNotNull(exception);
         assertEquals(Message.cannotEditReception, exception.getMessage());
-        verify(receptionRepo,never()).save(any(Reception.class));
+        verify(receptionRepo, never()).save(any(Reception.class));
     }
+
     @Test
     void editReception_Fail_InvalidDate() {
-        UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1,EReceptionStatus.CANCELLED);
-        Reception fakeReception= new Reception();
+        UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1, EReceptionStatus.CANCELLED);
+        Reception fakeReception = new Reception();
         fakeReception.setReceptionId(1);
         fakeReception.setReceptionDate(getDaysFromNow(-1));
-       
+
         when(receptionRepo.findById(1)).thenReturn(Optional.of(fakeReception));
 
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             receptionService.editReception(fakeRequest);
         });
         assertNotNull(exception);
         assertEquals(Message.cannotEditReception, exception.getMessage());
-        verify(receptionRepo,never()).save(any(Reception.class));
+        verify(receptionRepo, never()).save(any(Reception.class));
     }
+
     @Test
     void updateReception_Fail_ReceptionNotFound() {
-        UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1,EReceptionStatus.CANCELLED);
+        UpdateReceptionRequest fakeRequest = new UpdateReceptionRequest(1, EReceptionStatus.CANCELLED);
 
         when(receptionRepo.findById(1)).thenReturn(Optional.empty());
 
-         NotFoundException exception = assertThrows(NotFoundException.class, ()->{
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             receptionService.editReception(fakeRequest);
         });
 
@@ -142,9 +153,8 @@ public class ReceptionServiceImplementationTest {
         assertEquals(Message.receptionNotFound, exception.getMessage());
         verify(receptionRepo, never()).save(any(Reception.class));
 
-
     }
-    
+
     @Test
     void createReceptionSuccess() {
         CreateReceptionRequest request = new CreateReceptionRequest();
@@ -156,16 +166,20 @@ public class ReceptionServiceImplementationTest {
         receptionist.setAccount(fakeAccount);
         Reception fakeResult = new Reception();
 
+        SysParam maxPatientParam = new SysParam();
+        maxPatientParam.setParamValue("50");
+
+        when(sysParamRepo.findByParamCode("MAX_PATIENTS_PER_DAY")).thenReturn(Optional.of(maxPatientParam));
         when(patientRepo.findById(1)).thenReturn(Optional.of(new Patient()));
         when(receptionRepo.save(any(Reception.class))).thenReturn(fakeResult);
 
         Reception result = receptionService.createReception(request, receptionist);
 
         assertNotNull(result);
-        verify(receptionRepo,times(1)).save(any(Reception.class));
+        verify(receptionRepo, times(1)).save(any(Reception.class));
 
     }
-    
+
     @Test
     void createReception_Fail_NoPermission() {
         CreateReceptionRequest request = new CreateReceptionRequest();
@@ -175,11 +189,14 @@ public class ReceptionServiceImplementationTest {
         Account fakeAccount = new Account();
         fakeAccount.setRole(ERole.WAREHOUSE_STAFF);
         receptionist.setAccount(fakeAccount);
-        
 
+        SysParam maxPatientParam = new SysParam();
+        maxPatientParam.setParamValue("50");
+
+        when(sysParamRepo.findByParamCode("MAX_PATIENTS_PER_DAY")).thenReturn(Optional.of(maxPatientParam));
         when(patientRepo.findById(1)).thenReturn(Optional.of(new Patient()));
 
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             receptionService.createReception(request, receptionist);
         });
 
@@ -187,7 +204,7 @@ public class ReceptionServiceImplementationTest {
         assertEquals(Message.cannotCreateReception, exception.getMessage());
         verify(receptionRepo, never()).save(any(Reception.class));
     }
-     
+
     @Test
     void createReception_Fail_InvalidDate() {
         CreateReceptionRequest request = new CreateReceptionRequest();
@@ -198,9 +215,13 @@ public class ReceptionServiceImplementationTest {
         fakeAccount.setRole(ERole.RECEPTIONIST);
         receptionist.setAccount(fakeAccount);
 
+        SysParam maxPatientParam = new SysParam();
+        maxPatientParam.setParamValue("50");
+
+        when(sysParamRepo.findByParamCode("MAX_PATIENTS_PER_DAY")).thenReturn(Optional.of(maxPatientParam));
         when(patientRepo.findById(1)).thenReturn(Optional.of(new Patient()));
 
-        BadRequestException exception = assertThrows(BadRequestException.class, ()->{
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             receptionService.createReception(request, receptionist);
         });
 
@@ -220,9 +241,13 @@ public class ReceptionServiceImplementationTest {
         fakeAccount.setRole(ERole.RECEPTIONIST);
         receptionist.setAccount(fakeAccount);
 
+        SysParam maxPatientParam = new SysParam();
+        maxPatientParam.setParamValue("50");
+
+        when(sysParamRepo.findByParamCode("MAX_PATIENTS_PER_DAY")).thenReturn(Optional.of(maxPatientParam));
         when(patientRepo.findById(1)).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(NotFoundException.class, ()->{
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             receptionService.createReception(request, receptionist);
         });
 
