@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 
+import com.example.ooad.domain.compositekey.MedicineInventoryKey;
 import com.example.ooad.domain.entity.ImportDetail;
 import com.example.ooad.domain.entity.Medicine;
 import com.example.ooad.domain.entity.MedicineImport;
@@ -116,6 +117,7 @@ public class MedicineImportServiceImplementation implements MedicineImportServic
     }
 
     @Override
+    @Transactional
     public MedicineImportDetailResponse getImportDetail(int importId) {
         MedicineImport medicineImport = medicineImportRepository.findById(importId)
             .orElseThrow(() -> new NotFoundException("Medicine import not found with id: " + importId));
@@ -127,6 +129,23 @@ public class MedicineImportServiceImplementation implements MedicineImportServic
         Map<Integer, MedicineInventory> inventoryMap = new HashMap<>();
         for (MedicineInventory inv : inventories) {
             inventoryMap.put(inv.getMedicine().getMedicineId(), inv);
+        }
+        
+        // Auto-create missing inventory entries for legacy data
+        for (ImportDetail detail : details) {
+            int medicineId = detail.getMedicine().getMedicineId();
+            if (!inventoryMap.containsKey(medicineId)) {
+                // Create inventory entry with full quantity (assume nothing sold yet)
+                MedicineInventory newInventory = new MedicineInventory();
+                newInventory.setMedicineInventoryId(new MedicineInventoryKey(importId, medicineId));
+                newInventory.setMedicineImport(medicineImport);
+                newInventory.setMedicine(detail.getMedicine());
+                newInventory.setQuantityInStock(detail.getQuantity());
+                newInventory.setExpiryDate(detail.getExpiryDate());
+                newInventory.setImportPrice(BigDecimal.valueOf(detail.getImportPrice()));
+                medicineInventoryRepository.save(newInventory);
+                inventoryMap.put(medicineId, newInventory);
+            }
         }
         
         return InventoryMapper.toMedicineImportDetailResponse(medicineImport, details, inventoryMap);

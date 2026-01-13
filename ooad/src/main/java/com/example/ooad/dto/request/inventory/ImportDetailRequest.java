@@ -16,7 +16,7 @@ public class ImportDetailRequest {
     private Integer quantity;
     
     @NotNull(message = "Import price is required")
-    @Min(value = 0, message = "Import price must be non-negative")
+    @Min(value = 1, message = "Import price must be greater than 0")
     private BigDecimal importPrice;
     
     @NotNull(message = "Expiry date is required")
