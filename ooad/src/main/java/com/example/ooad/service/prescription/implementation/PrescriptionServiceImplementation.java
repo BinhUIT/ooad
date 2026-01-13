@@ -1,6 +1,8 @@
 package com.example.ooad.service.prescription.implementation;
 
+import java.math.BigDecimal;
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +14,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.example.ooad.domain.compositekey.PrescriptionDetailKey;
+import com.example.ooad.domain.entity.Invoice;
+import com.example.ooad.domain.entity.InvoiceMedicineDetail;
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Medicine;
 import com.example.ooad.domain.entity.Patient;
@@ -21,7 +25,10 @@ import com.example.ooad.dto.request.PrescriptionDetailRequest;
 import com.example.ooad.dto.request.PrescriptionRequest;
 import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
+import com.example.ooad.repository.InvoiceMedicineDetailRepository;
+import com.example.ooad.repository.InvoiceRepository;
 import com.example.ooad.repository.MedicineRepository;
+import com.example.ooad.repository.MedicinePriceRepository;
 import com.example.ooad.repository.PrescriptionDetailRepository;
 import com.example.ooad.repository.PrescriptionRepository;
 import com.example.ooad.service.medical_record.interfaces.MedicalRecordService;
@@ -38,15 +45,26 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
     private final MedicalRecordService medicalRecordService;
     private final MedicineRepository medicineRepo;
     private final PatientService patientService;
+    private final InvoiceRepository invoiceRepo;
+    private final InvoiceMedicineDetailRepository invoiceMedicineDetailRepo;
+    private final MedicinePriceRepository medicinePriceRepo;
 
     public PrescriptionServiceImplementation(PrescriptionRepository prescriptionRepo,
             PrescriptionDetailRepository prescriptionDetailRepo,
-            MedicalRecordService medicalRecordService, MedicineRepository medicineRepo, PatientService patientService) {
+            MedicalRecordService medicalRecordService,
+            MedicineRepository medicineRepo,
+            PatientService patientService,
+            InvoiceRepository invoiceRepo,
+            InvoiceMedicineDetailRepository invoiceMedicineDetailRepo,
+            MedicinePriceRepository medicinePriceRepo) {
         this.prescriptionRepo = prescriptionRepo;
         this.prescriptionDetailRepo = prescriptionDetailRepo;
         this.medicalRecordService = medicalRecordService;
         this.medicineRepo = medicineRepo;
         this.patientService = patientService;
+        this.invoiceRepo = invoiceRepo;
+        this.invoiceMedicineDetailRepo = invoiceMedicineDetailRepo;
+        this.medicinePriceRepo = medicinePriceRepo;
     }
 
     // 3-param version (backward compatibility) - delegates to 4-param version
@@ -109,9 +127,18 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
 
     private Prescription fillInfoToPrescription(Prescription prescription, PrescriptionRequest request,
             boolean isCreate) {
+        MedicalRecord record = medicalRecordService.findMedicalRecordById(request.getRecordId());
+
+        // Check if invoice is paid - cannot update paid prescriptions
+        Optional<Invoice> invoiceOpt = invoiceRepo.findByRecord_RecordId(record.getRecordId());
+        if (invoiceOpt.isPresent()
+                && invoiceOpt.get().getPaymentStatus() == com.example.ooad.domain.enums.EPaymentStatus.PAID) {
+            throw new BadRequestException("Cannot update prescription - invoice has been paid");
+        }
+
         clearPrescriptionDetail(prescription);
         prescription.setNotes(request.getNotes());
-        prescription.setRecord(medicalRecordService.findMedicalRecordById(request.getRecordId()));
+        prescription.setRecord(record);
         prescription = prescriptionRepo.save(prescription);
         List<PrescriptionDetail> prescriptionDetails = new ArrayList<>();
         List<Integer> listMedicineIds = request.getPrescriptionDetails().stream().map(item -> item.getMedicineId())
@@ -122,6 +149,10 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
             prescriptionDetails.add(fromRequestToPrescriptionDetail(prescription, detailRequest, medicines, isCreate));
         }
         prescriptionDetailRepo.saveAll(prescriptionDetails);
+
+        // Sync invoice medicine details after saving prescription
+        syncInvoiceMedicineDetails(prescription);
+
         return prescription;
 
     }
@@ -176,5 +207,62 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
         Date filterDate = prescriptionDate.orElse(null);
         return prescriptionRepo.findPrescriptionsOfPatient(pageable, filterDate, p.getPatientId());
+    }
+
+    private void syncInvoiceMedicineDetails(Prescription prescription) {
+        MedicalRecord record = prescription.getRecord();
+        if (record == null) {
+            return;
+        }
+
+        Optional<Invoice> invoiceOpt = invoiceRepo.findByRecord_RecordId(record.getRecordId());
+        if (!invoiceOpt.isPresent()) {
+            return;
+        }
+
+        Invoice invoice = invoiceOpt.get();
+
+        invoiceMedicineDetailRepo.deleteByInvoiceId(invoice.getInvoiceId());
+
+        List<PrescriptionDetail> prescriptionDetails = prescriptionDetailRepo
+                .findByPrescription_PrescriptionId(prescription.getPrescriptionId());
+
+        for (PrescriptionDetail presDetail : prescriptionDetails) {
+            Medicine medicine = presDetail.getMedicine();
+            if (medicine == null)
+                continue;
+
+            BigDecimal salePrice = medicinePriceRepo.getCurrentPrice(
+                    medicine.getMedicineId(),
+                    Date.valueOf(LocalDate.now()));
+
+            if (salePrice == null) {
+                salePrice = BigDecimal.ZERO;
+            }
+
+            BigDecimal amount = salePrice.multiply(BigDecimal.valueOf(presDetail.getQuantity()));
+
+            InvoiceMedicineDetail detail = new InvoiceMedicineDetail();
+            detail.setInvoice(invoice);
+            detail.setMedicine(medicine);
+            detail.setQuantity(presDetail.getQuantity());
+            detail.setSalePrice(salePrice);
+            detail.setAmount(amount);
+            invoiceMedicineDetailRepo.save(detail);
+        }
+
+        recalculateInvoice(invoice);
+    }
+
+    private void recalculateInvoice(Invoice invoice) {
+        List<InvoiceMedicineDetail> medicineDetails = invoiceMedicineDetailRepo
+                .findByInvoice_InvoiceId(invoice.getInvoiceId());
+        BigDecimal medicineFee = medicineDetails.stream()
+                .map(InvoiceMedicineDetail::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        invoice.setMedicineFee(medicineFee);
+        invoice.setTotalAmount(invoice.getExaminationFee().add(medicineFee).add(invoice.getServiceFee()));
+        invoiceRepo.save(invoice);
     }
 }

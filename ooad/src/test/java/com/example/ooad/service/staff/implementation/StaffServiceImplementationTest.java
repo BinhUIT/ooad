@@ -38,6 +38,7 @@ import com.example.ooad.repository.AccountRepository;
 import com.example.ooad.repository.StaffRepository;
 import com.example.ooad.repository.StaffScheduleRepository;
 import com.example.ooad.service.auth.interfaces.AuthService;
+import com.example.ooad.service.email.interfaces.EmailService;
 import com.example.ooad.validator.ActorValidator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -61,6 +62,9 @@ public class StaffServiceImplementationTest {
 
     @Mock
     AuthService authService;
+
+    @Mock
+    EmailService emailService;
 
     @InjectMocks
     StaffServiceImplementation service;
@@ -89,15 +93,6 @@ public class StaffServiceImplementationTest {
 
         when(staffRepo.findAll()).thenReturn(Collections.emptyList());
 
-        // prepare created account and stub accountRepo to first return null then the
-        // created account
-        Account createdAccount = new Account(1, req.getEmail(), "hashed", req.getRole(), EStatus.ACTIVE);
-        when(accountRepo.findByUsername(req.getEmail())).thenReturn(null, createdAccount);
-
-        // authService.createAccount should be called and return an AccountResponse
-        when(authService.createAccount(any(CreateAccountDto.class)))
-                .thenReturn(new AccountResponse(1, ERole.DOCTOR, EStatus.ACTIVE, req.getEmail()));
-
         Staff saved = new Staff();
         saved.setStaffId(10);
         saved.setFullName(req.getFullName());
@@ -108,7 +103,6 @@ public class StaffServiceImplementationTest {
 
         assertNotNull(resp);
         assertEquals(10, resp.getStaffId());
-        verify(authService, times(1)).createAccount(any(CreateAccountDto.class));
         verify(staffRepo, times(1)).save(any(Staff.class));
     }
 
@@ -130,14 +124,12 @@ public class StaffServiceImplementationTest {
 
         // staffRepo.findAll returns other staffs without conflict
         when(staffRepo.findAll()).thenReturn(Collections.emptyList());
-        // accountRepo returns the same account for username (no conflict)
-        when(accountRepo.findByUsername(req.getEmail())).thenReturn(existing.getAccount());
 
         when(staffRepo.save(any(Staff.class))).thenAnswer(inv -> inv.getArgument(0));
         var resp = service.updateStaff(id, req, br);
         assertNotNull(resp);
         assertEquals(req.getFullName(), resp.getFullName());
-        verify(accountRepo, times(1)).save(any(Account.class));
+        verify(staffRepo, times(1)).save(any(Staff.class));
     }
 
     @Test
@@ -299,41 +291,5 @@ public class StaffServiceImplementationTest {
         when(br.getAllErrors()).thenReturn(List.of(err));
 
         assertThrows(BadRequestException.class, () -> service.updateStaff(id, req, br));
-    }
-
-    @Test
-    public void createStaff_authServiceThrows_propagatesException() {
-        StaffRequest req = buildRequest();
-        BindingResult br = mock(BindingResult.class);
-        when(br.hasErrors()).thenReturn(false);
-        when(actorValidator.validateEmail(req.getEmail())).thenReturn(true);
-        when(actorValidator.validatePhoneNumber(req.getPhone())).thenReturn(true);
-        when(actorValidator.validateIdCard(req.getIdCard())).thenReturn(true);
-        when(staffRepo.findAll()).thenReturn(Collections.emptyList());
-        when(accountRepo.findByUsername(req.getEmail())).thenReturn(null);
-
-        when(authService.createAccount(any(CreateAccountDto.class))).thenThrow(new RuntimeException("auth fail"));
-
-        assertThrows(RuntimeException.class, () -> service.createStaff(req, br));
-    }
-
-    @Test
-    public void createStaff_accountNotReturned_throwsRuntime() {
-        StaffRequest req = buildRequest();
-        BindingResult br = mock(BindingResult.class);
-        when(br.hasErrors()).thenReturn(false);
-        when(actorValidator.validateEmail(req.getEmail())).thenReturn(true);
-        when(actorValidator.validatePhoneNumber(req.getPhone())).thenReturn(true);
-        when(actorValidator.validateIdCard(req.getIdCard())).thenReturn(true);
-        when(staffRepo.findAll()).thenReturn(Collections.emptyList());
-        when(accountRepo.findByUsername(req.getEmail())).thenReturn(null);
-
-        when(authService.createAccount(any(CreateAccountDto.class)))
-                .thenReturn(new AccountResponse(1, ERole.DOCTOR, EStatus.ACTIVE, req.getEmail()));
-
-        // accountRepo still returns null after create
-        when(accountRepo.findByUsername(req.getEmail())).thenReturn(null);
-
-        assertThrows(RuntimeException.class, () -> service.createStaff(req, br));
     }
 }

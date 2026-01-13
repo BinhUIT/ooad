@@ -28,11 +28,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 
 import com.example.ooad.domain.entity.Account;
+import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.domain.entity.MedicalRecord;
 import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.domain.entity.RefDiseaseType;
 import com.example.ooad.domain.entity.Staff;
+import com.example.ooad.repository.InvoiceRepository;
+import com.example.ooad.domain.enums.EPaymentStatus;
 import com.example.ooad.domain.enums.EReceptionStatus;
 import com.example.ooad.domain.enums.ERole;
 import com.example.ooad.dto.request.CreateMedicalRecordRequest;
@@ -41,6 +44,7 @@ import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.dto.response.MedicalRecordDetailResponse;
 import com.example.ooad.service.medical_record.interfaces.MedicalRecordService;
 import com.example.ooad.service.patient.interfaces.PatientService;
+import com.example.ooad.service.prescription.interfaces.PrescriptionService;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Medical Record Controller Test")
@@ -51,6 +55,12 @@ public class MedicalRecordControllerTest {
 
     @Mock
     private PatientService patientService;
+
+    @Mock
+    private InvoiceRepository invoiceRepository;
+
+    @Mock
+    private PrescriptionService prescriptionService;
 
     @Mock
     private BindingResult bindingResult;
@@ -156,6 +166,8 @@ public class MedicalRecordControllerTest {
         when(medicalRecordService.createMedicalRecord(any(CreateMedicalRecordRequest.class),
                 any(BindingResult.class), any(Authentication.class)))
                 .thenReturn(medicalRecord);
+        when(invoiceRepository.findByRecord_RecordId(anyInt())).thenReturn(Optional.empty());
+        when(prescriptionService.getPrescriptionByRecordId(anyInt())).thenReturn(null);
 
         // Act
         ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> response = medicalRecordController
@@ -218,9 +230,12 @@ public class MedicalRecordControllerTest {
     void testGetMedicalRecordById_Success() {
         // Arrange
         when(medicalRecordService.findMedicalRecordById(1)).thenReturn(medicalRecord);
+        when(invoiceRepository.findByRecord_RecordId(anyInt())).thenReturn(Optional.empty());
+        when(prescriptionService.getPrescriptionByRecordId(anyInt())).thenReturn(null);
 
         // Act
-        ResponseEntity<GlobalResponse<MedicalRecord>> response = medicalRecordController.getMedicalRecordById(1);
+        ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> response = medicalRecordController
+                .getMedicalRecordById(1);
 
         // Assert
         assertNotNull(response);
@@ -229,5 +244,73 @@ public class MedicalRecordControllerTest {
         assertNotNull(response.getBody().getData());
         assertEquals(1, response.getBody().getData().getRecordId());
         verify(medicalRecordService, times(1)).findMedicalRecordById(1);
+    }
+
+    @Test
+    @DisplayName("Should return invoice payment status in response when invoice exists")
+    void testGetMedicalRecordById_WithInvoiceStatus() {
+        // Arrange
+        Invoice invoice = new Invoice();
+        invoice.setInvoiceId(1);
+        invoice.setPaymentStatus(EPaymentStatus.PAID);
+
+        when(medicalRecordService.findMedicalRecordById(1)).thenReturn(medicalRecord);
+        when(invoiceRepository.findByRecord_RecordId(1)).thenReturn(Optional.of(invoice));
+        when(prescriptionService.getPrescriptionByRecordId(anyInt())).thenReturn(null);
+
+        // Act
+        ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> response = medicalRecordController
+                .getMedicalRecordById(1);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody().getData());
+        assertEquals("PAID", response.getBody().getData().getInvoicePaymentStatus());
+        verify(invoiceRepository, times(1)).findByRecord_RecordId(1);
+    }
+
+    @Test
+    @DisplayName("Should return null invoice payment status when invoice does not exist")
+    void testGetMedicalRecordById_NoInvoice() {
+        // Arrange
+        when(medicalRecordService.findMedicalRecordById(1)).thenReturn(medicalRecord);
+        when(invoiceRepository.findByRecord_RecordId(1)).thenReturn(Optional.empty());
+        when(prescriptionService.getPrescriptionByRecordId(anyInt())).thenReturn(null);
+
+        // Act
+        ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> response = medicalRecordController
+                .getMedicalRecordById(1);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody().getData());
+        assertEquals(null, response.getBody().getData().getInvoicePaymentStatus());
+    }
+
+    @Test
+    @DisplayName("Should include invoice payment status when creating medical record")
+    void testCreateMedicalRecord_WithInvoiceStatus() {
+        // Arrange
+        Invoice invoice = new Invoice();
+        invoice.setInvoiceId(1);
+        invoice.setPaymentStatus(EPaymentStatus.UNPAID);
+
+        when(medicalRecordService.createMedicalRecord(any(CreateMedicalRecordRequest.class),
+                any(BindingResult.class), any(Authentication.class)))
+                .thenReturn(medicalRecord);
+        when(invoiceRepository.findByRecord_RecordId(1)).thenReturn(Optional.of(invoice));
+        when(prescriptionService.getPrescriptionByRecordId(anyInt())).thenReturn(null);
+
+        // Act
+        ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> response = medicalRecordController
+                .createMedicalRecord(createRequest, bindingResult, authentication);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("UNPAID", response.getBody().getData().getInvoicePaymentStatus());
+        verify(invoiceRepository, times(1)).findByRecord_RecordId(1);
     }
 }

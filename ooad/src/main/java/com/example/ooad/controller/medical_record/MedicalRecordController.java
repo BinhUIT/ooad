@@ -24,6 +24,7 @@ import com.example.ooad.domain.entity.PrescriptionDetail;
 import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.domain.entity.Service;
 import com.example.ooad.domain.entity.Patient;
+import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.dto.request.CreateMedicalRecordRequest;
 import com.example.ooad.dto.request.UpdateMedicalRecordRequest;
 import com.example.ooad.dto.response.GlobalResponse;
@@ -37,6 +38,7 @@ import com.example.ooad.dto.response.MedicineDto;
 import com.example.ooad.service.medical_record.interfaces.MedicalRecordService;
 import com.example.ooad.service.prescription.interfaces.PrescriptionService;
 import com.example.ooad.repository.ServiceRepository;
+import com.example.ooad.repository.InvoiceRepository;
 import com.example.ooad.utils.Message;
 
 import jakarta.validation.Valid;
@@ -46,21 +48,26 @@ public class MedicalRecordController {
     private final MedicalRecordService medicalRecordService;
     private final PrescriptionService prescriptionService;
     private final ServiceRepository serviceRepo;
+    private final InvoiceRepository invoiceRepo;
 
     public MedicalRecordController(MedicalRecordService medicalRecordService,
             PrescriptionService prescriptionService,
-            ServiceRepository serviceRepo) {
+            ServiceRepository serviceRepo,
+            InvoiceRepository invoiceRepo) {
         this.medicalRecordService = medicalRecordService;
         this.prescriptionService = prescriptionService;
         this.serviceRepo = serviceRepo;
+        this.invoiceRepo = invoiceRepo;
     }
 
-    // Common endpoints - receptionist and admin get entity
+    // Common endpoints - receptionist and admin and doctor use same endpoint
     @GetMapping({ "/receptionist/medical-records/{medicalRecordId}",
-            "/admin/medical-records/{medicalRecordId}" })
-    public ResponseEntity<GlobalResponse<MedicalRecord>> getMedicalRecordById(@PathVariable int medicalRecordId) {
-        MedicalRecord result = medicalRecordService.findMedicalRecordById(medicalRecordId);
-        GlobalResponse<MedicalRecord> response = new GlobalResponse<>(result, Message.success, 200);
+            "/admin/medical-records/{medicalRecordId}", "/doctor/medical-records/{medicalRecordId}" })
+    public ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> getMedicalRecordById(
+            @PathVariable int medicalRecordId) {
+        MedicalRecord record = medicalRecordService.findMedicalRecordById(medicalRecordId);
+        MedicalRecordDetailResponse dto = buildDetailResponse(record);
+        GlobalResponse<MedicalRecordDetailResponse> response = new GlobalResponse<>(dto, Message.success, 200);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -73,18 +80,15 @@ public class MedicalRecordController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/doctor/medical-records/{medicalRecordId}")
-    public ResponseEntity<GlobalResponse<MedicalRecordDetailResponse>> getMedicalRecordByIdForDoctor(
-            @PathVariable int medicalRecordId) {
-        MedicalRecord record = medicalRecordService.findMedicalRecordById(medicalRecordId);
-        MedicalRecordDetailResponse dto = buildDetailResponse(record);
-        GlobalResponse<MedicalRecordDetailResponse> response = new GlobalResponse<>(dto, Message.success, 200);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
     private MedicalRecordDetailResponse buildDetailResponse(MedicalRecord record) {
         MedicalRecordDetailResponse dto = new MedicalRecordDetailResponse();
         dto.setRecordId(record.getRecordId());
+
+        // Get invoice payment status
+        Optional<Invoice> invoiceOpt = invoiceRepo.findByRecord_RecordId(record.getRecordId());
+        if (invoiceOpt.isPresent()) {
+            dto.setInvoicePaymentStatus(invoiceOpt.get().getPaymentStatus().name());
+        }
 
         Reception reception = record.getReception();
         if (reception != null) {
