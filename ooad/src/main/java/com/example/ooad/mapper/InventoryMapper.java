@@ -134,7 +134,7 @@ public class InventoryMapper {
             .map(detail -> {
                 MedicineInventory inventory = inventoryMap != null ? 
                     inventoryMap.get(detail.getMedicine().getMedicineId()) : null;
-                return toImportDetailResponse(detail, inventory, isWithin3Days);
+                return toImportDetailResponse(detail, inventory);
             })
             .collect(Collectors.toList());
         response.setDetails(detailResponses);
@@ -181,13 +181,14 @@ public class InventoryMapper {
     // ==================== Import Detail ====================
     
     /**
-     * Convert ImportDetail to ImportDetailResponse with editable status and 3-day check
+     * Convert ImportDetail to ImportDetailResponse with editable status
+     * Editable = no items sold (quantityInStock == quantity)
+     * 3-day rule is handled at import level, not detail level
      * @param detail The import detail entity
      * @param inventory The corresponding inventory entity (can be null)
-     * @param isWithin3Days Whether the import is within 3 days from today
      * @return ImportDetailResponse with quantity in stock and editable status
      */
-    public static ImportDetailResponse toImportDetailResponse(ImportDetail detail, MedicineInventory inventory, boolean isWithin3Days) {
+    public static ImportDetailResponse toImportDetailResponse(ImportDetail detail, MedicineInventory inventory) {
         ImportDetailResponse response = new ImportDetailResponse();
         response.setMedicineId(detail.getMedicine().getMedicineId());
         response.setMedicineName(detail.getMedicine().getMedicineName());
@@ -202,14 +203,11 @@ public class InventoryMapper {
             response.setQuantityInStock(inventory.getQuantityInStock());
             // Check if items have been sold
             boolean notSold = inventory.getQuantityInStock() == detail.getQuantity();
-            // Editable only if: no items sold AND within 3 days
-            boolean isEditable = notSold && isWithin3Days;
-            response.setEditable(isEditable);
+            // Editable only if no items sold
+            response.setEditable(notSold);
             
             if (!notSold) {
                 response.setStatusMessage("Đã bán, không được sửa/xóa");
-            } else if (!isWithin3Days) {
-                response.setStatusMessage("Quá 3 ngày, không được sửa/xóa");
             } else {
                 response.setStatusMessage("Có thể sửa/xóa");
             }
@@ -221,14 +219,6 @@ public class InventoryMapper {
         }
         
         return response;
-    }
-    
-    /**
-     * Convert ImportDetail to ImportDetailResponse with editable status (default: check 3-day rule)
-     */
-    public static ImportDetailResponse toImportDetailResponse(ImportDetail detail, MedicineInventory inventory) {
-        // Assume within 3 days for backward compatibility
-        return toImportDetailResponse(detail, inventory, true);
     }
     
     /**
