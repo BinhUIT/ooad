@@ -17,6 +17,7 @@ import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.domain.entity.InvoiceMedicineDetail;
 import com.example.ooad.domain.entity.InvoiceServiceDetail;
 import com.example.ooad.domain.entity.Medicine;
+import com.example.ooad.domain.entity.MedicineInventory;
 import com.example.ooad.domain.entity.RefPaymentMethod;
 import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.enums.EPaymentStatus;
@@ -135,33 +136,61 @@ public class InvoiceServiceImplementation implements InvoiceService {
             throw new BadRequestException("Cannot update a paid invoice");
         }
         
-        // Validate medicine availability before processing
-        Date minExpiryDate = Date.valueOf(LocalDate.now().plusMonths(3));
-        for (InvoiceMedicineDetailRequest detail : details) {
-            int availableQty = inventoryRepo.getTotalAvailableQuantity(detail.getMedicineId(), minExpiryDate);
-            if (availableQty < detail.getQuantity()) {
-                Medicine medicine = medicineRepo.findById(detail.getMedicineId())
-                        .orElseThrow(() -> new NotFoundException("Medicine not found: " + detail.getMedicineId()));
-                throw new BadRequestException(
-                        "Insufficient inventory for medicine: " + medicine.getMedicineName() + 
-                        ". Available: " + availableQty + ", Requested: " + detail.getQuantity());
-            }
-        }
+        // Get existing medicine details for inventory tracking
+        List<InvoiceMedicineDetail> existingDetails = medicineDetailRepo.findByInvoice_InvoiceId(invoiceId);
         
-        // Collect IDs to keep
+        // Calculate net inventory changes (considering what needs to be restored and deducted)
+        // First, restore inventory for items being removed or reduced
         List<Integer> keepIds = details.stream()
                 .filter(d -> d.getDetailId() != null)
                 .map(InvoiceMedicineDetailRequest::getDetailId)
                 .collect(Collectors.toList());
         
-        // Delete removed details
+        // Restore inventory for deleted items
+        for (InvoiceMedicineDetail existing : existingDetails) {
+            if (!keepIds.contains(existing.getDetailId())) {
+                // This item is being deleted, restore inventory
+                restoreToInventory(existing.getMedicine().getMedicineId(), existing.getQuantity());
+            }
+        }
+        
+        // Validate and calculate net changes for remaining/new items
+        Date minExpiryDate = Date.valueOf(LocalDate.now().plusMonths(3));
+        for (InvoiceMedicineDetailRequest detailReq : details) {
+            int currentInvoiceQty = 0;
+            if (detailReq.getDetailId() != null) {
+                // Find existing quantity for this detail
+                InvoiceMedicineDetail existingDetail = existingDetails.stream()
+                        .filter(d -> d.getDetailId() == detailReq.getDetailId().intValue())
+                        .findFirst()
+                        .orElse(null);
+                if (existingDetail != null) {
+                    currentInvoiceQty = existingDetail.getQuantity();
+                }
+            }
+            
+            // Only need to validate if increasing quantity
+            int netChange = detailReq.getQuantity() - currentInvoiceQty;
+            if (netChange > 0) {
+                int availableQty = inventoryRepo.getTotalAvailableQuantity(detailReq.getMedicineId(), minExpiryDate);
+                if (availableQty < netChange) {
+                    Medicine medicine = medicineRepo.findById(detailReq.getMedicineId())
+                            .orElseThrow(() -> new NotFoundException("Medicine not found: " + detailReq.getMedicineId()));
+                    throw new BadRequestException(
+                            "Insufficient inventory for medicine: " + medicine.getMedicineName() + 
+                            ". Available: " + availableQty + ", Requested: " + netChange);
+                }
+            }
+        }
+        
+        // Delete removed details from database
         if (keepIds.isEmpty()) {
             medicineDetailRepo.deleteByInvoiceId(invoiceId);
         } else {
             medicineDetailRepo.deleteByInvoiceIdAndDetailIdNotIn(invoiceId, keepIds);
         }
         
-        // Update or create details
+        // Update or create details with inventory changes
         for (InvoiceMedicineDetailRequest detailReq : details) {
             Medicine medicine = medicineRepo.findById(detailReq.getMedicineId())
                     .orElseThrow(() -> new NotFoundException("Medicine not found: " + detailReq.getMedicineId()));
@@ -178,16 +207,33 @@ public class InvoiceServiceImplementation implements InvoiceService {
             BigDecimal amount = salePrice.multiply(BigDecimal.valueOf(detailReq.getQuantity()));
             
             if (detailReq.getDetailId() != null) {
-                // Update existing
+                // Update existing - handle inventory change
                 InvoiceMedicineDetail existingDetail = medicineDetailRepo.findById(detailReq.getDetailId())
                         .orElseThrow(() -> new NotFoundException("Medicine detail not found"));
+                
+                int oldQuantity = existingDetail.getQuantity();
+                int newQuantity = detailReq.getQuantity();
+                int quantityDiff = newQuantity - oldQuantity;
+                
+                // If medicine changed, restore old and deduct new
+                if (existingDetail.getMedicine().getMedicineId() != detailReq.getMedicineId()) {
+                    restoreToInventory(existingDetail.getMedicine().getMedicineId(), oldQuantity);
+                    deductFromInventory(detailReq.getMedicineId(), newQuantity);
+                } else if (quantityDiff > 0) {
+                    // Same medicine, quantity increased - deduct difference
+                    deductFromInventory(detailReq.getMedicineId(), quantityDiff);
+                } else if (quantityDiff < 0) {
+                    // Same medicine, quantity decreased - restore difference
+                    restoreToInventory(detailReq.getMedicineId(), -quantityDiff);
+                }
+                
                 existingDetail.setMedicine(medicine);
                 existingDetail.setQuantity(detailReq.getQuantity());
                 existingDetail.setSalePrice(salePrice);
                 existingDetail.setAmount(amount);
                 medicineDetailRepo.save(existingDetail);
             } else {
-                // Create new
+                // Create new - deduct from inventory
                 InvoiceMedicineDetail newDetail = new InvoiceMedicineDetail();
                 newDetail.setInvoice(invoice);
                 newDetail.setMedicine(medicine);
@@ -195,6 +241,9 @@ public class InvoiceServiceImplementation implements InvoiceService {
                 newDetail.setSalePrice(salePrice);
                 newDetail.setAmount(amount);
                 medicineDetailRepo.save(newDetail);
+                
+                // Deduct from inventory
+                deductFromInventory(detailReq.getMedicineId(), detailReq.getQuantity());
             }
         }
         
@@ -307,6 +356,9 @@ public class InvoiceServiceImplementation implements InvoiceService {
         newDetail.setAmount(amount);
         medicineDetailRepo.save(newDetail);
         
+        // Deduct from inventory using FEFO strategy
+        deductFromInventory(detail.getMedicineId(), detail.getQuantity());
+        
         // Recalculate totals
         recalculateInvoiceTotals(invoiceId);
         
@@ -362,6 +414,9 @@ public class InvoiceServiceImplementation implements InvoiceService {
         if (detail.getInvoice().getInvoiceId() != invoiceId) {
             throw new BadRequestException("Detail does not belong to this invoice");
         }
+        
+        // Restore inventory before deleting
+        restoreToInventory(detail.getMedicine().getMedicineId(), detail.getQuantity());
         
         medicineDetailRepo.delete(detail);
         recalculateInvoiceTotals(invoiceId);
@@ -582,5 +637,66 @@ public class InvoiceServiceImplementation implements InvoiceService {
         response.setSalePrice(detail.getSalePrice());
         response.setAmount(detail.getAmount());
         return response;
+    }
+
+    // ========================================================================
+    // Inventory Management Helper Methods (FEFO - First Expiry First Out)
+    // ========================================================================
+
+    /**
+     * Deduct medicine from inventory using FEFO (First Expiry First Out) strategy.
+     * This method will deduct from batches with nearest expiry date first.
+     * 
+     * @param medicineId The medicine to deduct
+     * @param quantity The quantity to deduct
+     * @throws BadRequestException if insufficient inventory
+     */
+    private void deductFromInventory(int medicineId, int quantity) {
+        Date minExpiryDate = Date.valueOf(LocalDate.now().plusMonths(3));
+        List<MedicineInventory> availableBatches = inventoryRepo.findAvailableBatchesFEFO(medicineId, minExpiryDate);
+        
+        int remainingToDeduct = quantity;
+        
+        for (MedicineInventory batch : availableBatches) {
+            if (remainingToDeduct <= 0) break;
+            
+            int currentStock = batch.getQuantityInStock();
+            int deductFromThisBatch = Math.min(currentStock, remainingToDeduct);
+            
+            batch.setQuantityInStock(currentStock - deductFromThisBatch);
+            inventoryRepo.save(batch);
+            
+            remainingToDeduct -= deductFromThisBatch;
+        }
+        
+        if (remainingToDeduct > 0) {
+            Medicine medicine = medicineRepo.findById(medicineId)
+                    .orElseThrow(() -> new NotFoundException("Medicine not found: " + medicineId));
+            throw new BadRequestException(
+                    "Failed to deduct inventory for medicine: " + medicine.getMedicineName() + 
+                    ". Remaining: " + remainingToDeduct);
+        }
+    }
+
+    /**
+     * Restore medicine to inventory. Uses the most recent batch for simplicity.
+     * This is called when deleting or reducing quantity of invoice medicine details.
+     * 
+     * @param medicineId The medicine to restore
+     * @param quantity The quantity to restore
+     */
+    private void restoreToInventory(int medicineId, int quantity) {
+        List<MedicineInventory> batches = inventoryRepo.findMostRecentBatch(medicineId);
+        
+        if (batches.isEmpty()) {
+            // If no batch exists, log warning but don't throw exception
+            // The medicine might have been completely depleted
+            return;
+        }
+        
+        // Restore to the most recent batch (first one in the list ordered by import date desc)
+        MedicineInventory mostRecentBatch = batches.get(0);
+        mostRecentBatch.setQuantityInStock(mostRecentBatch.getQuantityInStock() + quantity);
+        inventoryRepo.save(mostRecentBatch);
     }
 }
