@@ -242,21 +242,6 @@ public class MedicineImportServiceImplementation implements MedicineImportServic
             }
         }
         
-        // Delete only editable items (items that haven't been sold)
-        for (ImportDetail existingDetail : existingDetails) {
-            int medicineId = existingDetail.getMedicine().getMedicineId();
-            MedicineInventory inv = existingInventoryMap.get(medicineId);
-            
-            // Only delete if editable (no items sold) OR if it's being replaced with new data
-            if (inv != null && inv.getQuantityInStock() == existingDetail.getQuantity()) {
-                importDetailRepository.deleteByImportIdAndMedicineId(importId, medicineId);
-                medicineInventoryRepository.deleteByImportIdAndMedicineId(importId, medicineId);
-            } else if (!requestMedicineIds.contains(medicineId)) {
-                // If item was sold and is being removed from request, we already threw error above
-            }
-            // If item was sold but is in request, we'll update it below (but only header info, not quantity)
-        }
-        
         // Update import info
         InventoryMapper.updateMedicineImportEntity(medicineImport, request);
         
@@ -264,7 +249,7 @@ public class MedicineImportServiceImplementation implements MedicineImportServic
         int totalQuantity = 0;
         BigDecimal totalValue = BigDecimal.ZERO;
         
-        // Process each detail in request
+        // Process each detail in request - UPDATE existing or CREATE new
         for (ImportDetailRequest detailRequest : request.getDetails()) {
             ImportDetail existingDetail = existingDetailMap.get(detailRequest.getMedicineId());
             MedicineInventory existingInv = existingInventoryMap.get(detailRequest.getMedicineId());
@@ -278,18 +263,20 @@ public class MedicineImportServiceImplementation implements MedicineImportServic
                 boolean isEditable = existingInv.getQuantityInStock() == existingDetail.getQuantity();
                 
                 if (isEditable) {
-                    // Editable - we already deleted, now create new
-                    ImportDetail newDetail = InventoryMapper.toImportDetailEntity(detailRequest, medicineImport, medicine);
-                    importDetailRepository.save(newDetail);
+                    // Editable - UPDATE the existing entities instead of delete+create
+                    existingDetail.setQuantity(detailRequest.getQuantity());
+                    existingDetail.setImportPrice(detailRequest.getImportPrice().floatValue());
+                    existingDetail.setExpiryDate(detailRequest.getExpiryDate());
+                    importDetailRepository.save(existingDetail);
                     
-                    MedicineInventory newInventory = InventoryMapper.toMedicineInventoryEntity(detailRequest, medicineImport, medicine);
-                    medicineInventoryRepository.save(newInventory);
+                    existingInv.setQuantityInStock(detailRequest.getQuantity());
+                    existingInv.setExpiryDate(detailRequest.getExpiryDate());
+                    medicineInventoryRepository.save(existingInv);
                     
                     totalQuantity += detailRequest.getQuantity();
                     totalValue = totalValue.add(detailRequest.getImportPrice().multiply(BigDecimal.valueOf(detailRequest.getQuantity())));
                 } else {
-                    // Not editable - keep original values, only update non-quantity fields if needed
-                    // For now, we throw an error if user tries to change quantity of sold items
+                    // Not editable - keep original values
                     if (detailRequest.getQuantity() != existingDetail.getQuantity()) {
                         throw new BadRequestException("Không thể sửa số lượng nhập của thuốc '" + medicine.getMedicineName() + 
                             "' vì đã bán. Số lượng nhập ban đầu: " + existingDetail.getQuantity());
@@ -298,6 +285,9 @@ public class MedicineImportServiceImplementation implements MedicineImportServic
                     totalQuantity += existingDetail.getQuantity();
                     totalValue = totalValue.add(BigDecimal.valueOf(existingDetail.getImportPrice()).multiply(BigDecimal.valueOf(existingDetail.getQuantity())));
                 }
+                
+                // Mark as processed
+                existingDetailMap.remove(detailRequest.getMedicineId());
             } else {
                 // New item - create both detail and inventory
                 ImportDetail detail = InventoryMapper.toImportDetailEntity(detailRequest, medicineImport, medicine);
@@ -308,6 +298,19 @@ public class MedicineImportServiceImplementation implements MedicineImportServic
                 
                 totalQuantity += detailRequest.getQuantity();
                 totalValue = totalValue.add(detailRequest.getImportPrice().multiply(BigDecimal.valueOf(detailRequest.getQuantity())));
+            }
+        }
+        
+        // Delete items that are no longer in request (remaining in existingDetailMap)
+        for (Map.Entry<Integer, ImportDetail> entry : existingDetailMap.entrySet()) {
+            int medicineId = entry.getKey();
+            ImportDetail detail = entry.getValue();
+            MedicineInventory inv = existingInventoryMap.get(medicineId);
+            
+            // Only delete if editable (validation already done above)
+            if (inv != null && inv.getQuantityInStock() == detail.getQuantity()) {
+                medicineInventoryRepository.delete(inv);
+                importDetailRepository.delete(detail);
             }
         }
         
