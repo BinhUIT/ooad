@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.ooad.domain.entity.Invoice;
+import com.example.ooad.domain.entity.Staff;
 import com.example.ooad.domain.enums.EPaymentStatus;
 
 @Repository
@@ -45,4 +46,26 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     List<Invoice> findByInvoiceDateAndPaymentStatus(@Param("month") int month, @Param("year") int year,@Param("status") EPaymentStatus status);
 
     List<Invoice> findByPatient_PatientIdAndPaymentStatus(int patientId, EPaymentStatus status);
+    
+    // Revenue statistics queries
+    @Query("SELECT i FROM Invoice i WHERE i.invoiceDate = :date AND i.paymentStatus = :status")
+    List<Invoice> findByInvoiceDateAndStatus(@Param("date") Date date, @Param("status") EPaymentStatus status);
+    
+    @Query("SELECT i FROM Invoice i WHERE i.invoiceDate = :date AND i.paymentStatus = :status AND i.record.doctor = :doctor")
+    List<Invoice> findByInvoiceDateAndStatusAndDoctor(@Param("date") Date date, @Param("status") EPaymentStatus status, @Param("doctor") Staff doctor);
+    
+    @Query("SELECT i FROM Invoice i WHERE YEAR(i.invoiceDate) = :year AND i.paymentStatus = :status")
+    List<Invoice> findByYearAndStatus(@Param("year") int year, @Param("status") EPaymentStatus status);
+    
+    @Query("SELECT i FROM Invoice i WHERE YEAR(i.invoiceDate) = :year AND i.paymentStatus = :status AND i.record.doctor = :doctor")
+    List<Invoice> findByYearAndStatusAndDoctor(@Param("year") int year, @Param("status") EPaymentStatus status, @Param("doctor") Staff doctor);
+    
+    @Query("SELECT i FROM Invoice i WHERE MONTH(i.invoiceDate) = :month AND YEAR(i.invoiceDate) = :year AND i.paymentStatus = :status AND i.record.doctor = :doctor")
+    List<Invoice> findByMonthYearStatusAndDoctor(@Param("month") int month, @Param("year") int year, @Param("status") EPaymentStatus status, @Param("doctor") Staff doctor);
+    
+    @Query("SELECT i FROM Invoice i WHERE i.invoiceDate BETWEEN :fromDate AND :toDate AND i.paymentStatus = :status")
+    List<Invoice> findByDateRangeAndStatus(@Param("fromDate") Date fromDate, @Param("toDate") Date toDate, @Param("status") EPaymentStatus status);
+    
+    @Query("SELECT i FROM Invoice i WHERE i.invoiceDate BETWEEN :fromDate AND :toDate AND i.paymentStatus = :status AND i.record.doctor = :doctor")
+    List<Invoice> findByDateRangeAndStatusAndDoctor(@Param("fromDate") Date fromDate, @Param("toDate") Date toDate, @Param("status") EPaymentStatus status, @Param("doctor") Staff doctor);
 }
