@@ -64,6 +64,10 @@ public class AppointmentServiceImplementation implements AppointmentService {
         if(!checkSchedule(schedule)||schedule.getStatus()!=EScheduleStatus.AVAILABLE) {
             throw new BadRequestException(Message.cannotBookAppointment);
         }
+        Page<Appointment> appointmentsOfPatientInDate = appointmentRepo.findByPatient_PatientIdAndAppointmentDateAndStatus(PageRequest.of(0,7),patient.getPatientId(),schedule.getScheduleDate(),EAppointmentStatus.SCHEDULED);
+        if(!appointmentsOfPatientInDate.isEmpty()) {
+            throw new BadRequestException("You can not book more appointment");
+        }
         Appointment appointment = new Appointment();
         appointment.setAppointmentDate(schedule.getScheduleDate());
         appointment.setAppointmentTime(schedule.getStartTime());
@@ -81,7 +85,7 @@ public class AppointmentServiceImplementation implements AppointmentService {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
         if(status.isPresent()) {
             if(appointmentDate.isPresent()) {
-                return appointmentRepo.findByPatient_PatientIdAndAppointmentDateAndStatus(pageable, patient.getPatientId(), status.get(), appointmentDate.get());
+                return appointmentRepo.findByPatient_PatientIdAndAppointmentDateAndStatus(pageable, patient.getPatientId(), appointmentDate.get(), status.get());
             }
             return appointmentRepo.findByPatient_PatientIdAndStatus(pageable, patient.getPatientId(), status.get());
         }
@@ -149,6 +153,17 @@ public class AppointmentServiceImplementation implements AppointmentService {
     public Appointment changeAppointmentStatus(Authentication auth, int appointmentId,EAppointmentStatus status) {
         Appointment appointment = this.findAppointmentById(appointmentId);
         checkAuthority(auth, appointment);
+        Date currentDate = Date.valueOf(LocalDate.now());
+        if(status==EAppointmentStatus.CONFIRMED) {
+            if(appointment.getAppointmentDate().after(currentDate)||appointment.getAppointmentDate().before(currentDate)) {
+                throw new BadRequestException("Can not check in now");
+            }
+            LocalTime currentTime = LocalTime.now();
+            LocalTime maxEarly = currentTime.minusHours(1);
+            if(appointment.getAppointmentTime().isBefore(maxEarly)) {
+                throw new BadRequestException("Can not check in now");
+            }
+        }
         if(status==EAppointmentStatus.CANCELLED||status==EAppointmentStatus.COMPLETED||status==EAppointmentStatus.NOSHOW){
             freeSchedule(appointment);
         }

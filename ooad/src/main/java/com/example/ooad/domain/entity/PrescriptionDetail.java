@@ -12,9 +12,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name="prescription_detail")
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class PrescriptionDetail {
     @EmbeddedId
     private PrescriptionDetailKey prescriptionDetailId;
@@ -27,64 +35,14 @@ public class PrescriptionDetail {
     @JoinColumn(name="medicine_id")
     private Medicine medicine;
     private int quantity;
+    private boolean isMorning;
+    private boolean isAfterNoon;
+    private boolean isEvening;
+    private boolean isNight;
     @Column(name="dosage", columnDefinition="VARCHAR(100)")
     private String dosage;
     private int days;
     @Enumerated(EnumType.STRING)
     private EDispenseStatus dispenseStatus=EDispenseStatus.PENDING;
-    public PrescriptionDetailKey getPrescriptionDetailId() {
-        return prescriptionDetailId;
-    }
-    public void setPrescriptionDetailId(PrescriptionDetailKey prescriptionDetailId) {
-        this.prescriptionDetailId = prescriptionDetailId;
-    }
-    public Prescription getPrescription() {
-        return prescription;
-    }
-    public void setPrescription(Prescription prescription) {
-        this.prescription = prescription;
-    }
-    public Medicine getMedicine() {
-        return medicine;
-    }
-    public void setMedicine(Medicine medicine) {
-        this.medicine = medicine;
-    }
-    public int getQuantity() {
-        return quantity;
-    }
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-    public String getDosage() {
-        return dosage;
-    }
-    public void setDosage(String dosage) {
-        this.dosage = dosage;
-    }
-    public int getDays() {
-        return days;
-    }
-    public void setDays(int days) {
-        this.days = days;
-    }
-    public EDispenseStatus getDispenseStatus() {
-        return dispenseStatus;
-    }
-    public void setDispenseStatus(EDispenseStatus dispenseStatus) {
-        this.dispenseStatus = dispenseStatus;
-    }
-    public PrescriptionDetail() {
-    }
-    public PrescriptionDetail(PrescriptionDetailKey prescriptionDetailId, Prescription prescription, Medicine medicine,
-            int quantity, String dosage, int days, EDispenseStatus dispenseStatus) {
-        this.prescriptionDetailId = prescriptionDetailId;
-        this.prescription = prescription;
-        this.medicine = medicine;
-        this.quantity = quantity;
-        this.dosage = dosage;
-        this.days = days;
-        this.dispenseStatus = dispenseStatus;
-    }
     
 }

@@ -21,7 +21,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     public Page<Appointment> findByPatient_PatientId(Pageable pageable, int patientId);
     public Page<Appointment> findByPatient_PatientIdAndStatus(Pageable pageable, int patientId, EAppointmentStatus status);
     public Page<Appointment> findByPatient_PatientIdAndAppointmentDate(Pageable pageable, int patientId, Date appointmentDate);
-    public Page<Appointment> findByPatient_PatientIdAndAppointmentDateAndStatus(Pageable pageable, int patientId,EAppointmentStatus status, Date appointmentDate);
+    public Page<Appointment> findByPatient_PatientIdAndAppointmentDateAndStatus(Pageable pageable, int patientId, Date appointmentDate, EAppointmentStatus status);
 
     @Query("SELECT a FROM Appointment a WHERE "+"(a.patient is not null) and "+ "(:status IS NULL or a.status =:status) AND "+ "(:appointmentDate IS NULL or a.appointmentDate =:appointmentDate) AND"+"(:patientName IS NULL or UPPER(a.patient.fullName) LIKE UPPER (CONCAT('%', :patientName, '%')))")
     public Page<Appointment> getAppointments(Pageable pageable, @Param("status") EAppointmentStatus status, @Param("appointmentDate") Date appointmentDate, @Param("patientName") String patientName);

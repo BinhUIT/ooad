@@ -31,6 +31,7 @@ public class ReceptionUpdater {
                 r.setStatus(EReceptionStatus.DONE);
             }
         }
+        System.out.println("Call");
         receptionRepo.saveAll(receptions);
     }
     

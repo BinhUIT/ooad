@@ -17,5 +17,9 @@ public class PrescriptionDetailRequest {
     private int quantity;
     private String dosage;
     private int days;
+    private boolean isMorning;
+    private boolean isAfterNoon;
+    private boolean isEvening;
+    private boolean isNight;
 
 }

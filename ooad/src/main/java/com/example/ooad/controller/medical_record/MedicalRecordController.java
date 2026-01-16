@@ -18,27 +18,27 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.domain.entity.MedicalRecord;
+import com.example.ooad.domain.entity.Patient;
 import com.example.ooad.domain.entity.Prescription;
 import com.example.ooad.domain.entity.PrescriptionDetail;
 import com.example.ooad.domain.entity.Reception;
 import com.example.ooad.domain.entity.Service;
-import com.example.ooad.domain.entity.Patient;
-import com.example.ooad.domain.entity.Invoice;
 import com.example.ooad.dto.request.CreateMedicalRecordRequest;
 import com.example.ooad.dto.request.UpdateMedicalRecordRequest;
+import com.example.ooad.dto.response.DiseaseTypeDto;
 import com.example.ooad.dto.response.GlobalResponse;
 import com.example.ooad.dto.response.MedicalRecordDetailResponse;
-import com.example.ooad.dto.response.PatientDto;
-import com.example.ooad.dto.response.DiseaseTypeDto;
-import com.example.ooad.dto.response.OrderedServiceDto;
-import com.example.ooad.dto.response.PrescriptionDto;
-import com.example.ooad.dto.response.PrescriptionDetailDto;
 import com.example.ooad.dto.response.MedicineDto;
+import com.example.ooad.dto.response.OrderedServiceDto;
+import com.example.ooad.dto.response.PatientDto;
+import com.example.ooad.dto.response.PrescriptionDetailDto;
+import com.example.ooad.dto.response.PrescriptionDto;
+import com.example.ooad.repository.InvoiceRepository;
+import com.example.ooad.repository.ServiceRepository;
 import com.example.ooad.service.medical_record.interfaces.MedicalRecordService;
 import com.example.ooad.service.prescription.interfaces.PrescriptionService;
-import com.example.ooad.repository.ServiceRepository;
-import com.example.ooad.repository.InvoiceRepository;
 import com.example.ooad.utils.Message;
 
 import jakarta.validation.Valid;
@@ -185,6 +185,10 @@ public class MedicalRecordController {
                     dd.setDosage(d.getDosage());
                     dd.setDays(d.getDays());
                     dd.setDispenseStatus(d.getDispenseStatus() != null ? d.getDispenseStatus().name() : "PENDING");
+                    dd.setAfterNoon(d.isAfterNoon());
+                    dd.setMorning(d.isMorning());
+                    dd.setEvening(d.isEvening());
+                    dd.setNight(d.isNight());
                     detailDtos.add(dd);
                 }
             }

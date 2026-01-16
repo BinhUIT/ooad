@@ -27,8 +27,8 @@ import com.example.ooad.exception.BadRequestException;
 import com.example.ooad.exception.NotFoundException;
 import com.example.ooad.repository.InvoiceMedicineDetailRepository;
 import com.example.ooad.repository.InvoiceRepository;
-import com.example.ooad.repository.MedicineRepository;
 import com.example.ooad.repository.MedicinePriceRepository;
+import com.example.ooad.repository.MedicineRepository;
 import com.example.ooad.repository.PrescriptionDetailRepository;
 import com.example.ooad.repository.PrescriptionRepository;
 import com.example.ooad.service.medical_record.interfaces.MedicalRecordService;
@@ -139,6 +139,7 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
         clearPrescriptionDetail(prescription);
         prescription.setNotes(request.getNotes());
         prescription.setRecord(record);
+        
         prescription = prescriptionRepo.save(prescription);
         List<PrescriptionDetail> prescriptionDetails = new ArrayList<>();
         List<Integer> listMedicineIds = request.getPrescriptionDetails().stream().map(item -> item.getMedicineId())
@@ -172,6 +173,10 @@ public class PrescriptionServiceImplementation implements PrescriptionService {
         prescriptionDetail.setPrescriptionDetailId(key);
         prescriptionDetail.setPrescription(prescription);
         prescriptionDetail.setMedicine(med);
+        prescriptionDetail.setMorning(detailRequest.isMorning());
+        prescriptionDetail.setAfterNoon(detailRequest.isAfterNoon());
+        prescriptionDetail.setEvening(detailRequest.isEvening());
+        prescriptionDetail.setNight(detailRequest.isNight());
         return prescriptionDetail;
     }
 

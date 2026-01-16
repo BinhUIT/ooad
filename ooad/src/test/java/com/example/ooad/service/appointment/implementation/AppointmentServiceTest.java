@@ -163,8 +163,8 @@ public class AppointmentServiceTest {
         PageRequest pageable = PageRequest.of(0, 10);
         Page<Appointment> mockPage = new PageImpl<>(Collections.emptyList());
 
-        when(appointmentRepo.findByPatient_PatientIdAndAppointmentDateAndStatus(pageable, patient.getPatientId(),
-                status.get(), date.get()))
+        when(appointmentRepo.findByPatient_PatientIdAndAppointmentDateAndStatus(pageable, patient.getPatientId(),date.get(),
+                status.get()))
                 .thenReturn(mockPage);
 
         Page<Appointment> result = appointmentService.getAppointmentHistory(0, 10, patient, status, date);
